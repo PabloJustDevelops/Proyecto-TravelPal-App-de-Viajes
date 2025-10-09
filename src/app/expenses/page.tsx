@@ -1,0 +1,334 @@
+'use client'
+
+import { useState, useEffect, useCallback } from 'react'
+import { useAuth } from '@/contexts/AuthContext'
+import { createSupabaseClient, Expense, Trip } from '@/lib/supabase'
+import DashboardLayout from '@/components/layout/DashboardLayout'
+import ExpenseCard from '@/components/expenses/ExpenseCard'
+import Button from '@/components/ui/Button'
+import Input from '@/components/ui/Input'
+import { Card, CardContent } from '@/components/ui/Card'
+import { 
+  PlusIcon,
+  MagnifyingGlassIcon,
+  CurrencyDollarIcon,
+  ChartBarIcon,
+  CalendarIcon
+} from '@heroicons/react/24/outline'
+import { formatCurrency } from '@/lib/utils'
+import Link from 'next/link'
+import LoadingSpinner from '@/components/ui/LoadingSpinner'
+
+export default function ExpensesPage() {
+  const { user } = useAuth()
+  const [expenses, setExpenses] = useState<(Expense & { trip?: Trip })[]>([])
+  const [filteredExpenses, setFilteredExpenses] = useState<(Expense & { trip?: Trip })[]>([])
+  const [loading, setLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [categoryFilter, setCategoryFilter] = useState<string>('all')
+  const [tripFilter, setTripFilter] = useState<string>('all')
+  const [trips, setTrips] = useState<Trip[]>([])
+
+  const loadExpenses = useCallback(async () => {
+    const supabase = createSupabaseClient()
+
+    try {
+      const { data, error } = await supabase
+        .from('expenses')
+        .select(`
+          *,
+          trip:trips(*)
+        `)
+        .eq('user_id', user!.id)
+        .order('date', { ascending: false })
+
+      if (error) throw error
+
+      setExpenses(data || [])
+    } catch (error) {
+      console.error('Error loading expenses:', error)
+    } finally {
+      setLoading(false)
+    }
+  }, [user])
+
+  const loadTrips = useCallback(async () => {
+    const supabase = createSupabaseClient()
+
+    try {
+      const { data, error } = await supabase
+        .from('trips')
+        .select('id, title, user_id, origin, destination, departure_date, return_date, budget, status, created_at, updated_at')
+        .eq('user_id', user!.id)
+        .order('departure_date', { ascending: false })
+
+      if (error) throw error
+
+      setTrips(data || [])
+    } catch (error) {
+      console.error('Error loading trips:', error)
+    }
+  }, [user])
+
+  const filterExpenses = useCallback(() => {
+    let filtered = expenses
+
+    // Filter by search term
+    if (searchTerm) {
+      filtered = filtered.filter(
+        (expense) =>
+          expense.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          expense.trip?.title.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    }
+
+    // Filter by category
+    if (categoryFilter !== 'all') {
+      filtered = filtered.filter((expense) => expense.category === categoryFilter)
+    }
+
+    // Filter by trip
+    if (tripFilter !== 'all') {
+      filtered = filtered.filter((expense) => expense.trip_id === tripFilter)
+    }
+
+    setFilteredExpenses(filtered)
+  }, [expenses, searchTerm, categoryFilter, tripFilter])
+
+  useEffect(() => {
+    if (user) {
+      loadExpenses()
+      loadTrips()
+    }
+  }, [user, loadExpenses, loadTrips])
+
+  useEffect(() => {
+    filterExpenses()
+  }, [expenses, searchTerm, categoryFilter, tripFilter, filterExpenses])
+
+  const getExpenseStats = () => {
+    const totalAmount = expenses.reduce((sum, expense) => {
+      // Convert to EUR for calculation (simplified)
+      const amount = expense.currency === 'EUR' ? expense.amount : expense.amount * 0.85
+      return sum + amount
+    }, 0)
+
+    const categoryTotals = expenses.reduce((acc, expense) => {
+      const amount = expense.currency === 'EUR' ? expense.amount : expense.amount * 0.85
+      acc[expense.category] = (acc[expense.category] || 0) + amount
+      return acc
+    }, {} as Record<string, number>)
+
+    const topCategory = Object.entries(categoryTotals).sort(([,a], [,b]) => b - a)[0]
+
+    return {
+      total: totalAmount,
+      count: expenses.length,
+      topCategory: topCategory ? topCategory[0] : null,
+      topCategoryAmount: topCategory ? topCategory[1] : 0,
+      avgPerExpense: expenses.length > 0 ? totalAmount / expenses.length : 0,
+    }
+  }
+
+  const getCategoryName = (category: string) => {
+    const names: Record<string, string> = {
+      accommodation: 'Alojamiento',
+      transport: 'Transporte',
+      food: 'Comida',
+      entertainment: 'Entretenimiento',
+      shopping: 'Compras',
+      health: 'Salud',
+      insurance: 'Seguro',
+      other: 'Otros',
+    }
+    return names[category] || category
+  }
+
+  const stats = getExpenseStats()
+
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center py-12">
+          <LoadingSpinner size="lg" />
+        </div>
+      </DashboardLayout>
+    )
+  }
+
+  return (
+    <DashboardLayout>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Mis Gastos</h1>
+            <p className="mt-1 text-sm text-gray-500">
+              Controla y analiza todos tus gastos de viaje
+            </p>
+          </div>
+          <Link href="/expenses/new">
+            <Button className="mt-4 sm:mt-0">
+              <PlusIcon className="h-4 w-4 mr-2" />
+              Nuevo Gasto
+            </Button>
+          </Link>
+        </div>
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <CurrencyDollarIcon className="h-8 w-8 text-green-600" />
+                </div>
+                <div className="ml-4">
+                  <div className="text-sm font-medium text-gray-500">Total Gastado</div>
+                  <div className="text-2xl font-bold text-gray-900">
+                    {formatCurrency(stats.total, 'EUR')}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <ChartBarIcon className="h-8 w-8 text-blue-600" />
+                </div>
+                <div className="ml-4">
+                  <div className="text-sm font-medium text-gray-500">Total Gastos</div>
+                  <div className="text-2xl font-bold text-gray-900">{stats.count}</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <CalendarIcon className="h-8 w-8 text-purple-600" />
+                </div>
+                <div className="ml-4">
+                  <div className="text-sm font-medium text-gray-500">Promedio por Gasto</div>
+                  <div className="text-2xl font-bold text-gray-900">
+                    {formatCurrency(stats.avgPerExpense, 'EUR')}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <div className="h-8 w-8 text-2xl">🏆</div>
+                </div>
+                <div className="ml-4">
+                  <div className="text-sm font-medium text-gray-500">Categoría Principal</div>
+                  <div className="text-lg font-bold text-gray-900">
+                    {stats.topCategory ? getCategoryName(stats.topCategory) : 'N/A'}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Filters */}
+        <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+          <div className="flex flex-col lg:flex-row gap-4">
+            {/* Search */}
+            <div className="flex-1">
+              <div className="relative">
+                <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  type="text"
+                  placeholder="Buscar gastos..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+
+            {/* Category Filter */}
+            <div className="lg:w-48">
+              <select
+                value={categoryFilter}
+                onChange={(e) => setCategoryFilter(e.target.value)}
+                className="w-full h-10 px-3 py-2 text-sm border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="all">Todas las categorías</option>
+                <option value="accommodation">Alojamiento</option>
+                <option value="transport">Transporte</option>
+                <option value="food">Comida</option>
+                <option value="entertainment">Entretenimiento</option>
+                <option value="shopping">Compras</option>
+                <option value="health">Salud</option>
+                <option value="insurance">Seguro</option>
+                <option value="other">Otros</option>
+              </select>
+            </div>
+
+            {/* Trip Filter */}
+            <div className="lg:w-48">
+              <select
+                value={tripFilter}
+                onChange={(e) => setTripFilter(e.target.value)}
+                className="w-full h-10 px-3 py-2 text-sm border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="all">Todos los viajes</option>
+                {trips.map((trip) => (
+                  <option key={trip.id} value={trip.id}>
+                    {trip.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Expenses Grid */}
+        {filteredExpenses.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredExpenses.map((expense) => (
+              <ExpenseCard key={expense.id} expense={expense} showTripTitle />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <div className="mx-auto h-12 w-12 text-gray-400">
+              <CurrencyDollarIcon className="h-12 w-12" />
+            </div>
+            <h3 className="mt-2 text-sm font-medium text-gray-900">
+              {searchTerm || categoryFilter !== 'all' || tripFilter !== 'all'
+                ? 'No se encontraron gastos'
+                : 'No tienes gastos registrados'}
+            </h3>
+            <p className="mt-1 text-sm text-gray-500">
+              {searchTerm || categoryFilter !== 'all' || tripFilter !== 'all'
+                ? 'Intenta ajustar los filtros de búsqueda'
+                : 'Comienza registrando tu primer gasto'}
+            </p>
+            {(!searchTerm && categoryFilter === 'all' && tripFilter === 'all') && (
+              <div className="mt-6">
+                <Link href="/expenses/new">
+                  <Button>
+                    <PlusIcon className="h-4 w-4 mr-2" />
+                    Registrar Primer Gasto
+                  </Button>
+                </Link>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </DashboardLayout>
+  )
+}

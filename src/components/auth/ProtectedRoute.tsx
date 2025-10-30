@@ -19,7 +19,8 @@ export default function ProtectedRoute({
 
   useEffect(() => {
     if (!loading && !user) {
-      router.push(redirectTo)
+      // Use replace instead of push to avoid back button issues
+      router.replace(redirectTo)
     }
   }, [user, loading, router, redirectTo])
 

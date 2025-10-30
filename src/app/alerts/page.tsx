@@ -6,6 +6,8 @@ import AlertCard from '@/components/alerts/AlertCard'
 import Button from '@/components/ui/Button'
 import { useAuth } from '@/contexts/AuthContext'
 import { createSupabaseClient, Alert } from '@/lib/supabase'
+import { logger } from '@/lib/logger'
+import { getErrorMessage } from '@/lib/utils'
 import { 
   BellIcon,
   CheckIcon,
@@ -25,21 +27,25 @@ export default function AlertsPage() {
   const [typeFilter, setTypeFilter] = useState<string>('all')
   const [statusFilter, setStatusFilter] = useState<string>('all')
 
-  const loadAlerts = useCallback(async () => {
+  const loadAlerts = useCallback(async (signal?: AbortSignal) => {
     const supabase = createSupabaseClient()
 
     try {
-      const { data, error } = await supabase
+      const query = supabase
         .from('alerts')
         .select('*')
         .eq('user_id', user!.id)
         .order('created_at', { ascending: false })
 
+      const { data, error } = await (signal ? query.abortSignal(signal) : query)
+
       if (error) throw error
 
       setAlerts(data || [])
-    } catch (error) {
-      console.error('Error loading alerts:', error)
+    } catch (err: unknown) {
+      if (err instanceof Error && err.name === 'AbortError') return
+      const message = getErrorMessage(err)
+      logger.error('AlertsPage: Error loading alerts', { error: message })
     } finally {
       setLoading(false)
     }
@@ -65,13 +71,40 @@ export default function AlertsPage() {
 
   useEffect(() => {
     if (user) {
-      loadAlerts()
+      const controller = new AbortController()
+      loadAlerts(controller.signal)
+      return () => controller.abort()
+    } else {
+      // Evitar spinner infinito cuando no hay usuario
+      setLoading(false)
     }
   }, [user, loadAlerts])
 
   useEffect(() => {
     filterAlerts()
   }, [alerts, typeFilter, statusFilter, filterAlerts])
+
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center py-12">
+          <LoadingSpinner />
+        </div>
+      </DashboardLayout>
+    )
+  }
+
+  if (!user) {
+    return (
+      <DashboardLayout>
+        <div className="text-center py-12">
+          <h3 className="text-lg font-semibold text-gray-900">Inicia sesión para ver tus alertas</h3>
+          <p className="mt-1 text-sm text-gray-500">La sección de alertas requiere autenticación.</p>
+          <Button className="mt-4" onClick={() => (window.location.href = '/login')}>Ir a Login</Button>
+        </div>
+      </DashboardLayout>
+    )
+  }
 
   const handleMarkAsRead = async (alertId: string) => {
     setActionLoading(alertId)
@@ -88,8 +121,9 @@ export default function AlertsPage() {
       setAlerts(alerts.map(alert => 
         alert.id === alertId ? { ...alert, is_read: true } : alert
       ))
-    } catch (error) {
-      console.error('Error marking alert as read:', error)
+    } catch (err: unknown) {
+      const message = getErrorMessage(err)
+      logger.error('AlertsPage: Error marking alert as read', { error: message })
     } finally {
       setActionLoading(null)
     }
@@ -110,8 +144,9 @@ export default function AlertsPage() {
       if (error) throw error
 
       setAlerts(alerts.filter(alert => alert.id !== alertId))
-    } catch (error) {
-      console.error('Error dismissing alert:', error)
+    } catch (err: unknown) {
+      const message = getErrorMessage(err)
+      logger.error('AlertsPage: Error dismissing alert', { error: message })
     } finally {
       setActionLoading(null)
     }
@@ -134,215 +169,98 @@ export default function AlertsPage() {
       if (error) throw error
 
       setAlerts(alerts.map(alert => ({ ...alert, is_read: true })))
-    } catch (error) {
-      console.error('Error marking all alerts as read:', error)
+    } catch (err: unknown) {
+      const message = getErrorMessage(err)
+      logger.error('AlertsPage: Error marking all alerts as read', { error: message })
     } finally {
       setActionLoading(null)
     }
   }
 
-  const handleClearAll = async () => {
-    if (!confirm('¿Estás seguro de que quieres eliminar todas las alertas?')) return
-
-    setActionLoading('clear')
-    const supabase = createSupabaseClient()
-
-    try {
-      const { error } = await supabase
-        .from('alerts')
-        .delete()
-        .eq('user_id', user!.id)
-
-      if (error) throw error
-
-      setAlerts([])
-    } catch (error) {
-      console.error('Error clearing all alerts:', error)
-    } finally {
-      setActionLoading(null)
+  const getTypeLabel = (type: Alert['type']) => {
+    const labels: Record<Alert['type'], string> = {
+      reminder: 'Recordatorio',
+      warning: 'Advertencia',
+      info: 'Información',
     }
-  }
-
-  const getAlertStats = () => {
-    const total = alerts.length
-    const unread = alerts.filter(alert => !alert.is_read).length
-    const byType = alerts.reduce((acc, alert) => {
-      acc[alert.type] = (acc[alert.type] || 0) + 1
-      return acc
-    }, {} as Record<string, number>)
-
-    return { total, unread, byType }
-  }
-
-  const stats = getAlertStats()
-
-  if (loading) {
-    return (
-      <DashboardLayout>
-        <div className="flex items-center justify-center py-12">
-          <LoadingSpinner size="lg" />
-        </div>
-      </DashboardLayout>
-    )
+    return labels[type]
   }
 
   return (
     <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Alertas y Notificaciones</h1>
-            <p className="mt-1 text-sm text-gray-500">
-              Mantente informado sobre tus viajes y actividades
-            </p>
+            <h1 className="text-2xl font-bold text-gray-900">Alertas</h1>
+            <p className="text-gray-600">Gestiona tus recordatorios y notificaciones</p>
           </div>
-          
-          {alerts.length > 0 && (
-            <div className="flex items-center gap-2 mt-4 sm:mt-0">
-              {stats.unread > 0 && (
-                <Button
-                  variant="outline"
-                  onClick={handleMarkAllAsRead}
-                  loading={actionLoading === 'all'}
-                  disabled={!!actionLoading}
-                >
-                  <CheckIcon className="h-4 w-4 mr-2" />
-                  Marcar todas como leídas
-                </Button>
-              )}
-              
-              <Button
-                variant="danger"
-                onClick={handleClearAll}
-                loading={actionLoading === 'clear'}
-                disabled={!!actionLoading}
-              >
-                <TrashIcon className="h-4 w-4 mr-2" />
-                Limpiar todas
-              </Button>
-            </div>
-          )}
-        </div>
-
-        {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-            <div className="flex items-center">
-              <BellIcon className="h-8 w-8 text-blue-600" />
-              <div className="ml-3">
-                <div className="text-sm font-medium text-gray-500">Total</div>
-                <div className="text-2xl font-bold text-gray-900">{stats.total}</div>
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-            <div className="flex items-center">
-              <div className="text-2xl">🔔</div>
-              <div className="ml-3">
-                <div className="text-sm font-medium text-gray-500">No leídas</div>
-                <div className="text-2xl font-bold text-red-600">{stats.unread}</div>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-            <div className="flex items-center">
-              <div className="text-2xl">⚠️</div>
-              <div className="ml-3">
-                <div className="text-sm font-medium text-gray-500">Advertencias</div>
-                <div className="text-2xl font-bold text-yellow-600">
-                  {stats.byType.warning || 0}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-            <div className="flex items-center">
-              <div className="text-2xl">⏰</div>
-              <div className="ml-3">
-                <div className="text-sm font-medium text-gray-500">Recordatorios</div>
-                <div className="text-2xl font-bold text-purple-600">
-                  {stats.byType.reminder || 0}
-                </div>
-              </div>
-            </div>
+          <div className="flex items-center space-x-3">
+            <Button variant="outline" onClick={() => handleMarkAllAsRead()}>
+              <CheckIcon className="h-5 w-5 mr-2" /> Marcar todas como leídas
+            </Button>
           </div>
         </div>
 
         {/* Filters */}
-        {alerts.length > 0 && (
-          <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center">
-                <FunnelIcon className="h-4 w-4 text-gray-400 mr-2" />
-                <span className="text-sm font-medium text-gray-700">Filtros:</span>
-              </div>
+        <div className="bg-white rounded-lg shadow p-4">
+          <div className="flex flex-wrap gap-4 items-center">
+            <div className="flex items-center space-x-2">
+              <FunnelIcon className="h-5 w-5 text-gray-500" />
+              <span className="text-sm text-gray-700">Tipo:</span>
+              <select
+                value={typeFilter}
+                onChange={(e) => setTypeFilter(e.target.value)}
+                className="text-sm border rounded p-1"
+              >
+                <option value="all">Todos</option>
+                <option value="reminder">Recordatorios</option>
+                <option value="warning">Advertencias</option>
+                <option value="info">Información</option>
+              </select>
+            </div>
 
-              {/* Type Filter */}
-              <div>
-                <select
-                  value={typeFilter}
-                  onChange={(e) => setTypeFilter(e.target.value)}
-                  className="text-sm border border-gray-300 rounded-md px-3 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="all">Todos los tipos</option>
-                  <option value="info">Información</option>
-                  <option value="warning">Advertencia</option>
-                  <option value="error">Error</option>
-                  <option value="success">Éxito</option>
-                  <option value="reminder">Recordatorio</option>
-                </select>
-              </div>
-
-              {/* Status Filter */}
-              <div>
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="text-sm border border-gray-300 rounded-md px-3 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="all">Todas</option>
-                  <option value="unread">No leídas</option>
-                  <option value="read">Leídas</option>
-                </select>
-              </div>
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-gray-700">Estado:</span>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="text-sm border rounded p-1"
+              >
+                <option value="all">Todos</option>
+                <option value="unread">No leídos</option>
+                <option value="read">Leídos</option>
+              </select>
             </div>
           </div>
-        )}
+        </div>
 
-        {/* Alerts List */}
-        {filteredAlerts.length > 0 ? (
-          <div className="space-y-4">
-            {filteredAlerts.map((alert) => (
-              <AlertCard
-                key={alert.id}
-                alert={alert}
-                onMarkAsRead={handleMarkAsRead}
-                onDismiss={handleDismiss}
-                showActions={!actionLoading || actionLoading === alert.id}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-12">
-            <div className="mx-auto h-12 w-12 text-gray-400">
-              <BellIcon className="h-12 w-12" />
+        {/* Content */}
+        <div className="bg-white rounded-lg shadow">
+          {loading ? (
+            <div className="p-8 text-center">
+              <LoadingSpinner />
+              <p className="text-sm text-gray-500 mt-2">Cargando alertas...</p>
             </div>
-            <h3 className="mt-2 text-sm font-medium text-gray-900">
-              {typeFilter !== 'all' || statusFilter !== 'all'
-                ? 'No se encontraron alertas'
-                : 'No tienes alertas'}
-            </h3>
-            <p className="mt-1 text-sm text-gray-500">
-              {typeFilter !== 'all' || statusFilter !== 'all'
-                ? 'Intenta ajustar los filtros'
-                : 'Las alertas aparecerán aquí cuando tengas notificaciones importantes'}
-            </p>
-          </div>
-        )}
+          ) : filteredAlerts.length === 0 ? (
+            <div className="p-8 text-center">
+              <BellIcon className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-500">No hay alertas que coincidan con los filtros seleccionados.</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-gray-200">
+              {filteredAlerts.map((alert) => (
+                <AlertCard 
+                  key={alert.id} 
+                  alert={alert}
+                  onMarkAsRead={() => handleMarkAsRead(alert.id)}
+                  onDismiss={() => handleDismiss(alert.id)}
+                  isLoading={actionLoading === alert.id}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </DashboardLayout>
   )

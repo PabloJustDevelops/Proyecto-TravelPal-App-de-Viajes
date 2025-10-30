@@ -8,9 +8,15 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholde
 // Create Supabase client for server-side operations
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
-// Create Supabase client for client-side operations
+// Singleton instance for client-side operations
+let supabaseClientInstance: ReturnType<typeof createBrowserClient> | null = null
+
+// Create Supabase client for client-side operations (singleton pattern)
 export const createSupabaseClient = () => {
-  return createBrowserClient(supabaseUrl, supabaseAnonKey)
+  if (!supabaseClientInstance) {
+    supabaseClientInstance = createBrowserClient(supabaseUrl, supabaseAnonKey)
+  }
+  return supabaseClientInstance
 }
 
 // TypeScript interfaces for our data models

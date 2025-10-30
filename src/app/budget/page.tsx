@@ -10,6 +10,8 @@ import { Card } from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import Modal from '@/components/ui/Modal'
+import LoadingSpinner from '@/components/ui/LoadingSpinner'
+import { logger } from '@/lib/logger'
 import { 
   PlusIcon,
   CurrencyDollarIcon,
@@ -97,13 +99,13 @@ export default function BudgetPage() {
     { value: 'CNY', label: 'CNY - Yuan Chino' },
   ]
 
-  const loadData = useCallback(async () => {
+  const loadData = useCallback(async (signal?: AbortSignal) => {
     try {
       setLoading(true)
       const supabase = createSupabaseClient()
 
       // Load budgets with trip information
-      const { data: budgetsData, error: budgetsError } = await supabase
+      const budgetsQuery = supabase
         .from('budgets')
         .select(`
           *,
@@ -115,22 +117,28 @@ export default function BudgetPage() {
         .eq('user_id', user?.id)
         .order('created_at', { ascending: false })
 
+      const { data: budgetsData, error: budgetsError } = await (signal ? budgetsQuery.abortSignal(signal) : budgetsQuery)
+
       if (budgetsError) throw budgetsError
 
       // Load trips for form
-      const { data: tripsData, error: tripsError } = await supabase
+      const tripsQuery = supabase
         .from('trips')
         .select('id, title, user_id, origin, destination, departure_date, return_date, budget, status, created_at, updated_at')
         .eq('user_id', user?.id)
         .order('title')
 
+      const { data: tripsData, error: tripsError } = await (signal ? tripsQuery.abortSignal(signal) : tripsQuery)
+
       if (tripsError) throw tripsError
 
       // Load expenses for calculations
-      const { data: expensesData, error: expensesError } = await supabase
+      const expensesQuery = supabase
         .from('expenses')
         .select('id, user_id, title, amount, currency, category, date, trip_id, description, receipt_url, created_at, updated_at')
         .eq('user_id', user?.id)
+
+      const { data: expensesData, error: expensesError } = await (signal ? expensesQuery.abortSignal(signal) : expensesQuery)
 
       if (expensesError) throw expensesError
 
@@ -161,7 +169,9 @@ export default function BudgetPage() {
       setTrips(tripsData || [])
       setExpenses(expensesData || [])
     } catch (error) {
-      console.error('Error loading data:', error)
+      if (error instanceof Error && error.name === 'AbortError') return
+      const msg = error instanceof Error ? error.message : 'Error desconocido'
+      logger.error('BudgetPage: Error loading data', { error: msg })
     } finally {
       setLoading(false)
     }
@@ -169,9 +179,36 @@ export default function BudgetPage() {
 
   useEffect(() => {
     if (user) {
-      loadData()
+      const controller = new AbortController()
+      loadData(controller.signal)
+      return () => controller.abort()
+    } else {
+      // Evitar spinner infinito cuando no hay usuario
+      setLoading(false)
     }
   }, [user, loadData])
+
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center py-12">
+          <LoadingSpinner />
+        </div>
+      </DashboardLayout>
+    )
+  }
+
+  if (!user) {
+    return (
+      <DashboardLayout>
+        <div className="text-center py-12">
+          <h3 className="text-lg font-semibold text-gray-900">Inicia sesión para gestionar tus presupuestos</h3>
+          <p className="mt-1 text-sm text-gray-500">La sección de presupuesto requiere autenticación.</p>
+          <Button className="mt-4" onClick={() => (window.location.href = '/login')}>Ir a Login</Button>
+        </div>
+      </DashboardLayout>
+    )
+  }
 
   const filteredBudgets = budgets.filter(budget => {
     const matchesSearch = budget.name.toLowerCase().includes(searchTerm.toLowerCase()) ||

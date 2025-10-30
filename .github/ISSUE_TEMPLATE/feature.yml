@@ -1,0 +1,21 @@
+name: Feature request
+description: Propón una nueva funcionalidad
+title: "feat: "
+labels: [feature]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Resumen
+    validations:
+      required: true
+  - type: textarea
+    id: value
+    attributes:
+      label: Valor para el usuario
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Criterios de aceptación

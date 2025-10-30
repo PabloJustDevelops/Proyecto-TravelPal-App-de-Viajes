@@ -29,11 +29,11 @@ export default function ExpensesPage() {
   const [tripFilter, setTripFilter] = useState<string>('all')
   const [trips, setTrips] = useState<Trip[]>([])
 
-  const loadExpenses = useCallback(async () => {
+  const loadExpenses = useCallback(async (signal?: AbortSignal) => {
     const supabase = createSupabaseClient()
 
     try {
-      const { data, error } = await supabase
+      const query = supabase
         .from('expenses')
         .select(`
           *,
@@ -42,31 +42,40 @@ export default function ExpensesPage() {
         .eq('user_id', user!.id)
         .order('date', { ascending: false })
 
+      const { data, error } = await (signal ? query.abortSignal(signal) : query)
+
       if (error) throw error
 
       setExpenses(data || [])
     } catch (error) {
-      console.error('Error loading expenses:', error)
+      if (error instanceof Error && error.name === 'AbortError') return
+      // Unificar errores con logger
+      const msg = error instanceof Error ? error.message : 'Error desconocido'
+      logger.error('ExpensesPage: Error loading expenses', { error: msg })
     } finally {
       setLoading(false)
     }
   }, [user])
 
-  const loadTrips = useCallback(async () => {
+  const loadTrips = useCallback(async (signal?: AbortSignal) => {
     const supabase = createSupabaseClient()
 
     try {
-      const { data, error } = await supabase
+      const query = supabase
         .from('trips')
         .select('id, title, user_id, origin, destination, departure_date, return_date, budget, status, created_at, updated_at')
         .eq('user_id', user!.id)
         .order('departure_date', { ascending: false })
 
+      const { data, error } = await (signal ? query.abortSignal(signal) : query)
+
       if (error) throw error
 
       setTrips(data || [])
     } catch (error) {
-      console.error('Error loading trips:', error)
+      if (error instanceof Error && error.name === 'AbortError') return
+      const msg = error instanceof Error ? error.message : 'Error desconocido'
+      logger.error('ExpensesPage: Error loading trips', { error: msg })
     }
   }, [user])
 
@@ -97,8 +106,13 @@ export default function ExpensesPage() {
 
   useEffect(() => {
     if (user) {
-      loadExpenses()
-      loadTrips()
+      const controller = new AbortController()
+      loadExpenses(controller.signal)
+      loadTrips(controller.signal)
+      return () => controller.abort()
+    } else {
+      // Evitar spinner infinito cuando no hay usuario
+      setLoading(false)
     }
   }, [user, loadExpenses, loadTrips])
 
@@ -151,6 +165,20 @@ export default function ExpensesPage() {
       <DashboardLayout>
         <div className="flex items-center justify-center py-12">
           <LoadingSpinner size="lg" />
+        </div>
+      </DashboardLayout>
+    )
+  }
+
+  if (!user) {
+    return (
+      <DashboardLayout>
+        <div className="text-center py-12">
+          <h3 className="text-lg font-semibold text-gray-900">Inicia sesión para ver tus gastos</h3>
+          <p className="mt-1 text-sm text-gray-500">La sección de gastos requiere autenticación.</p>
+          <Link href="/login">
+            <Button className="mt-4">Ir a Login</Button>
+          </Link>
         </div>
       </DashboardLayout>
     )

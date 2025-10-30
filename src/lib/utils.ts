@@ -77,3 +77,23 @@ export function validatePassword(password: string): {
     errors
   }
 }
+
+export function getErrorMessage(err: unknown, fallbackMessage?: string): string {
+  let baseMessage: string
+  if (err instanceof Error) {
+    baseMessage = err.message
+  } else {
+    try {
+      baseMessage = JSON.stringify(err)
+    } catch {
+      baseMessage = String(err)
+    }
+  }
+
+  if (fallbackMessage && fallbackMessage.trim().length > 0) {
+    const isUseless = !baseMessage || baseMessage === '[object Object]' || baseMessage === 'undefined' || baseMessage === 'null'
+    return isUseless ? fallbackMessage : `${fallbackMessage}: ${baseMessage}`
+  }
+
+  return baseMessage
+}

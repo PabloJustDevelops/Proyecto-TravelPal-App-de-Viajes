@@ -2,12 +2,11 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import DashboardLayout from '@/components/layout/DashboardLayout'
-import TripCard from '@/components/trips/TripCard'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import { useAuth } from '@/contexts/AuthContext'
 import { createSupabaseClient, Trip } from '@/lib/supabase'
-import { PlusIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline'
+import { PlusIcon, MagnifyingGlassIcon, PlayIcon } from '@heroicons/react/24/outline'
 import Link from 'next/link'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 
@@ -19,20 +18,24 @@ export default function TripsPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
 
-  const loadTrips = useCallback(async () => {
+  const loadTrips = useCallback(async (signal?: AbortSignal) => {
+    if (!user) return
     const supabase = createSupabaseClient()
 
     try {
-      const { data, error } = await supabase
+      const query = supabase
         .from('trips')
         .select('*')
-        .eq('user_id', user!.id)
+        .eq('user_id', user.id)
         .order('departure_date', { ascending: false })
+
+      const { data, error } = await (signal ? query.abortSignal(signal) : query)
 
       if (error) throw error
 
       setTrips(data || [])
     } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') return
       console.error('Error loading trips:', error)
     } finally {
       setLoading(false)
@@ -70,7 +73,12 @@ export default function TripsPage() {
 
   useEffect(() => {
     if (user) {
-      loadTrips()
+      const controller = new AbortController()
+      loadTrips(controller.signal)
+      return () => controller.abort()
+    } else {
+      // Evitar spinner infinito cuando no hay usuario
+      setLoading(false)
     }
   }, [user, loadTrips])
 
@@ -78,27 +86,25 @@ export default function TripsPage() {
     filterTrips()
   }, [trips, searchTerm, statusFilter, filterTrips])
 
-  const getStatusCounts = () => {
-    const now = new Date()
-    return {
-      all: trips.length,
-      upcoming: trips.filter(
-        (trip) => new Date(trip.departure_date) > now && trip.status !== 'cancelled'
-      ).length,
-      planned: trips.filter((trip) => trip.status === 'planned').length,
-      confirmed: trips.filter((trip) => trip.status === 'confirmed').length,
-      completed: trips.filter((trip) => trip.status === 'completed').length,
-      cancelled: trips.filter((trip) => trip.status === 'cancelled').length,
-    }
-  }
-
-  const statusCounts = getStatusCounts()
-
   if (loading) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center py-12">
           <LoadingSpinner size="lg" />
+        </div>
+      </DashboardLayout>
+    )
+  }
+
+  if (!user) {
+    return (
+      <DashboardLayout>
+        <div className="text-center py-12">
+          <h3 className="text-lg font-semibold text-gray-900">Inicia sesión para ver tus viajes</h3>
+          <p className="mt-1 text-sm text-gray-500">La sección de viajes requiere autenticación.</p>
+          <Link href="/login">
+            <Button className="mt-4">Ir a Login</Button>
+          </Link>
         </div>
       </DashboardLayout>
     )
@@ -112,11 +118,11 @@ export default function TripsPage() {
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Mis Viajes</h1>
             <p className="mt-1 text-sm text-gray-500">
-              Gestiona y organiza todos tus viajes
+              Gestiona tus itinerarios y reservas
             </p>
           </div>
-          <Link href="/trips/new">
-            <Button className="mt-4 sm:mt-0">
+          <Link href="/trips/new" className="mt-4 sm:mt-0">
+            <Button>
               <PlusIcon className="h-4 w-4 mr-2" />
               Nuevo Viaje
             </Button>
@@ -125,7 +131,7 @@ export default function TripsPage() {
 
         {/* Filters */}
         <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-          <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex flex-col lg:flex-row gap-4">
             {/* Search */}
             <div className="flex-1">
               <div className="relative">
@@ -141,18 +147,18 @@ export default function TripsPage() {
             </div>
 
             {/* Status Filter */}
-            <div className="sm:w-48">
+            <div className="lg:w-48">
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
                 className="w-full h-10 px-3 py-2 text-sm border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
-                <option value="all">Todos ({statusCounts.all})</option>
-                <option value="upcoming">Próximos ({statusCounts.upcoming})</option>
-                <option value="planned">Planeados ({statusCounts.planned})</option>
-                <option value="confirmed">Confirmados ({statusCounts.confirmed})</option>
-                <option value="completed">Completados ({statusCounts.completed})</option>
-                <option value="cancelled">Cancelados ({statusCounts.cancelled})</option>
+                <option value="all">Todos los estados</option>
+                <option value="planned">Planificado</option>
+                <option value="confirmed">Confirmado</option>
+                <option value="completed">Completado</option>
+                <option value="cancelled">Cancelado</option>
+                <option value="upcoming">Próximos</option>
               </select>
             </div>
           </div>
@@ -162,46 +168,50 @@ export default function TripsPage() {
         {filteredTrips.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredTrips.map((trip) => (
-              <TripCard key={trip.id} trip={trip} />
+              <div key={trip.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">{trip.title}</h3>
+                    <p className="text-sm text-gray-500">{trip.origin} → {trip.destination}</p>
+                  </div>
+                  <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-700 capitalize">
+                    {trip.status}
+                  </span>
+                </div>
+                <div className="mt-4 text-sm text-gray-600">
+                  <div>Salida: {new Date(trip.departure_date).toLocaleDateString()}</div>
+                  {trip.return_date && (
+                    <div>Regreso: {new Date(trip.return_date).toLocaleDateString()}</div>
+                  )}
+                </div>
+                <div className="mt-4 flex items-center justify-between">
+                  <Link href={`/trips/${trip.id}`} className="text-blue-600 hover:text-blue-700 text-sm font-medium">
+                    Ver detalles
+                  </Link>
+                  <div className="flex items-center text-gray-500">
+                    <PlayIcon className="h-5 w-5 mr-1" />
+                    {trip.airline || 'Sin aerolínea'}
+                  </div>
+                </div>
+              </div>
             ))}
           </div>
         ) : (
           <div className="text-center py-12">
             <div className="mx-auto h-12 w-12 text-gray-400">
-              <svg
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                aria-hidden="true"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
+              {/* Placeholder icon */}
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-12 w-12"><path d="M2 16l20-12M2 16l7-1m13-11l-4 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
             </div>
-            <h3 className="mt-2 text-sm font-medium text-gray-900">
-              {searchTerm || statusFilter !== 'all'
-                ? 'No se encontraron viajes'
-                : 'No tienes viajes registrados'}
-            </h3>
-            <p className="mt-1 text-sm text-gray-500">
-              {searchTerm || statusFilter !== 'all'
-                ? 'Intenta ajustar los filtros de búsqueda'
-                : 'Comienza creando tu primer viaje'}
-            </p>
-            {(!searchTerm && statusFilter === 'all') && (
-              <div className="mt-6">
-                <Link href="/trips/new">
-                  <Button>
-                    <PlusIcon className="h-4 w-4 mr-2" />
-                    Crear Primer Viaje
-                  </Button>
-                </Link>
-              </div>
-            )}
+            <h3 className="mt-2 text-sm font-medium text-gray-900">No tienes viajes registrados</h3>
+            <p className="mt-1 text-sm text-gray-500">Crea tu primer viaje para empezar a planificar.</p>
+            <div className="mt-6">
+              <Link href="/trips/new">
+                <Button>
+                  <PlusIcon className="h-4 w-4 mr-2" />
+                  Crear Primer Viaje
+                </Button>
+              </Link>
+            </div>
           </div>
         )}
       </div>

@@ -190,6 +190,7 @@ export default function NoteEditor({ note, tripId, onSave, onCancel, loading = f
 
 - Lista item 1
 - Lista item 2"
+                  data-testid="note-content-textarea"
                   required
                 />
                 <p className="text-xs text-gray-500">

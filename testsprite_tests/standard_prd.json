@@ -1,0 +1,126 @@
+{
+  "meta": {
+    "project": "Gestión de Vuelos (App de Viajes)",
+    "date": "2025-10-29",
+    "prepared_by": "Software Development Manager"
+  },
+  "product_overview": "Aplicación web para gestionar viajes, reservas, planificación diaria, gastos, presupuesto, notas y alertas, con autenticación segura y experiencia responsive.",
+  "core_goals": [
+    "Centralizar información de viajes y reservas en un único dashboard.",
+    "Facilitar la planificación de itinerarios diarios con actividades y recordatorios.",
+    "Registrar y controlar gastos y presupuestos por viaje.",
+    "Mejorar la productividad mediante notas y alertas personalizadas.",
+    "Proveer una UI accesible, consistente y de alto rendimiento."
+  ],
+  "key_features": [
+    "Autenticación completa: registro, login, recuperación de contraseña y gestión de perfil.",
+    "Dashboard con resumen de métricas de usuario, próximos viajes y alertas.",
+    "Gestión de viajes con funcionalidades CRUD, filtros y ordenación.",
+    "Planificación detallada con actividades diarias, reservas vinculadas y recordatorios.",
+    "Registro y visualización de gastos con categorías y moneda.",
+    "Visualización y análisis básico de presupuesto por viaje.",
+    "Sistema de notas con CRUD, etiquetas y favoritos.",
+    "Panel de alertas y notificaciones con marcado como leído y descarte.",
+    "Protección de rutas y control de acceso mediante guardas de sesión.",
+    "Logging centralizado configurable según nivel para observabilidad."
+  ],
+  "user_flow_summary": [
+    "Usuario no autenticado accede a login, registro o recuperación de contraseña.",
+    "Usuario autenticado es redirigido al dashboard principal.",
+    "Navegación mediante navbar hacia módulos: Dashboard, Viajes, Planificación, Gastos, Presupuesto, Análisis, Notas y Alertas.",
+    "Manejo de notificaciones con contador y panel desplegable para marcar o descartar.",
+    "Gestión integral de viajes: creación, edición, filtrado y listado.",
+    "Planificación diaria con actividades y reservas, incluyendo recordatorios asociados.",
+    "Administración de gastos y visualización en presupuesto con gráficos simples.",
+    "Interacción con notas para crear, editar, borrar y marcar favoritas."
+  ],
+  "validation_criteria": [
+    "Registro y login deben autenticar correctamente y mostrar errores claros en casos inválidos.",
+    "Logout redirige correctamente a la página de login.",
+    "Formulario de recuperación de contraseña valida email y notifica éxito o error.",
+    "Dashboard muestra resumen actualizado de próximos viajes, actividades y alertas.",
+    "Creación, edición y listado de viajes funciona con filtros y ordenación adecuados.",
+    "Planificación muestra actividades y reservas ordenadas y permite gestión de recordatorios.",
+    "Gastos se pueden crear y visualizar con totales y agrupaciones en presupuesto.",
+    "Notas permiten CRUD completo y marcado de favoritos.",
+    "Alertas y notificaciones muestran contador funcional, panel desplegable y acciones de marcado/descartar.",
+    "Rutas protegidas solo accesibles para usuarios autenticados.",
+    "Logging refleja niveles configurables y métricas de rendimiento según nivel."
+  ],
+  "code_summary": {
+    "tech_stack": [
+      "TypeScript",
+      "Next.js",
+      "React",
+      "Supabase",
+      "Turbopack",
+      "TailwindCSS"
+    ],
+    "features": [
+      {
+        "name": "Autenticación - Login",
+        "description": "Formulario de inicio de sesión con manejo de errores visibles y normalización de mensajes.",
+        "files": [
+          "src/components/auth/LoginForm.tsx",
+          "src/pages/auth/login.tsx",
+          "src/lib/supabaseClient.ts"
+        ]
+      },
+      {
+        "name": "Autenticación - Registro",
+        "description": "Flujo de registro de usuario con confirmación y redirección.",
+        "files": [
+          "src/components/auth/RegisterForm.tsx",
+          "src/pages/auth/register.tsx",
+          "src/lib/supabaseClient.ts"
+        ]
+      },
+      {
+        "name": "Autenticación - Recuperación de contraseña",
+        "description": "Solicitud de restablecimiento de contraseña y mensajes de éxito/error.",
+        "files": [
+          "src/components/auth/ForgotPasswordForm.tsx",
+          "src/pages/auth/forgot-password.tsx",
+          "src/lib/supabaseClient.ts"
+        ]
+      },
+      {
+        "name": "Protección de rutas",
+        "description": "Guardas de ruta y comprobación de sesión para acceso a páginas internas.",
+        "files": [
+          "src/middleware.ts",
+          "src/lib/authGuard.ts",
+          "src/lib/supabaseClient.ts"
+        ]
+      },
+      {
+        "name": "Dashboard",
+        "description": "Resumen de métricas del usuario y widgets de viajes.",
+        "files": [
+          "src/pages/dashboard/index.tsx",
+          "src/components/dashboard/StatsSummary.tsx",
+          "src/components/dashboard/UpcomingTrips.tsx"
+        ]
+      },
+      {
+        "name": "Gestión de viajes (CRUD)",
+        "description": "Creación, edición y listado de viajes con filtros por fecha y estado.",
+        "files": [
+          "src/pages/trips/index.tsx",
+          "src/pages/trips/new.tsx",
+          "src/pages/trips/[id]/edit.tsx",
+          "src/components/trips/TripForm.tsx",
+          "src/components/trips/TripList.tsx"
+        ]
+      },
+      {
+        "name": "Sistema de notificaciones",
+        "description": "Carga, lectura y descarte de notificaciones pendientes con logging centralizado.",
+        "files": [
+          "src/components/notifications/NotificationSystem.tsx",
+          "src/lib/logger.ts"
+        ]
+      }
+    ]
+  }
+}

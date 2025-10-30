@@ -2,6 +2,8 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { AuthUser, authService } from '@/lib/auth'
+import { logger } from '@/lib/logger'
+import { getErrorMessage } from '@/lib/utils'
 
 interface AuthContextType {
   user: AuthUser | null
@@ -20,27 +22,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    logger.debug('AuthContext: Inicializando useEffect')
     // Get initial user
     authService.getCurrentUser().then((user) => {
+      logger.debug('AuthContext: Usuario inicial obtenido:', user)
       setUser(user)
       setLoading(false)
     })
 
     // Listen for auth changes
+    logger.debug('AuthContext: Configurando listener de cambios de auth')
     const { data: { subscription } } = authService.onAuthStateChange((user) => {
+      logger.debug('AuthContext: Cambio de estado de auth:', user)
       setUser(user)
       setLoading(false)
     })
 
-    return () => subscription.unsubscribe()
+    return () => {
+      logger.debug('AuthContext: Limpiando subscription')
+      subscription.unsubscribe()
+    }
   }, [])
 
   const signIn = async (email: string, password: string) => {
+    logger.info('AuthContext: Iniciando signIn')
     setLoading(true)
     try {
-      await authService.signIn(email, password)
-    } finally {
+      const result = await authService.signIn(email, password)
+      logger.info('AuthContext: signIn exitoso', result)
+      // No establecer loading a false aquí, dejar que onAuthStateChange lo maneje
+    } catch (err: unknown) {
+      const message = getErrorMessage(err)
+      logger.error('AuthContext: Error en signIn', { error: message })
       setLoading(false)
+      throw err
     }
   }
 

@@ -1,0 +1,15 @@
+name: Enhancement
+description: Mejora incremental o refactor
+title: "enhancement: "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: context
+    attributes:
+      label: Contexto y objetivo
+    validations:
+      required: true
+  - type: textarea
+    id: approach
+    attributes:
+      label: Enfoque propuesto

@@ -17,13 +17,15 @@ interface AlertCardProps {
   onMarkAsRead?: (alertId: string) => void
   onDismiss?: (alertId: string) => void
   showActions?: boolean
+  isLoading?: boolean
 }
 
 export default function AlertCard({ 
   alert, 
   onMarkAsRead, 
   onDismiss, 
-  showActions = true 
+  showActions = true,
+  isLoading = false,
 }: AlertCardProps) {
   const getAlertIcon = (type: string) => {
     switch (type) {
@@ -149,8 +151,9 @@ export default function AlertCard({
             {showActions && onDismiss && (
               <button
                 onClick={() => onDismiss(alert.id)}
-                className="ml-4 flex-shrink-0 text-gray-400 hover:text-gray-600 transition-colors"
+                className="ml-4 flex-shrink-0 text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 title="Descartar alerta"
+                disabled={isLoading}
               >
                 <XMarkIcon className="h-4 w-4" />
               </button>
@@ -158,16 +161,20 @@ export default function AlertCard({
           </div>
 
           {showActions && !alert.is_read && onMarkAsRead && (
-            <div className="mt-3">
+            <div className="mt-3 flex items-center gap-2">
               <button
                 onClick={() => onMarkAsRead(alert.id)}
                 className={cn(
-                  'text-xs font-medium hover:underline transition-colors',
+                  'text-xs font-medium hover:underline transition-colors disabled:opacity-50 disabled:cursor-not-allowed',
                   colors.title
                 )}
+                disabled={isLoading}
               >
                 Marcar como leída
               </button>
+              {isLoading && (
+                <span className="text-xs text-gray-400">Procesando...</span>
+              )}
             </div>
           )}
         </div>

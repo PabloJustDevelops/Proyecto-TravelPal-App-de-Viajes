@@ -10,8 +10,8 @@ import {
   UserCircleIcon,
   ArrowRightOnRectangleIcon,
   PlusIcon,
-  BellIcon,
 } from '@heroicons/react/24/outline'
+import NotificationSystem from '@/components/notifications/NotificationSystem'
 
 interface NavigationItem {
   name: string
@@ -26,19 +26,19 @@ interface NavbarProps {
 export default function Navbar({ navigation }: NavbarProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
-  const [notificationsOpen, setNotificationsOpen] = useState(false)
+  const [avatarError, setAvatarError] = useState(false)
   const { user, signOut } = useAuth()
   const router = useRouter()
 
   const handleSignOut = async () => {
     await signOut()
-    router.push('/auth/login')
+    router.replace('/auth/login')
   }
 
   return (
     <nav className="bg-white shadow-lg">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
+        <div className="flex justify-between h-16 items-center">
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
               <Link href="/dashboard" className="text-xl font-bold text-blue-600">
@@ -60,53 +60,38 @@ export default function Navbar({ navigation }: NavbarProps) {
           </div>
 
           <div className="hidden sm:ml-6 sm:flex sm:items-center space-x-4">
-            {/* Botón de notificaciones */}
-            <div className="relative">
-              <button
-                onClick={() => setNotificationsOpen(!notificationsOpen)}
-                className="relative p-2 text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 rounded-full"
-              >
-                <BellIcon className="h-6 w-6" />
-              {/* Badge de notificaciones deshabilitado temporalmente */}
-              {false && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                  0
-                </span>
-              )}
-              </button>
-
-              {notificationsOpen && (
-                <div className="origin-top-right absolute right-0 mt-2 w-80 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
-                  <div className="py-1 max-h-96 overflow-y-auto">
-                    <div className="px-4 py-2 text-sm font-medium text-gray-900 border-b bg-gray-50">
-                      Notificaciones
-                    </div>
-                    <div className="px-4 py-8 text-center text-gray-500">
-                      No hay notificaciones
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
+            {/* Sistema de notificaciones integrado */}
+            <NotificationSystem className="shrink-0" />
 
             <Link
               href="/trips/new"
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 whitespace-nowrap shrink-0"
             >
               <PlusIcon className="h-4 w-4 mr-2" />
               Nuevo Viaje
             </Link>
 
-            <div className="relative">
+            <div className="relative shrink-0">
               <button
                 onClick={() => setProfileMenuOpen(!profileMenuOpen)}
                 className="flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                aria-label="Abrir menú de perfil"
               >
-                <UserCircleIcon className="h-8 w-8 text-gray-400" />
+                {user?.avatar_url && !avatarError ? (
+                  <img
+                    src={user.avatar_url}
+                    alt={user.full_name || 'Usuario'}
+                    className="h-8 w-8 rounded-full object-cover"
+                    referrerPolicy="no-referrer"
+                    onError={() => setAvatarError(true)}
+                  />
+                ) : (
+                  <UserCircleIcon className="h-8 w-8 text-gray-400" />
+                )}
               </button>
 
               {profileMenuOpen && (
-                <div className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
+                <div className="origin-top-right absolute right-0 mt-2 w-48 max-w-[calc(100vw-1rem)] rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
                   <div className="py-1">
                     <div className="px-4 py-2 text-sm text-gray-700 border-b">
                       <div className="font-medium">{user?.full_name || 'Usuario'}</div>
@@ -173,7 +158,17 @@ export default function Navbar({ navigation }: NavbarProps) {
           </div>
           <div className="pt-4 pb-3 border-t border-gray-200">
             <div className="flex items-center px-4">
-              <UserCircleIcon className="h-10 w-10 text-gray-400" />
+              {user?.avatar_url && !avatarError ? (
+                <img
+                  src={user.avatar_url}
+                  alt={user.full_name || 'Usuario'}
+                  className="h-10 w-10 rounded-full object-cover"
+                  referrerPolicy="no-referrer"
+                  onError={() => setAvatarError(true)}
+                />
+              ) : (
+                <UserCircleIcon className="h-10 w-10 text-gray-400" />
+              )}
               <div className="ml-3">
                 <div className="text-base font-medium text-gray-800">
                   {user?.full_name || 'Usuario'}

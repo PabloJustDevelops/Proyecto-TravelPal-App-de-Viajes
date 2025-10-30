@@ -1,5 +1,7 @@
 // Utilidades para monitoreo de rendimiento
 
+import { logger } from '@/lib/logger'
+
 // Tipos específicos para las funciones
 type AnyFunction = (...args: unknown[]) => unknown;
 
@@ -33,9 +35,7 @@ export function measureRenderTime(componentName: string) {
       const result = method.apply(target, args)
       const end = performance.now()
       
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`${componentName}.${propertyName} took ${end - start} milliseconds`)
-      }
+      logger.debug(`${componentName}.${propertyName} took ${end - start} milliseconds`)
       
       return result
     }) as T
@@ -129,12 +129,13 @@ export function createIntersectionObserver(
 // Medición de Web Vitals
 export function measureWebVitals() {
   if (typeof window === 'undefined') return
+  if (!logger.isLevelEnabled('debug')) return
 
   // Largest Contentful Paint (LCP)
   new PerformanceObserver((entryList) => {
     const entries = entryList.getEntries()
     const lastEntry = entries[entries.length - 1]
-    console.log('LCP:', lastEntry.startTime)
+    logger.debug('LCP:', lastEntry.startTime)
   }).observe({ entryTypes: ['largest-contentful-paint'] })
 
   // First Input Delay (FID)
@@ -144,7 +145,7 @@ export function measureWebVitals() {
       const entryWithProcessing = entry as PerformanceEntryWithProcessing
       // Verificar si la propiedad existe antes de usarla
       if ('processingStart' in entryWithProcessing && 'startTime' in entryWithProcessing) {
-        console.log('FID:', (entryWithProcessing.processingStart || 0) - entryWithProcessing.startTime)
+        logger.debug('FID:', (entryWithProcessing.processingStart || 0) - entryWithProcessing.startTime)
       }
     })
   }).observe({ entryTypes: ['first-input'] })
@@ -157,7 +158,7 @@ export function measureWebVitals() {
       const layoutShiftEntry = entry as LayoutShiftEntry
       if (!layoutShiftEntry.hadRecentInput) {
         clsValue += layoutShiftEntry.value
-        console.log('CLS:', clsValue)
+        logger.debug('CLS:', clsValue)
       }
     })
   }).observe({ entryTypes: ['layout-shift'] })
@@ -202,12 +203,13 @@ export function preloadResource(href: string, as: string, type?: string) {
 // Análisis de bundle size (desarrollo)
 export function analyzeBundleSize() {
   if (process.env.NODE_ENV !== 'development') return
+  if (!logger.isLevelEnabled('info')) return
 
   const observer = new PerformanceObserver((list) => {
     list.getEntries().forEach((entry) => {
       if (entry.entryType === 'navigation') {
         const navigationEntry = entry as NavigationEntry
-        console.log('Bundle analysis:', {
+        logger.info('Bundle analysis:', {
           transferSize: navigationEntry.transferSize,
           encodedBodySize: navigationEntry.encodedBodySize,
           decodedBodySize: navigationEntry.decodedBodySize,

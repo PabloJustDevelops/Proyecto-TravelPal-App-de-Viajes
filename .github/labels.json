@@ -1,0 +1,5 @@
+[
+  { "name": "bug", "color": "d73a4a", "description": "Error o problema" },
+  { "name": "feature", "color": "a2eeef", "description": "Nueva funcionalidad" },
+  { "name": "enhancement", "color": "a2eeef", "description": "Mejora o refactor" }
+]

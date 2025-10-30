@@ -65,11 +65,12 @@ CREATE TABLE public.notes (
 CREATE TABLE public.alerts (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID REFERENCES public.users(id) ON DELETE CASCADE NOT NULL,
-  trip_id UUID REFERENCES public.trips(id) ON DELETE CASCADE NOT NULL,
+  trip_id UUID REFERENCES public.trips(id) ON DELETE CASCADE,
+  type TEXT NOT NULL DEFAULT 'info',
   title TEXT NOT NULL,
   message TEXT NOT NULL,
   alert_date TIMESTAMP WITH TIME ZONE NOT NULL,
-  is_sent BOOLEAN DEFAULT FALSE,
+  is_read BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 

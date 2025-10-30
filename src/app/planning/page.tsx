@@ -20,6 +20,7 @@ import Modal from '../../components/ui/Modal';
 import { useAuth } from '../../contexts/AuthContext';
 import { createSupabaseClient } from '../../lib/supabase';
 import { formatDate } from '../../lib/utils';
+import { logger } from '@/lib/logger'
 
 interface Trip {
   id: string;
@@ -98,7 +99,8 @@ export default function PlanningPage() {
       if (error) throw error;
       setTrips(data || []);
     } catch (error) {
-      console.error('Error loading trips:', error);
+-      console.error('Error loading trips:', error);
++      logger.error('Error loading trips:', error)
     }
   }, [user, supabase]);
 
@@ -156,7 +158,8 @@ export default function PlanningPage() {
 
       setBookings(mockBookings);
     } catch (error) {
-      console.error('Error loading bookings:', error);
+-      console.error('Error loading bookings:', error);
++      logger.error('Error loading bookings:', error)
     } finally {
       setIsLoading(false);
     }
@@ -482,7 +485,7 @@ export default function PlanningPage() {
                   startDate={selectedTrip.departure_date}
                   endDate={selectedTrip.return_date || selectedTrip.departure_date}
                   onSave={(itinerary) => {
-                    console.log('Saving itinerary:', itinerary);
+                    logger.debug('Saving itinerary:', itinerary)
                     // Aquí se guardaría el itinerario en Supabase
                   }}
                 />

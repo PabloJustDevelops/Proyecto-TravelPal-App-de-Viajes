@@ -5,7 +5,7 @@ import { Trip } from '@/lib/supabase'
 
 interface TripChartProps {
   trips: Trip[]
-  type: 'status' | 'timeline' | 'destinations'
+  type?: 'status' | 'timeline' | 'destinations'
   title?: string
   height?: number
 }
@@ -17,12 +17,7 @@ interface ChartData {
   percentage: number
 }
 
-export default function TripChart({ 
-  trips, 
-  type, 
-  title = 'Análisis de Viajes',
-  height = 300 
-}: TripChartProps) {
+export default function TripChart({ trips, type = 'status', title = 'Estado de Viajes', height = 320 }: TripChartProps) {
   const [chartData, setChartData] = useState<ChartData[]>([])
 
   useEffect(() => {

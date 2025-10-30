@@ -4,9 +4,9 @@ import { useEffect, useState } from 'react'
 import { Expense } from '@/lib/supabase'
 import { formatCurrency } from '@/lib/utils'
 
-interface ExpenseChartProps {
+export interface ExpenseChartProps {
   expenses: Expense[]
-  type: 'category' | 'timeline' | 'comparison'
+  type?: 'category' | 'timeline' | 'comparison'
   title?: string
   height?: number
 }
@@ -18,12 +18,7 @@ interface ChartData {
   percentage: number
 }
 
-export default function ExpenseChart({ 
-  expenses, 
-  type, 
-  title = 'Análisis de Gastos',
-  height = 300 
-}: ExpenseChartProps) {
+export default function ExpenseChart({ expenses, type = 'category', title = 'Gastos por categoría', height = 320 }: ExpenseChartProps) {
   const [chartData, setChartData] = useState<ChartData[]>([])
 
   useEffect(() => {

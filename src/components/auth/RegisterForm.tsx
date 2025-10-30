@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -29,12 +29,17 @@ type RegisterFormData = z.infer<typeof registerSchema>
 export default function RegisterForm() {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [isClient, setIsClient] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
   
   const { signUp } = useAuth()
   const router = useRouter()
+
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
 
   const {
     register,
@@ -55,7 +60,7 @@ export default function RegisterForm() {
       await signUp(data.email, data.password, data.fullName)
       setSuccess(true)
       setTimeout(() => {
-        router.push('/auth/login')
+        router.replace('/auth/login')
       }, 2000)
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -119,6 +124,18 @@ export default function RegisterForm() {
             </div>
           )}
 
+          {success && (
+            <div className="rounded-md bg-green-50 p-4">
+              <div className="text-sm text-green-700">
+                ¡Cuenta creada exitosamente! 
+                {/* Mensaje condicional basado en si se requiere confirmación */}
+                <br />
+                <strong>Nota:</strong> Si no puedes iniciar sesión inmediatamente, 
+                revisa tu email para confirmar tu cuenta.
+              </div>
+            </div>
+          )}
+
           <div className="space-y-4">
             <div>
               <label htmlFor="fullName" className="block text-sm font-medium text-gray-700">
@@ -164,17 +181,19 @@ export default function RegisterForm() {
                   className="appearance-none relative block w-full px-3 py-2 pr-10 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
                   placeholder="Tu contraseña"
                 />
-                <button
-                  type="button"
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? (
-                    <EyeSlashIcon className="h-5 w-5 text-gray-400" />
-                  ) : (
-                    <EyeIcon className="h-5 w-5 text-gray-400" />
-                  )}
-                </button>
+                {isClient && (
+                  <button
+                    type="button"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? (
+                      <EyeSlashIcon className="h-5 w-5 text-gray-400" />
+                    ) : (
+                      <EyeIcon className="h-5 w-5 text-gray-400" />
+                    )}
+                  </button>
+                )}
               </div>
               {errors.password && (
                 <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
@@ -206,17 +225,19 @@ export default function RegisterForm() {
                   className="appearance-none relative block w-full px-3 py-2 pr-10 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
                   placeholder="Confirma tu contraseña"
                 />
-                <button
-                  type="button"
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                >
-                  {showConfirmPassword ? (
-                    <EyeSlashIcon className="h-5 w-5 text-gray-400" />
-                  ) : (
-                    <EyeIcon className="h-5 w-5 text-gray-400" />
-                  )}
-                </button>
+                {isClient && (
+                  <button
+                    type="button"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  >
+                    {showConfirmPassword ? (
+                      <EyeSlashIcon className="h-5 w-5 text-gray-400" />
+                    ) : (
+                      <EyeIcon className="h-5 w-5 text-gray-400" />
+                    )}
+                  </button>
+                )}
               </div>
               {errors.confirmPassword && (
                 <p className="mt-1 text-sm text-red-600">{errors.confirmPassword.message}</p>

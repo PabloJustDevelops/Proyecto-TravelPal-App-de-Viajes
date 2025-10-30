@@ -8,7 +8,8 @@ import DashboardLayout from '@/components/layout/DashboardLayout'
 import NoteEditor from '@/components/notes/NoteEditor'
 import Button from '@/components/ui/Button'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
-import { formatDate } from '@/lib/utils'
+import { formatDate, getErrorMessage } from '@/lib/utils'
+import { logger } from '@/lib/logger'
 import { 
   ArrowLeftIcon,
   PencilIcon,
@@ -24,7 +25,6 @@ export default function NoteDetailPage() {
 
   const [note, setNote] = useState<(Note & { trip?: Trip }) | null>(null)
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [isEditing, setIsEditing] = useState(false)
   const [editorLoading, setEditorLoading] = useState(false)
   const [deleteLoading, setDeleteLoading] = useState(false)
@@ -52,10 +52,9 @@ export default function NoteDetailPage() {
       }
 
       setNote(data)
-    } catch (error: unknown) {
-      console.error('Error loading note:', error)
-      const errorMessage = error instanceof Error ? error.message : 'Error desconocido'
-      setError(`Error al cargar la nota: ${errorMessage}`)
+    } catch (err: unknown) {
+      const message = getErrorMessage(err, 'Error desconocido')
+      logger.error('NoteDetailPage: Error loading note', { error: message })
     } finally {
       setLoading(false)
     }
@@ -89,9 +88,10 @@ export default function NoteDetailPage() {
 
       await loadNote()
       setIsEditing(false)
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Error al guardar la nota'
-      throw new Error(errorMessage)
+    } catch (err: unknown) {
+      const message = getErrorMessage(err, 'Error al guardar la nota')
+      logger.error('NoteDetailPage: Error saving note', { error: message })
+      throw new Error(message)
     } finally {
       setEditorLoading(false)
     }
@@ -112,9 +112,10 @@ export default function NoteDetailPage() {
       if (error) throw error
 
       router.push('/notes')
-    } catch (error) {
-      console.error('Error deleting note:', error)
-      alert('Error al eliminar la nota')
+    } catch (err: unknown) {
+      const message = getErrorMessage(err, 'Error al eliminar la nota')
+      logger.error('NoteDetailPage: Error deleting note', { error: message })
+      alert(message)
     } finally {
       setDeleteLoading(false)
     }

@@ -1,23 +1,24 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { 
-  BellIcon, 
-  XMarkIcon, 
+import React, { useState, useEffect, useCallback } from "react";
+import {
+  BellIcon,
+  XMarkIcon,
   CheckIcon,
   ClockIcon,
   ExclamationTriangleIcon,
-  InformationCircleIcon
-} from '@heroicons/react/24/outline';
-import { useAuth } from '../../contexts/AuthContext';
-import { reminderFunctions } from '../../lib/supabase-functions';
-import { formatDate } from '../../lib/utils';
+  InformationCircleIcon,
+} from "@heroicons/react/24/outline";
+import { useAuth } from "../../contexts/AuthContext";
+import { createSupabaseClient } from "../../lib/supabase";
+import { formatDate, getErrorMessage } from "../../lib/utils";
+import { logger } from "@/lib/logger";
 
 interface Notification {
   id: string;
   title: string;
   message: string;
-  type: 'reminder' | 'info' | 'warning' | 'success' | 'error';
+  type: "reminder" | "info" | "warning" | "success" | "error";
   timestamp: string;
   read: boolean;
   actionUrl?: string;
@@ -25,125 +26,195 @@ interface Notification {
   reminderId?: string;
 }
 
+// Tipado mínimo para filas de la tabla alerts usadas aquí
+interface Alert {
+  id: string;
+  title: string;
+  message: string;
+  type: string;
+  alert_date?: string;
+  created_at: string;
+  is_read: boolean;
+}
+
 interface NotificationSystemProps {
   className?: string;
 }
 
-export const NotificationSystem: React.FC<NotificationSystemProps> = ({ className = '' }) => {
+export const NotificationSystem: React.FC<NotificationSystemProps> = ({
+  className = "",
+}) => {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Cargar recordatorios pendientes
-  const loadPendingReminders = useCallback(async () => {
-    if (!user) return;
+  // Cargar alertas pendientes (type: 'reminder' | 'warning' | 'info')
+  const loadPendingAlerts = useCallback(
+    async (signal?: AbortSignal) => {
+      if (!user) return;
 
-    try {
-      setIsLoading(true);
-      const pendingReminders = await reminderFunctions.getPending(user.id);
-      
-      const reminderNotifications: Notification[] = pendingReminders.map(reminder => ({
-        id: `reminder_${reminder.id}`,
-        title: reminder.title,
-        message: reminder.message,
-        type: 'reminder' as const,
-        timestamp: reminder.reminder_datetime,
-        read: false,
-        reminderId: reminder.id,
-        actionLabel: 'Marcar como visto'
-      }));
+      try {
+        setIsLoading(true);
+        const supabase = createSupabaseClient();
 
-      setNotifications(prev => {
-        // Evitar duplicados
-        const existingIds = prev.map(n => n.id);
-        const newNotifications = reminderNotifications.filter(n => !existingIds.includes(n.id));
-        return [...prev, ...newNotifications];
-      });
+        const query = supabase
+          .from("alerts")
+          .select("*")
+          .eq("user_id", user.id)
+          .eq("is_read", false)
+          .order("created_at", { ascending: false });
 
-    } catch (error) {
-      console.error('Error loading reminders:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [user]);
+        const { data, error } = await (signal
+          ? query.abortSignal(signal)
+          : query);
 
-  // Cargar notificaciones al montar el componente
+        if (error) throw error;
+
+        const rows: Alert[] = (data || []) as Alert[];
+        const pendingAlerts = rows.filter((a) =>
+          ["reminder", "warning", "info"].includes(a.type)
+        );
+
+        const alertNotifications: Notification[] = pendingAlerts.map(
+          (alert: Alert) => ({
+            id: `alert_${alert.id}`,
+            title: alert.title,
+            message: alert.message,
+            type: (alert.type as Notification["type"]) ?? "info",
+            timestamp: alert.alert_date ?? alert.created_at,
+            read: alert.is_read,
+            actionLabel: "Marcar como leído",
+          })
+        );
+
+        setNotifications((prev) => {
+          const existingIds = prev.map((n) => n.id);
+          const newNotifications = alertNotifications.filter(
+            (n) => !existingIds.includes(n.id)
+          );
+          return [...prev, ...newNotifications];
+        });
+      } catch (err: unknown) {
+        if (err instanceof DOMException && err.name === "AbortError") return;
+        const message = getErrorMessage(err);
+        logger.error("NotificationSystem: Error loading alerts", { error: message });
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [user]
+  );
+
+  // Cargar notificaciones al montar el componente con cancelación
   useEffect(() => {
-    loadPendingReminders();
-    
-    // Configurar intervalo para verificar nuevos recordatorios cada 5 minutos
-    const interval = setInterval(loadPendingReminders, 5 * 60 * 1000);
-    
-    return () => clearInterval(interval);
-  }, [loadPendingReminders]);
+    const controller = new AbortController();
+
+    loadPendingAlerts(controller.signal);
+
+    // Configurar intervalo para verificar nuevas alertas cada 5 minutos
+    const interval = setInterval(
+      () => loadPendingAlerts(controller.signal),
+      5 * 60 * 1000
+    );
+
+    return () => {
+      controller.abort();
+      clearInterval(interval);
+    };
+  }, [loadPendingAlerts]);
 
   // Actualizar contador de no leídas
   useEffect(() => {
-    const unread = notifications.filter(n => !n.read).length;
+    const unread = notifications.filter((n) => !n.read).length;
     setUnreadCount(unread);
   }, [notifications]);
 
   // Solicitar permisos de notificación del navegador
   useEffect(() => {
-    if ('Notification' in window && Notification.permission === 'default') {
+    if ("Notification" in window && Notification.permission === "default") {
       Notification.requestPermission();
     }
   }, []);
 
-  // Marcar notificación como leída
+  // Marcar notificación como leída (actualiza alert.is_read)
   const markAsRead = async (notificationId: string) => {
-    const notification = notifications.find(n => n.id === notificationId);
-    
-    if (notification?.reminderId) {
-      try {
-        await reminderFunctions.markAsSent(notification.reminderId);
-      } catch (error) {
-        console.error('Error marking reminder as sent:', error);
-      }
+    const notification = notifications.find((n) => n.id === notificationId);
+    if (!notification) return;
+
+    try {
+      const supabase = createSupabaseClient();
+      const alertId = notificationId.replace("alert_", "");
+      const { error } = await supabase
+        .from("alerts")
+        .update({ is_read: true })
+        .eq("id", alertId);
+
+      if (error) throw error;
+    } catch (err: unknown) {
+      const message = getErrorMessage(err);
+      logger.error("NotificationSystem: Error marking alert as read", { error: message });
     }
 
-    setNotifications(prev => 
-      prev.map(n => n.id === notificationId ? { ...n, read: true } : n)
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === notificationId ? { ...n, read: true } : n))
     );
   };
 
-  // Descartar notificación
+  // Descartar notificación (marcar como leída)
   const dismissNotification = async (notificationId: string) => {
-    const notification = notifications.find(n => n.id === notificationId);
-    
-    if (notification?.reminderId) {
-      try {
-        await reminderFunctions.dismiss(notification.reminderId);
-      } catch (error) {
-        console.error('Error dismissing reminder:', error);
-      }
+    try {
+      const supabase = createSupabaseClient();
+      const alertId = notificationId.replace("alert_", "");
+      const { error } = await supabase
+        .from("alerts")
+        .update({ is_read: true })
+        .eq("id", alertId);
+
+      if (error) throw error;
+    } catch (err: unknown) {
+      const message = getErrorMessage(err);
+      logger.error("NotificationSystem: Error dismissing alert", { error: message });
     }
 
-    setNotifications(prev => prev.filter(n => n.id !== notificationId));
+    setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
   };
 
   // Marcar todas como leídas
-  const markAllAsRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+  const markAllAsRead = async () => {
+    try {
+      const supabase = createSupabaseClient();
+      const { error } = await supabase
+        .from("alerts")
+        .update({ is_read: true })
+        .eq("user_id", user!.id)
+        .eq("is_read", false);
+
+      if (error) throw error;
+    } catch (err: unknown) {
+      const message = getErrorMessage(err);
+      logger.error("NotificationSystem: Error marking all alerts as read", { error: message });
+    }
+
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
   };
 
-  // Limpiar todas las notificaciones
+  // Limpiar todas las notificaciones locales
   const clearAll = () => {
     setNotifications([]);
   };
 
   // Obtener icono según el tipo
-  const getNotificationIcon = (type: Notification['type']) => {
+  const getNotificationIcon = (type: Notification["type"]) => {
     switch (type) {
-      case 'reminder':
+      case "reminder":
         return <ClockIcon className="h-5 w-5 text-blue-500" />;
-      case 'warning':
+      case "warning":
         return <ExclamationTriangleIcon className="h-5 w-5 text-yellow-500" />;
-      case 'error':
+      case "error":
         return <XMarkIcon className="h-5 w-5 text-red-500" />;
-      case 'success':
+      case "success":
         return <CheckIcon className="h-5 w-5 text-green-500" />;
       default:
         return <InformationCircleIcon className="h-5 w-5 text-gray-500" />;
@@ -151,29 +222,21 @@ export const NotificationSystem: React.FC<NotificationSystemProps> = ({ classNam
   };
 
   // Obtener color de fondo según el tipo
-  const getNotificationBg = (type: Notification['type'], read: boolean) => {
-    const opacity = read ? 'bg-opacity-50' : 'bg-opacity-100';
-    
+  const getNotificationBg = (type: Notification["type"], read: boolean) => {
+    const opacity = read ? "bg-opacity-50" : "bg-opacity-100";
     switch (type) {
-      case 'reminder':
+      case "reminder":
         return `bg-blue-50 ${opacity}`;
-      case 'warning':
+      case "warning":
         return `bg-yellow-50 ${opacity}`;
-      case 'error':
+      case "error":
         return `bg-red-50 ${opacity}`;
-      case 'success':
+      case "success":
         return `bg-green-50 ${opacity}`;
       default:
         return `bg-gray-50 ${opacity}`;
     }
   };
-
-  // Exponer funciones para uso externo (comentado por ahora)
-  // React.useImperativeHandle(React.createRef(), () => ({
-  //   addNotification,
-  //   markAsRead,
-  //   dismissNotification
-  // }));
 
   return (
     <div className={`relative ${className}`}>
@@ -185,7 +248,7 @@ export const NotificationSystem: React.FC<NotificationSystemProps> = ({ classNam
         <BellIcon className="h-6 w-6" />
         {unreadCount > 0 && (
           <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-            {unreadCount > 99 ? '99+' : unreadCount}
+            {unreadCount > 99 ? "99+" : unreadCount}
           </span>
         )}
       </button>
@@ -195,7 +258,9 @@ export const NotificationSystem: React.FC<NotificationSystemProps> = ({ classNam
         <div className="absolute right-0 mt-2 w-96 bg-white rounded-lg shadow-lg border border-gray-200 z-50 max-h-96 overflow-hidden">
           {/* Header */}
           <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900">Notificaciones</h3>
+            <h3 className="text-lg font-semibold text-gray-900">
+              Notificaciones
+            </h3>
             <div className="flex items-center space-x-2">
               {unreadCount > 0 && (
                 <button
@@ -219,7 +284,9 @@ export const NotificationSystem: React.FC<NotificationSystemProps> = ({ classNam
             {isLoading ? (
               <div className="p-4 text-center">
                 <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
-                <p className="text-sm text-gray-500 mt-2">Cargando notificaciones...</p>
+                <p className="text-sm text-gray-500 mt-2">
+                  Cargando notificaciones...
+                </p>
               </div>
             ) : notifications.length === 0 ? (
               <div className="p-8 text-center">
@@ -228,37 +295,49 @@ export const NotificationSystem: React.FC<NotificationSystemProps> = ({ classNam
               </div>
             ) : (
               <div className="divide-y divide-gray-100">
-                {notifications.map(notification => (
+                {notifications.map((notification) => (
                   <div
                     key={notification.id}
-                    className={`p-4 hover:bg-gray-50 transition-colors ${
-                      getNotificationBg(notification.type, notification.read)
-                    }`}
+                    className={`p-4 hover:bg-gray-50 transition-colors ${getNotificationBg(
+                      notification.type,
+                      notification.read
+                    )}`}
                   >
                     <div className="flex items-start space-x-3">
                       <div className="flex-shrink-0 mt-1">
                         {getNotificationIcon(notification.type)}
                       </div>
-                      
+
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
-                            <p className={`text-sm font-medium ${
-                              notification.read ? 'text-gray-600' : 'text-gray-900'
-                            }`}>
+                            <p
+                              className={`text-sm font-medium ${
+                                notification.read
+                                  ? "text-gray-600"
+                                  : "text-gray-900"
+                              }`}
+                            >
                               {notification.title}
                             </p>
-                            <p className={`text-sm mt-1 ${
-                              notification.read ? 'text-gray-500' : 'text-gray-700'
-                            }`}>
+                            <p
+                              className={`text-sm mt-1 ${
+                                notification.read
+                                  ? "text-gray-500"
+                                  : "text-gray-700"
+                              }`}
+                            >
                               {notification.message}
                             </p>
                             <p className="text-xs text-gray-400 mt-2">
-                              {formatDate(new Date(notification.timestamp))} a las{' '}
-                              {new Date(notification.timestamp).toLocaleTimeString()}
+                              {formatDate(new Date(notification.timestamp))} a
+                              las{" "}
+                              {new Date(
+                                notification.timestamp
+                              ).toLocaleTimeString()}
                             </p>
                           </div>
-                          
+
                           <div className="flex items-center space-x-1 ml-2">
                             {!notification.read && (
                               <button
@@ -270,7 +349,9 @@ export const NotificationSystem: React.FC<NotificationSystemProps> = ({ classNam
                               </button>
                             )}
                             <button
-                              onClick={() => dismissNotification(notification.id)}
+                              onClick={() =>
+                                dismissNotification(notification.id)
+                              }
                               className="text-gray-400 hover:text-gray-600 text-xs"
                               title="Descartar"
                             >
@@ -278,7 +359,7 @@ export const NotificationSystem: React.FC<NotificationSystemProps> = ({ classNam
                             </button>
                           </div>
                         </div>
-                        
+
                         {notification.actionLabel && notification.actionUrl && (
                           <div className="mt-3">
                             <a
@@ -317,43 +398,68 @@ export const NotificationSystem: React.FC<NotificationSystemProps> = ({ classNam
 // Hook para usar el sistema de notificaciones
 export const useNotifications = () => {
   const [notificationSystem, setNotificationSystem] = useState<{
-    addNotification: (notification: Omit<Notification, 'id' | 'timestamp' | 'read'>) => string;
+    addNotification: (
+      notification: Omit<Notification, "id" | "timestamp" | "read">
+    ) => string;
     markAsRead: (id: string) => void;
     dismissNotification: (id: string) => void;
   } | null>(null);
 
-  const addNotification = useCallback((notification: Omit<Notification, 'id' | 'timestamp' | 'read'>) => {
-    if (notificationSystem) {
-      return notificationSystem.addNotification(notification);
-    }
-    return '';
-  }, [notificationSystem]);
+  const addNotification = useCallback(
+    (notification: Omit<Notification, "id" | "timestamp" | "read">) => {
+      if (notificationSystem) {
+        return notificationSystem.addNotification(notification);
+      }
+      return "";
+    },
+    [notificationSystem]
+  );
 
-  const showSuccess = useCallback((title: string, message: string) => {
-    return addNotification({ title, message, type: 'success' });
-  }, [addNotification]);
+  const showSuccess = useCallback(
+    (title: string, message: string) => {
+      return addNotification({ title, message, type: "success" });
+    },
+    [addNotification]
+  );
 
-  const showError = useCallback((title: string, message: string) => {
-    return addNotification({ title, message, type: 'error' });
-  }, [addNotification]);
+  const showError = useCallback(
+    (title: string, message: string) => {
+      return addNotification({ title, message, type: "error" });
+    },
+    [addNotification]
+  );
 
-  const showWarning = useCallback((title: string, message: string) => {
-    return addNotification({ title, message, type: 'warning' });
-  }, [addNotification]);
+  const showWarning = useCallback(
+    (title: string, message: string) => {
+      return addNotification({ title, message, type: "warning" });
+    },
+    [addNotification]
+  );
 
-  const showInfo = useCallback((title: string, message: string) => {
-    return addNotification({ title, message, type: 'info' });
-  }, [addNotification]);
+  const showInfo = useCallback(
+    (title: string, message: string) => {
+      return addNotification({ title, message, type: "info" });
+    },
+    [addNotification]
+  );
 
-  const showReminder = useCallback((title: string, message: string, actionUrl?: string, actionLabel?: string) => {
-    return addNotification({ 
-      title, 
-      message, 
-      type: 'reminder',
-      actionUrl,
-      actionLabel
-    });
-  }, [addNotification]);
+  const showReminder = useCallback(
+    (
+      title: string,
+      message: string,
+      actionUrl?: string,
+      actionLabel?: string
+    ) => {
+      return addNotification({
+        title,
+        message,
+        type: "reminder",
+        actionUrl,
+        actionLabel,
+      });
+    },
+    [addNotification]
+  );
 
   return {
     addNotification,
@@ -362,7 +468,7 @@ export const useNotifications = () => {
     showWarning,
     showInfo,
     showReminder,
-    setNotificationSystem
+    setNotificationSystem,
   };
 };
 

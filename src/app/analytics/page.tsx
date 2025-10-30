@@ -20,6 +20,7 @@ import {
   FunnelIcon
 } from '@heroicons/react/24/outline'
 import { formatCurrency } from '@/lib/utils'
+import { logger } from '@/lib/logger'
 
 interface Budget {
   id: string
@@ -132,37 +133,63 @@ export default function AnalyticsPage() {
     })
   }, [selectedCurrency])
 
-  const loadData = useCallback(async () => {
+  const loadData = useCallback(async (signal?: AbortSignal) => {
     if (!user) return
     
     setLoading(true)
     try {
       const supabase = createSupabaseClient()
+
+      // Compute start date based on dateRange
+      let startISO: string | null = null
+      if (dateRange !== 'all') {
+        const days = parseInt(dateRange, 10)
+        if (!isNaN(days)) {
+          const d = new Date()
+          d.setHours(0, 0, 0, 0)
+          d.setDate(d.getDate() - (days - 1))
+          startISO = d.toISOString()
+        }
+      }
       
       // Load trips
-      const { data: tripsData, error: tripsError } = await supabase
+      let tripsQuery = supabase
         .from('trips')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
 
+      if (startISO) {
+        tripsQuery = tripsQuery.gte('departure_date', startISO)
+      }
+
+      const { data: tripsData, error: tripsError } = await (signal ? tripsQuery.abortSignal(signal) : tripsQuery)
+
       if (tripsError) throw tripsError
 
       // Load expenses
-      const { data: expensesData, error: expensesError } = await supabase
+      let expensesQuery = supabase
         .from('expenses')
         .select('*')
         .eq('user_id', user.id)
         .order('date', { ascending: false })
 
+      if (startISO) {
+        expensesQuery = expensesQuery.gte('date', startISO)
+      }
+
+      const { data: expensesData, error: expensesError } = await (signal ? expensesQuery.abortSignal(signal) : expensesQuery)
+
       if (expensesError) throw expensesError
 
-      // Load budgets
-      const { data: budgetsData, error: budgetsError } = await supabase
+      // Load budgets (no date range filter)
+      const budgetsQuery = supabase
         .from('budgets')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
+
+      const { data: budgetsData, error: budgetsError } = await (signal ? budgetsQuery.abortSignal(signal) : budgetsQuery)
 
       if (budgetsError) throw budgetsError
       
@@ -172,15 +199,22 @@ export default function AnalyticsPage() {
       
       calculateAnalytics(tripsData || [], expensesData || [], budgetsData || [])
     } catch (error) {
-      console.error('Error loading analytics data:', error)
+      if (error instanceof Error && error.name === 'AbortError') return
+      const msg = error instanceof Error ? error.message : 'Error desconocido'
+      logger.error('AnalyticsPage: Error loading analytics data', { error: msg })
     } finally {
       setLoading(false)
     }
-  }, [user, calculateAnalytics])
+  }, [user, calculateAnalytics, dateRange])
 
   useEffect(() => {
     if (user) {
-      loadData()
+      const controller = new AbortController()
+      loadData(controller.signal)
+      return () => controller.abort()
+    } else {
+      // Evitar spinner infinito cuando no hay usuario
+      setLoading(false)
     }
   }, [user, loadData])
 
@@ -206,7 +240,8 @@ export default function AnalyticsPage() {
       document.body.removeChild(a)
       URL.revokeObjectURL(url)
     } catch (error) {
-      console.error('Error exporting data:', error)
+      const msg = error instanceof Error ? error.message : 'Error desconocido'
+      logger.error('AnalyticsPage: Error exporting data', { error: msg })
     }
   }
 
@@ -220,6 +255,19 @@ export default function AnalyticsPage() {
       other: 'Otros',
     }
     return names[category] || category
+  }
+
+  // Mostrar mensaje de autenticación cuando no hay usuario
+  if (!user) {
+    return (
+      <DashboardLayout>
+        <div className="text-center py-12">
+          <h3 className="text-lg font-semibold text-gray-900">Inicia sesión para ver el análisis</h3>
+          <p className="mt-1 text-sm text-gray-500">La sección de análisis requiere autenticación.</p>
+          <Button className="mt-4" onClick={() => (window.location.href = '/login')}>Ir a Login</Button>
+        </div>
+      </DashboardLayout>
+    )
   }
 
   if (loading) {
@@ -248,217 +296,119 @@ export default function AnalyticsPage() {
               className="flex items-center space-x-2"
             >
               <ArrowDownTrayIcon className="h-5 w-5" />
-              <span>Exportar Datos</span>
+              <span>Exportar</span>
             </Button>
           </div>
         </div>
 
         {/* Filters */}
-        <Card className="p-6">
-          <div className="flex items-center space-x-4">
+        <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+          <div className="flex flex-wrap gap-4 items-center">
             <div className="flex items-center space-x-2">
-              <FunnelIcon className="h-5 w-5 text-gray-400" />
-              <span className="text-sm font-medium text-gray-700">Filtros:</span>
+              <FunnelIcon className="h-5 w-5 text-gray-500" />
+              <span className="text-sm text-gray-700">Moneda:</span>
+              <select
+                value={selectedCurrency}
+                onChange={(e) => setSelectedCurrency(e.target.value)}
+                className="text-sm border rounded p-1"
+              >
+                {currencies.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
             </div>
-            
-            <select
-              value={dateRange}
-              onChange={(e) => setDateRange(e.target.value)}
-              className="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-            >
-              {dateRanges.map((range) => (
-                <option key={range.value} value={range.value}>
-                  {range.label}
-                </option>
-              ))}
-            </select>
-
-            <select
-              value={selectedCurrency}
-              onChange={(e) => setSelectedCurrency(e.target.value)}
-              className="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-            >
-              {currencies.map((currency) => (
-                <option key={currency} value={currency}>
-                  {currency}
-                </option>
-              ))}
-            </select>
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-gray-700">Rango de fechas:</span>
+              <select
+                value={dateRange}
+                onChange={(e) => setDateRange(e.target.value)}
+                className="text-sm border rounded p-1"
+              >
+                {dateRanges.map((r) => (
+                  <option key={r.value} value={r.value}>{r.label}</option>
+                ))}
+              </select>
+            </div>
           </div>
-        </Card>
+        </div>
 
-        {/* Key Metrics */}
-        {analytics && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card className="p-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <MapPinIcon className="h-8 w-8 text-blue-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">Total Viajes</p>
-                  <p className="text-2xl font-bold text-gray-900">{analytics.totalTrips}</p>
-                </div>
-              </div>
-            </Card>
-
-            <Card className="p-6">
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card>
+            <div className="p-6">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
                   <CurrencyDollarIcon className="h-8 w-8 text-green-600" />
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">Gastos Totales</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {formatCurrency(analytics.totalExpenses, selectedCurrency)}
-                  </p>
+                  <div className="text-sm font-medium text-gray-500">Total Gastado</div>
+                  <div className="text-2xl font-bold text-gray-900">{formatCurrency(analytics?.totalExpenses || 0, selectedCurrency)}</div>
                 </div>
               </div>
-            </Card>
-
-            <Card className="p-6">
+            </div>
+          </Card>
+          <Card>
+            <div className="p-6">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <ChartBarIcon className="h-8 w-8 text-purple-600" />
+                  <ChartBarIcon className="h-8 w-8 text-blue-600" />
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">Promedio por Viaje</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {formatCurrency(analytics.averageExpensePerTrip, selectedCurrency)}
-                  </p>
+                  <div className="text-sm font-medium text-gray-500">Total Viajes</div>
+                  <div className="text-2xl font-bold text-gray-900">{analytics?.totalTrips || 0}</div>
                 </div>
               </div>
-            </Card>
-
-            <Card className="p-6">
+            </div>
+          </Card>
+          <Card>
+            <div className="p-6">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  {analytics.monthlyTrend === 'up' ? (
-                    <ArrowTrendingUpIcon className="h-8 w-8 text-red-600" />
-                  ) : analytics.monthlyTrend === 'down' ? (
-                    <ArrowTrendingDownIcon className="h-8 w-8 text-green-600" />
+                  <MapPinIcon className="h-8 w-8 text-purple-600" />
+                </div>
+                <div className="ml-4">
+                  <div className="text-sm font-medium text-gray-500">Destino más visitado</div>
+                  <div className="text-lg font-bold text-gray-900">{analytics?.mostVisitedDestination || 'N/A'}</div>
+                </div>
+              </div>
+            </div>
+          </Card>
+          <Card>
+            <div className="p-6">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  {analytics?.monthlyTrend === 'up' ? (
+                    <ArrowTrendingUpIcon className="h-8 w-8 text-green-600" />
+                  ) : analytics?.monthlyTrend === 'down' ? (
+                    <ArrowTrendingDownIcon className="h-8 w-8 text-red-600" />
                   ) : (
                     <CalendarIcon className="h-8 w-8 text-gray-600" />
                   )}
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">Tendencia Mensual</p>
-                  <p className={`text-2xl font-bold ${
-                    analytics.monthlyTrend === 'up' ? 'text-red-600' :
-                    analytics.monthlyTrend === 'down' ? 'text-green-600' :
-                    'text-gray-600'
-                  }`}>
-                    {analytics.monthlyTrend === 'up' ? '↗ Subiendo' :
-                     analytics.monthlyTrend === 'down' ? '↘ Bajando' :
-                     '→ Estable'}
-                  </p>
+                  <div className="text-sm font-medium text-gray-500">Tendencia mensual</div>
+                  <div className="text-lg font-bold text-gray-900">{analytics?.monthlyTrend || 'stable'}</div>
                 </div>
               </div>
-            </Card>
-          </div>
-        )}
-
-        {/* Insights Cards */}
-        {analytics && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className="p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Categoría Más Costosa</h3>
-              <div className="text-center">
-                <p className="text-3xl font-bold text-blue-600 mb-2">
-                  {getCategoryName(analytics.mostExpensiveCategory)}
-                </p>
-                <p className="text-sm text-gray-500">
-                  Donde más gastas en tus viajes
-                </p>
-              </div>
-            </Card>
-
-            <Card className="p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Destino Favorito</h3>
-              <div className="text-center">
-                <p className="text-3xl font-bold text-green-600 mb-2">
-                  {analytics.mostVisitedDestination}
-                </p>
-                <p className="text-sm text-gray-500">
-                  Tu destino más visitado
-                </p>
-              </div>
-            </Card>
-
-            <Card className="p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Uso de Presupuesto</h3>
-              <div className="text-center">
-                <p className={`text-3xl font-bold mb-2 ${
-                  analytics.budgetUtilization > 100 ? 'text-red-600' :
-                  analytics.budgetUtilization > 80 ? 'text-yellow-600' :
-                  'text-green-600'
-                }`}>
-                  {analytics.budgetUtilization.toFixed(1)}%
-                </p>
-                <p className="text-sm text-gray-500">
-                  Utilización promedio del presupuesto
-                </p>
-              </div>
-            </Card>
-          </div>
-        )}
+            </div>
+          </Card>
+        </div>
 
         {/* Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {expenses.length > 0 && (
-            <>
-              <ExpenseChart 
-                expenses={expenses.filter(expense => expense.currency === selectedCurrency)} 
-                type="category" 
-                title="Distribución de Gastos por Categoría"
-              />
-              <ExpenseChart 
-                expenses={expenses.filter(expense => expense.currency === selectedCurrency)} 
-                type="timeline" 
-                title="Tendencia de Gastos en el Tiempo"
-              />
-            </>
-          )}
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {trips.length > 0 && (
-            <>
-              <TripChart 
-                trips={trips} 
-                type="status" 
-                title="Estado de los Viajes"
-              />
-              <TripChart 
-                trips={trips} 
-                type="destinations" 
-                title="Destinos Más Visitados"
-              />
-            </>
-          )}
-        </div>
-
-        {trips.length > 0 && (
-          <TripChart 
-            trips={trips} 
-            type="timeline" 
-            title="Cronología de Viajes"
-            height={200}
-          />
-        )}
-
-        {/* No Data State */}
-        {(!trips.length && !expenses.length) && (
-          <Card className="p-12 text-center">
-            <ChartBarIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              No hay datos suficientes
-            </h3>
-            <p className="text-gray-500 mb-6">
-              Crea algunos viajes y registra gastos para ver análisis detallados
-            </p>
+          <Card>
+            <div className="p-6">
+              <h3 className="text-lg font-semibold mb-4">Gastos por Categoría</h3>
+              <ExpenseChart expenses={expenses.filter(e => e.currency === selectedCurrency)} />
+            </div>
           </Card>
-        )}
+          <Card>
+            <div className="p-6">
+              <h3 className="text-lg font-semibold mb-4">Viajes por Destino</h3>
+              <TripChart trips={trips} />
+            </div>
+          </Card>
+        </div>
       </div>
     </DashboardLayout>
   )

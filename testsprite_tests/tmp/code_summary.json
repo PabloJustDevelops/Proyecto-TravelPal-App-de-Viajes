@@ -1,0 +1,107 @@
+{
+  "tech_stack": [
+    "TypeScript",
+    "Next.js (App Router)",
+    "React",
+    "Supabase (Auth + Postgres)",
+    "Tailwind CSS",
+    "Zod",
+    "react-hook-form",
+    "Heroicons",
+    "Turbopack"
+  ],
+  "features": [
+    {
+      "name": "Autenticación (servicio)",
+      "description": "Servicio de autenticación y perfil sobre Supabase: registro, login, logout, recuperación y actualización de perfil.",
+      "files": [
+        "src/lib/auth.ts",
+        "src/lib/supabase.ts"
+      ]
+    },
+    {
+      "name": "Contexto de Autenticación",
+      "description": "Contexto React para estado de usuario, carga y acciones (signIn, signUp, signOut, resetPassword, updateProfile).",
+      "files": [
+        "src/contexts/AuthContext.tsx"
+      ]
+    },
+    {
+      "name": "Protección de Rutas",
+      "description": "Componente para proteger rutas y redirigir a login si no hay usuario.",
+      "files": [
+        "src/components/auth/ProtectedRoute.tsx"
+      ]
+    },
+    {
+      "name": "Formularios de Auth",
+      "description": "Login/Register/ForgotPassword con validación (zod + react-hook-form).",
+      "files": [
+        "src/components/auth/LoginForm.tsx",
+        "src/components/auth/RegisterForm.tsx",
+        "src/components/auth/ForgotPasswordForm.tsx"
+      ]
+    },
+    {
+      "name": "Navbar y Layout",
+      "description": "Barra de navegación con enlaces, notificaciones, botón Nuevo Viaje y menú de perfil con fallback de avatar.",
+      "files": [
+        "src/components/layout/Navbar.tsx",
+        "src/components/layout/DashboardLayout.tsx",
+        "src/app/layout.tsx"
+      ]
+    },
+    {
+      "name": "Sistema de Notificaciones",
+      "description": "Panel de notificaciones con contador y acciones (marcar/desechar), integrado con Supabase (tabla alerts).",
+      "files": [
+        "src/components/notifications/NotificationSystem.tsx"
+      ]
+    },
+    {
+      "name": "Utilidades de Supabase (funciones)",
+      "description": "Funciones CRUD para bookings, itinerary_activities, reminders y calendar_events.",
+      "files": [
+        "src/lib/supabase-functions.ts"
+      ]
+    },
+    {
+      "name": "Logger Centralizado",
+      "description": "Utilitario de logging con niveles y control por entorno (NEXT_PUBLIC_LOG_LEVEL).",
+      "files": [
+        "src/lib/logger.ts"
+      ]
+    },
+    {
+      "name": "Utilidades comunes",
+      "description": "Helpers de formato (fecha, moneda), debounce y validaciones.",
+      "files": [
+        "src/lib/utils.ts"
+      ]
+    },
+    {
+      "name": "Métricas de rendimiento",
+      "description": "Utilidades para medir performance con control de salida por nivel de log.",
+      "files": [
+        "src/utils/performance.ts"
+      ]
+    },
+    {
+      "name": "Páginas App Router",
+      "description": "Entradas de App Router para dashboard, planning, expenses, budget, analytics, notes, alerts y auth.",
+      "files": [
+        "src/app/page.tsx",
+        "src/app/dashboard/page.tsx",
+        "src/app/planning/page.tsx",
+        "src/app/expenses/page.tsx",
+        "src/app/budget/page.tsx",
+        "src/app/analytics/page.tsx",
+        "src/app/notes/page.tsx",
+        "src/app/alerts/page.tsx",
+        "src/app/auth/login/page.tsx",
+        "src/app/auth/register/page.tsx",
+        "src/app/auth/forgot-password/page.tsx"
+      ]
+    }
+  ]
+}

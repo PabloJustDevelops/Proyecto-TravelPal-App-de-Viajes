@@ -1,5 +1,7 @@
 import { createSupabaseClient } from './supabase'
-import { User } from '@supabase/supabase-js'
+import { User, type AuthChangeEvent, type Session } from '@supabase/supabase-js'
+import { logger } from '@/lib/logger'
+import { getErrorMessage } from '@/lib/utils'
 
 export interface AuthUser extends User {
   full_name?: string
@@ -10,6 +12,7 @@ export class AuthService {
   private supabase = createSupabaseClient()
 
   async signUp(email: string, password: string, fullName: string) {
+    logger.info('AuthService: Iniciando signUp con email:', email)
     const { data, error } = await this.supabase.auth.signUp({
       email,
       password,
@@ -17,21 +20,53 @@ export class AuthService {
         data: {
           full_name: fullName,
         },
+        // Deshabilitar confirmación de email para desarrollo
+        emailRedirectTo: undefined,
       },
     })
 
-    if (error) throw error
+    logger.debug('AuthService: Respuesta de signUp:', { data, error })
+    if (error) {
+      logger.error('AuthService: Error en signUp:', { error: getErrorMessage(error) })
+      throw error
+    }
     return data
   }
 
   async signIn(email: string, password: string) {
-    const { data, error } = await this.supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
+    logger.info('AuthService: Iniciando signIn con email:', email)
+    
+    try {
+      logger.debug('AuthService: Llamando a supabase.auth.signInWithPassword...')
+      const { data, error } = await this.supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
 
-    if (error) throw error
-    return data
+      logger.debug('AuthService: Respuesta de signIn completa:', { 
+        data: data ? {
+          user: data.user ? { id: data.user.id, email: data.user.email } : null,
+          session: data.session ? 'session_exists' : null
+        } : null, 
+        error: error ? { message: error.message, status: error.status } : null 
+      })
+      
+      if (error) {
+        logger.error('AuthService: Error en signIn:', { error: getErrorMessage(error) })
+        throw new Error(`Error de autenticación: ${error.message}`)
+      }
+      
+      if (!data.user) {
+        logger.error('AuthService: No se obtuvo usuario después del signIn')
+        throw new Error('No se pudo autenticar el usuario')
+      }
+      
+      logger.info('AuthService: signIn completado exitosamente')
+      return data
+    } catch (err: unknown) {
+      logger.error('AuthService: Excepción en signIn:', { error: getErrorMessage(err) })
+      throw err
+    }
   }
 
   async signOut() {
@@ -40,11 +75,30 @@ export class AuthService {
   }
 
   async resetPassword(email: string) {
-    const { error } = await this.supabase.auth.resetPasswordForEmail(email, {
+    // Validar formato de email antes de enviar la solicitud
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      throw new Error('El formato del email no es válido')
+    }
+
+    // Normalizar el email (trim y lowercase)
+    const normalizedEmail = email.trim().toLowerCase()
+
+    const { error } = await this.supabase.auth.resetPasswordForEmail(normalizedEmail, {
       redirectTo: `${window.location.origin}/auth/reset-password`,
     })
 
-    if (error) throw error
+    if (error) {
+      logger.error('AuthService: Error en resetPassword:', { error: getErrorMessage(error) })
+      // Proporcionar mensajes de error más específicos
+      if (error.message.includes('invalid')) {
+        throw new Error('El email proporcionado no es válido')
+      } else if (error.message.includes('not found')) {
+        throw new Error('No se encontró una cuenta con este email')
+      } else {
+        throw new Error(`Error al enviar email de recuperación: ${error.message}`)
+      }
+    }
   }
 
   async updatePassword(password: string) {
@@ -95,7 +149,7 @@ export class AuthService {
   }
 
   onAuthStateChange(callback: (user: AuthUser | null) => void) {
-    return this.supabase.auth.onAuthStateChange(async (event, session) => {
+    return this.supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session | null) => {
       if (session?.user) {
         const user = await this.getCurrentUser()
         callback(user)

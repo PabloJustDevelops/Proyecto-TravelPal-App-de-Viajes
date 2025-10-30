@@ -1,0 +1,478 @@
+[
+  {
+    "id": "TC001",
+    "title": "Registro de usuario exitoso",
+    "description": "Verificar que un nuevo usuario pueda registrarse con datos válidos y ser redirigido correctamente.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navegar a la página de registro."
+      },
+      {
+        "type": "action",
+        "description": "Ingresar datos válidos en todos los campos obligatorios."
+      },
+      {
+        "type": "action",
+        "description": "Enviar el formulario de registro."
+      },
+      {
+        "type": "assertion",
+        "description": "Verificar que la cuenta se crea correctamente y que el usuario es redirigido al dashboard o página de login."
+      }
+    ]
+  },
+  {
+    "id": "TC002",
+    "title": "Registro con datos inválidos muestra errores claros",
+    "description": "Validar que errores claros y normalizados son mostrados cuando se ingresan datos inválidos en el formulario de registro.",
+    "category": "error handling",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navegar a la página de registro."
+      },
+      {
+        "type": "action",
+        "description": "Ingresar datos inválidos o incompletos (email mal formado, password débil, campos vacíos)."
+      },
+      {
+        "type": "action",
+        "description": "Intentar enviar el formulario."
+      },
+      {
+        "type": "assertion",
+        "description": "Verificar que se muestran mensajes de error claros que explican las correcciones necesarias."
+      }
+    ]
+  },
+  {
+    "id": "TC003",
+    "title": "Inicio de sesión exitoso con credenciales válidas",
+    "description": "Comprobar que un usuario válido puede iniciar sesión correctamente y es redirigido al dashboard.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navegar a la página de login."
+      },
+      {
+        "type": "action",
+        "description": "Ingresar credenciales válidas (email y contraseña)."
+      },
+      {
+        "type": "action",
+        "description": "Presionar el botón de iniciar sesión."
+      },
+      {
+        "type": "assertion",
+        "description": "Verificar que el usuario es autenticado y redirigido al dashboard."
+      }
+    ]
+  },
+  {
+    "id": "TC004",
+    "title": "Inicio de sesión con credenciales inválidas muestra error",
+    "description": "Verificar que al intentar iniciar sesión con credenciales incorrectas se muestra un mensaje de error normalizado y claro.",
+    "category": "error handling",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navegar a la página de login."
+      },
+      {
+        "type": "action",
+        "description": "Ingresar un email registrado con una contraseña incorrecta."
+      },
+      {
+        "type": "action",
+        "description": "Intentar iniciar sesión."
+      },
+      {
+        "type": "assertion",
+        "description": "Comprobar que aparece un mensaje de error claro indicando fallo en la autenticación."
+      }
+    ]
+  },
+  {
+    "id": "TC005",
+    "title": "Recuperación de contraseña con email válido",
+    "description": "Validar que al solicitar recuperación de contraseña con un email registrado se muestra mensaje de éxito y se inicia proceso de envío de enlace.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navegar a la página de recuperación de contraseña."
+      },
+      {
+        "type": "action",
+        "description": "Ingresar un email válido registrado en el sistema."
+      },
+      {
+        "type": "action",
+        "description": "Enviar solicitud de recuperación."
+      },
+      {
+        "type": "assertion",
+        "description": "Verificar que se muestra mensaje de éxito notificando que se ha enviado un enlace a ese email."
+      }
+    ]
+  },
+  {
+    "id": "TC006",
+    "title": "Recuperación de contraseña con email inválido muestra error",
+    "description": "Comprobar que al ingresar un email no registrado o inválido en recuperación de contraseña se muestra un mensaje de error claro.",
+    "category": "error handling",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navegar a la página de recuperación de contraseña."
+      },
+      {
+        "type": "action",
+        "description": "Ingresar un email no registrado o formato inválido."
+      },
+      {
+        "type": "action",
+        "description": "Enviar solicitud."
+      },
+      {
+        "type": "assertion",
+        "description": "Comprobar que aparece un mensaje claro y normalizado indicando el error."
+      }
+    ]
+  },
+  {
+    "id": "TC007",
+    "title": "Logout redirige a página de login",
+    "description": "Verificar que al hacer logout el usuario es desautenticado y redirigido a la página de login.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Iniciar sesión con un usuario válido."
+      },
+      {
+        "type": "action",
+        "description": "Ejecutar la acción de logout."
+      },
+      {
+        "type": "assertion",
+        "description": "Comprobar que el usuario es redirigido a la página de login y ya no tiene acceso a rutas protegidas."
+      }
+    ]
+  },
+  {
+    "id": "TC008",
+    "title": "Protección de rutas para usuarios no autenticados",
+    "description": "Confirmar que todas las rutas internas están protegidas y redirigen a login si el usuario no está autenticado.",
+    "category": "security",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Intentar acceder a páginas internas sin sesión activa."
+      },
+      {
+        "type": "assertion",
+        "description": "Verificar que el sistema redirige automáticamente a la página de login."
+      }
+    ]
+  },
+  {
+    "id": "TC009",
+    "title": "Dashboard muestra resumen actualizado",
+    "description": "Comprobar que el dashboard presenta las métricas de usuario, próximos viajes, actividades y alertas reflejando datos actuales.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Iniciar sesión y navegar al dashboard."
+      },
+      {
+        "type": "assertion",
+        "description": "Verificar que se muestran correctamente el resumen de métricas, próximos viajes y alertas actualizadas."
+      }
+    ]
+  },
+  {
+    "id": "TC010",
+    "title": "Creación, edición y listado de viajes funciona correctamente",
+    "description": "Validar la funcionalidad CRUD para viajes incluyendo creación, edición, filtrado y ordenación en la lista.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Crear un nuevo viaje completando todos los campos obligatorios."
+      },
+      {
+        "type": "assertion",
+        "description": "Verificar que el viaje creado aparece listado y con datos correctos."
+      },
+      {
+        "type": "action",
+        "description": "Editar detalles de un viaje existente y guardar cambios."
+      },
+      {
+        "type": "assertion",
+        "description": "Comprobar que los cambios se reflejan correctamente en la lista."
+      },
+      {
+        "type": "action",
+        "description": "Aplicar filtros por fecha y estado en la lista de viajes."
+      },
+      {
+        "type": "assertion",
+        "description": "Verificar que solo se muestran los viajes que cumplen con los criterios aplicados."
+      }
+    ]
+  },
+  {
+    "id": "TC011",
+    "title": "Planificación diaria muestra actividades, reservas y recordatorios",
+    "description": "Confirmar que la planificación permite crear, editar y mostrar actividades diarias, reservas vinculadas y gestión de recordatorios correctamente.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Acceder al módulo de planificación."
+      },
+      {
+        "type": "action",
+        "description": "Crear nuevas actividades diarias con y sin reservas vinculadas."
+      },
+      {
+        "type": "action",
+        "description": "Agregar recordatorios a actividades."
+      },
+      {
+        "type": "assertion",
+        "description": "Verificar que todas las actividades, reservas y recordatorios aparecen ordenados y se pueden editar o eliminar correctamente."
+      }
+    ]
+  },
+  {
+    "id": "TC012",
+    "title": "Gestión de gastos: creación y visualización con totales",
+    "description": "Probar que los gastos pueden ser creados con categorías y monedas, y se visualizan correctamente con totales por viaje.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Acceder a la sección de gastos."
+      },
+      {
+        "type": "action",
+        "description": "Crear gastos con diferentes categorías y monedas."
+      },
+      {
+        "type": "assertion",
+        "description": "Verificar que los gastos se muestran correctamente listados y que los totales agrupados por categoría y moneda son calculados adecuadamente."
+      }
+    ]
+  },
+  {
+    "id": "TC013",
+    "title": "Visualización y análisis básico de presupuesto por viaje",
+    "description": "Confirmar que el presupuesto por viaje se presenta con gráficos simples y métricas claras basadas en gastos registrados.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navegar a la sección de presupuesto y análisis."
+      },
+      {
+        "type": "assertion",
+        "description": "Verificar que los gráficos muestran el presupuesto versus gastos actuales y que los datos se actualizan con la información ingresada."
+      }
+    ]
+  },
+  {
+    "id": "TC014",
+    "title": "Notas CRUD completo con etiquetado y marcado favorito",
+    "description": "Verificar que se pueden crear, editar, eliminar notas, asignar etiquetas y marcar/desmarcar favoritas en el sistema de notas.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Crear una nueva nota con título, contenido y etiquetas."
+      },
+      {
+        "type": "assertion",
+        "description": "Verificar que la nota aparece en la lista con las etiquetas asignadas."
+      },
+      {
+        "type": "action",
+        "description": "Editar una nota existente y guardar los cambios."
+      },
+      {
+        "type": "assertion",
+        "description": "Comprobar que los cambios son reflejados correctamente."
+      },
+      {
+        "type": "action",
+        "description": "Marcar una nota como favorita y verificar su estado."
+      },
+      {
+        "type": "assertion",
+        "description": "Confirmar que la nota aparece señalada como favorita."
+      },
+      {
+        "type": "action",
+        "description": "Eliminar una nota."
+      },
+      {
+        "type": "assertion",
+        "description": "Verificar que la nota desaparece de la lista."
+      }
+    ]
+  },
+  {
+    "id": "TC015",
+    "title": "Sistema de alertas y notificaciones con contador y acciones",
+    "description": "Probar que las notificaciones se cargan, el contador funciona correctamente, y que se pueden marcar como leídas o descartar desde el panel desplegable.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Generar varias notificaciones pendientes."
+      },
+      {
+        "type": "assertion",
+        "description": "Verificar que el contador muestra la cantidad correcta de notificaciones no leídas."
+      },
+      {
+        "type": "action",
+        "description": "Abrir el panel de notificaciones."
+      },
+      {
+        "type": "action",
+        "description": "Marcar una o varias notificaciones como leídas y descartar otras."
+      },
+      {
+        "type": "assertion",
+        "description": "Comprobar que las notificaciones seleccionadas son actualizadas correctamente y el contador se actualiza."
+      }
+    ]
+  },
+  {
+    "id": "TC016",
+    "title": "Logging centralizado refleja niveles configurables y métricas",
+    "description": "Validar que el sistema de logging centralizado responde a la configuración de niveles y registra eventos y métricas de rendimiento según el nivel definido.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Configurar diferentes niveles de logging (error, warn, info, debug)."
+      },
+      {
+        "type": "action",
+        "description": "Ejecutar acciones en la aplicación que produzcan logs de distintos niveles."
+      },
+      {
+        "type": "assertion",
+        "description": "Verificar que solo los eventos correspondientes al nivel configurado son registrados y que métricas de rendimiento son capturadas adecuadamente."
+      }
+    ]
+  },
+  {
+    "id": "TC017",
+    "title": "Navegación responsive y accesible en navbar y módulos",
+    "description": "Comprobar que la barra de navegación y cambios entre módulos funcionan correctamente en diferentes dispositivos y cumplen criterios de accesibilidad.",
+    "category": "ui",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Abrir la aplicación en dispositivos y resoluciones variadas (móvil, tablet, desktop)."
+      },
+      {
+        "type": "action",
+        "description": "Navegar mediante la barra navbar hacia módulos: Dashboard, Viajes, Planificación, Gastos, Presupuesto, Análisis, Notas, Alertas."
+      },
+      {
+        "type": "assertion",
+        "description": "Verificar que la navegación es fluida, elementos visibles y usables, y que cumplen con estándares de accesibilidad (teclado, lector de pantalla)."
+      }
+    ]
+  },
+  {
+    "id": "TC018",
+    "title": "Gestión de viajes: manejo de filtros con valores límites y sin resultados",
+    "description": "Probar filtros de viajes con rangos en límites (fechas extremas) y escenarios donde no existan viajes que cumplan para validar manejo correcto.",
+    "category": "error handling",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Aplicar filtros con fechas en el límite inferior y superior válidos."
+      },
+      {
+        "type": "assertion",
+        "description": "Confirmar que los viajes filtrados cumplen el criterio correctamente."
+      },
+      {
+        "type": "action",
+        "description": "Aplicar filtros con criterios que no devuelvan ningún viaje."
+      },
+      {
+        "type": "assertion",
+        "description": "Verificar que se muestra un mensaje adecuado indicando ausencia de resultados."
+      }
+    ]
+  },
+  {
+    "id": "TC019",
+    "title": "Planificación diaria: creación de actividades con datos inválidos",
+    "description": "Comprobar que el sistema valida correctamente los datos al crear actividades diarias y notifica errores claros con campos inválidos o faltantes.",
+    "category": "error handling",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Intentar crear una actividad diaria sin completar campos obligatorios o con datos erróneos."
+      },
+      {
+        "type": "assertion",
+        "description": "Verificar que el sistema muestra mensajes de error claros y evita guardar la actividad hasta corregir los datos."
+      }
+    ]
+  },
+  {
+    "id": "TC020",
+    "title": "Gastos: manejo de moneda y categorización no permitidas",
+    "description": "Verificar que al ingresar una moneda no soportada o categoría inválida para un gasto, se muestra error y no permite guardar el registro.",
+    "category": "error handling",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Crear un gasto y seleccionar una moneda o categoría no contemplada en la lista."
+      },
+      {
+        "type": "action",
+        "description": "Intentar guardar el gasto."
+      },
+      {
+        "type": "assertion",
+        "description": "Confirmar que el sistema bloquea la acción y presenta un mensaje explicativo sobre la selecciones inválidas."
+      }
+    ]
+  }
+]

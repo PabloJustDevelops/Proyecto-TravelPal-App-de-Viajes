@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import { AuthProvider } from '@/contexts/AuthContext'
 import ErrorBoundary from '@/components/common/ErrorBoundary'
+import { ToastProvider } from '@/components/ui/Toast'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -21,16 +22,18 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="es">
+    <html lang="es" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
-      <body className={inter.className}>
+      <body className={inter.className} suppressHydrationWarning>
         <ErrorBoundary>
-          <AuthProvider>
-            {children}
-          </AuthProvider>
+          <ToastProvider>
+            <AuthProvider>
+              {children}
+            </AuthProvider>
+          </ToastProvider>
         </ErrorBoundary>
       </body>
     </html>

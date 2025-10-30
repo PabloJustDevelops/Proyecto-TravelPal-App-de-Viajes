@@ -2,6 +2,8 @@
 
 import React, { Component, ErrorInfo, ReactNode } from 'react'
 import { ExclamationTriangleIcon, ArrowPathIcon } from '@heroicons/react/24/outline'
+import { logger } from '@/lib/logger'
+import { getErrorMessage } from '@/lib/utils'
 
 interface Props {
   children: ReactNode
@@ -25,7 +27,10 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('Error capturado por ErrorBoundary:', error, errorInfo)
+    logger.error('ErrorBoundary: Error capturado', {
+      error: getErrorMessage(error),
+      componentStack: errorInfo.componentStack,
+    })
     
     // Llamar callback personalizado si existe
     if (this.props.onError) {
@@ -35,7 +40,7 @@ class ErrorBoundary extends Component<Props, State> {
     // En producción, enviar error a servicio de monitoreo
     if (process.env.NODE_ENV === 'production') {
       // Aquí se podría integrar con Sentry, LogRocket, etc.
-      console.error('Error en producción:', {
+      logger.error('ErrorBoundary: Error en producción', {
         error: error.message,
         stack: error.stack,
         componentStack: errorInfo.componentStack

@@ -1,0 +1,22 @@
+name: Bug report
+description: Reporta un problema
+title: "bug: "
+labels: [bug]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Descripción
+      description: ¿Qué ocurre?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Pasos para reproducir
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: Entorno (OS, Node, navegador)

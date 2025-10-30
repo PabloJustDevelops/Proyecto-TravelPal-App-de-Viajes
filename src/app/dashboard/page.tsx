@@ -34,34 +34,40 @@ export default function DashboardPage() {
   })
   const [loading, setLoading] = useState(true)
 
-  const loadDashboardData = useCallback(async () => {
+  const loadDashboardData = useCallback(async (signal?: AbortSignal) => {
     const supabase = createSupabaseClient()
 
     try {
       // Get trips stats
-      const { data: trips } = await supabase
+      const tripsQuery = supabase
         .from('trips')
         .select('*')
         .eq('user_id', user!.id)
         .order('created_at', { ascending: false })
 
+      const { data: trips } = await (signal ? tripsQuery.abortSignal(signal) : tripsQuery)
+
       const now = new Date()
       const upcomingTrips = trips?.filter(trip => new Date(trip.departure_date) > now) || []
 
       // Get expenses stats
-      const { data: expenses } = await supabase
+      const expensesQuery = supabase
         .from('expenses')
         .select('*')
         .eq('user_id', user!.id)
         .order('created_at', { ascending: false })
 
+      const { data: expenses } = await (signal ? expensesQuery.abortSignal(signal) : expensesQuery)
+
       const totalExpenses = expenses?.reduce((sum, expense) => sum + expense.amount, 0) || 0
 
       // Get notes count
-      const { count: notesCount } = await supabase
+      const notesQuery = supabase
         .from('notes')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', user!.id)
+
+      const { count: notesCount } = await (signal ? notesQuery.abortSignal(signal) : notesQuery)
 
       setStats({
         totalTrips: trips?.length || 0,
@@ -72,6 +78,7 @@ export default function DashboardPage() {
         recentExpenses: expenses?.slice(0, 5) || [],
       })
     } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') return
       console.error('Error loading dashboard data:', error)
     } finally {
       setLoading(false)
@@ -80,7 +87,9 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (user) {
-      loadDashboardData()
+      const controller = new AbortController()
+      loadDashboardData(controller.signal)
+      return () => controller.abort()
     }
   }, [user, loadDashboardData])
 

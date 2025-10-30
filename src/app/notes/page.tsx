@@ -9,6 +9,8 @@ import Input from '@/components/ui/Input'
 import Modal from '@/components/ui/Modal'
 import { useAuth } from '@/contexts/AuthContext'
 import { createSupabaseClient, Note, Trip } from '@/lib/supabase'
+import { logger } from '@/lib/logger'
+import { getErrorMessage } from '@/lib/utils'
 import {
   PlusIcon,
   MagnifyingGlassIcon,
@@ -31,45 +33,56 @@ export default function NotesPage() {
   const [editingNote, setEditingNote] = useState<Note | null>(null)
   const [editorLoading, setEditorLoading] = useState(false)
 
-  const loadNotes = useCallback(async () => {
+  const loadNotes = useCallback(async (signal?: AbortSignal) => {
+    if (!user) return
     const supabase = createSupabaseClient()
 
     try {
-      const { data, error } = await supabase
+      const query = supabase
         .from('notes')
         .select(`
           *,
           trip:trips(*)
         `)
-        .eq('user_id', user!.id)
+        .eq('user_id', user.id)
         .order('updated_at', { ascending: false })
+
+      const { data, error } = await (signal ? query.abortSignal(signal) : query)
 
       if (error) throw error
 
       setNotes(data || [])
-    } catch (error) {
-      console.error('Error loading notes:', error)
+    } catch (err: unknown) {
+      // Silenciar abortos de navegación
+      if (err instanceof Error && err.name === 'AbortError') return
+      const message = getErrorMessage(err)
+      logger.error('NotesPage: Error loading notes', { error: message })
     } finally {
       setLoading(false)
     }
   }, [user])
 
-  const loadTrips = useCallback(async () => {
+  const loadTrips = useCallback(async (signal?: AbortSignal) => {
+    if (!user) return
     const supabase = createSupabaseClient()
 
     try {
-      const { data, error } = await supabase
+      const query = supabase
           .from('trips')
           .select('id, title, user_id, origin, destination, departure_date, return_date, budget, status, created_at, updated_at')
-          .eq('user_id', user!.id)
+          .eq('user_id', user.id)
           .order('departure_date', { ascending: false })
-        .order('departure_date', { ascending: false })
+          .order('departure_date', { ascending: false })
+
+      const { data, error } = await (signal ? query.abortSignal(signal) : query)
 
       if (error) throw error
 
       setTrips(data || [])
-    } catch (error) {
-      console.error('Error loading trips:', error)
+    } catch (err: unknown) {
+      if (err instanceof Error && err.name === 'AbortError') return
+      const message = getErrorMessage(err)
+      logger.error('NotesPage: Error loading trips', { error: message })
     }
   }, [user])
 
@@ -101,8 +114,13 @@ export default function NotesPage() {
 
   useEffect(() => {
     if (user) {
-      loadNotes()
-      loadTrips()
+      const controller = new AbortController()
+      loadNotes(controller.signal)
+      loadTrips(controller.signal)
+      return () => controller.abort()
+    } else {
+      // Evitar spinner infinito cuando no hay usuario
+      setLoading(false)
     }
   }, [user, loadNotes, loadTrips])
 
@@ -146,9 +164,10 @@ export default function NotesPage() {
 
       await loadNotes()
       handleCloseEditor()
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Error al guardar la nota'
-      throw new Error(errorMessage)
+    } catch (err: unknown) {
+      const message = getErrorMessage(err, 'Error al guardar la nota')
+      logger.error('NotesPage: Error saving note', { error: message })
+      throw new Error(message)
     } finally {
       setEditorLoading(false)
     }
@@ -181,6 +200,18 @@ export default function NotesPage() {
       <DashboardLayout>
         <div className="flex items-center justify-center py-12">
           <LoadingSpinner size="lg" />
+        </div>
+      </DashboardLayout>
+    )
+  }
+
+  if (!user) {
+    return (
+      <DashboardLayout>
+        <div className="text-center py-12">
+          <h3 className="text-lg font-semibold text-gray-900">Inicia sesión para gestionar tus notas</h3>
+          <p className="mt-1 text-sm text-gray-500">La sección de notas requiere autenticación.</p>
+          <Button className="mt-4" onClick={() => (window.location.href = '/login')}>Ir a Login</Button>
         </div>
       </DashboardLayout>
     )

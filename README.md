@@ -1,69 +1,80 @@
-# App de Viajes - Proyecto Colaborativo
+<div align="center">
+  <img src="public/globe.svg" alt="App Viajes" width="120" />
+  <h1>App Viajes</h1>
+  <p><strong>Planifica, reserva y controla tus viajes</strong><br/>Una plataforma completa para itinerarios, gastos, presupuestos y analíticas.</p>
 
-📋 **Descripción del Proyecto**
+  <p>
+    <a href="#instalacion">Instalación</a> ·
+    <a href="#caracteristicas">Características</a> ·
+    <a href="#documentacion">Documentación</a> ·
+    <a href="#capturas">Capturas</a> ·
+    <a href="#roadmap">Roadmap</a>
+  </p>
 
-Esta aplicación web implementa un sistema completo de gestión de viajes que permite organizar itinerarios, controlar gastos, gestionar presupuestos y visualizar analíticas detalladas. Está diseñada como un proyecto colaborativo con enfoque en documentación, mejores prácticas y desarrollo ágil.
+  <p>
+    <img alt="Next.js" src="https://img.shields.io/badge/Next.js-15-black?logo=nextdotjs" />
+    <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white" />
+    <img alt="Supabase" src="https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?logo=supabase&logoColor=white" />
+    <img alt="Amadeus API" src="https://img.shields.io/badge/Amadeus-API-0B1F3B" />
+    <img alt="CI/CD" src="https://img.shields.io/badge/GitHub_Actions-CI%2FCD-2088FF?logo=githubactions&logoColor=white" />
+  </p>
+</div>
 
-🚀 **Características**
+---
 
-✅ **Gestión completa de viajes** - Crear, editar y organizar itinerarios  
-✅ **Control de gastos** - Registro y categorización de expenses por viaje  
-✅ **Presupuestos inteligentes** - Planificación y seguimiento financiero  
-✅ **Dashboard analítico** - Métricas y visualizaciones interactivas  
-✅ **Autenticación segura** - Sistema de login con Supabase Auth  
-✅ **Logger centralizado** - Sistema de logs con diferentes niveles  
-✅ **Notificaciones toast** - Feedback visual para todas las acciones  
-✅ **Diseño responsive** - Interfaz optimizada para todos los dispositivos  
-✅ **Integración APIs** - Conexión con Amadeus para datos de vuelos  
+## 📋 Descripción
 
-📁 **Estructura del Proyecto**
+App Viajes es una aplicación web colaborativa para gestionar todo el ciclo de un viaje: creación de itinerarios, control de gastos, presupuestos inteligentes y analíticas visuales. El proyecto enfatiza documentación clara, estándares de calidad y un flujo de trabajo profesional.
+
+## 🚀 Características
+
+- ✅ Gestión completa de viajes: crear, editar y organizar itinerarios
+- 💸 Control de gastos por viaje con categorías y métricas
+- 💼 Presupuestos inteligentes y seguimiento financiero
+- 📊 Dashboard analítico con visualizaciones interactivas
+- 🔐 Autenticación segura con Supabase Auth
+- 🧭 Integración con Amadeus API para datos de vuelos
+- 🧩 Logger centralizado y notificaciones toast
+- 📱 Diseño responsive y accesible
+
+---
+
+## 🖼️ Banner / Capturas
+
+> Vista previa de la aplicación (ejemplo). Reemplaza esta imagen por una captura real en `public/` cuando esté disponible.
+
+<div align="center">
+  <img src="public/window.svg" alt="Vista previa de App Viajes" width="800" />
+</div>
+
+---
+
+## 🗂️ Estructura del Proyecto
 
 ```
 app-viajes/
-├── src/                          # Código fuente principal
-│   ├── app/                     # Rutas y páginas (App Router)
-│   │   ├── dashboard/           # Panel principal
-│   │   ├── trips/               # Gestión de viajes
-│   │   ├── expenses/            # Control de gastos
-│   │   ├── budget/              # Presupuestos
-│   │   ├── analytics/           # Analíticas y reportes
-│   │   ├── auth/                # Autenticación
-│   │   └── api/                 # API routes
-│   ├── components/              # Componentes reutilizables
-│   │   ├── ui/                  # Componentes base de UI
-│   │   ├── layout/              # Componentes de layout
-│   │   ├── trips/               # Componentes específicos de viajes
-│   │   ├── expenses/            # Componentes de gastos
-│   │   └── charts/              # Gráficos y visualizaciones
-│   ├── lib/                     # Utilidades y configuraciones
-│   │   ├── supabase.ts          # Cliente de Supabase
-│   │   ├── logger.ts            # Sistema de logging
-│   │   ├── amadeus.ts           # Integración API Amadeus
-│   │   └── utils.ts             # Funciones auxiliares
-│   └── contexts/                # Contextos de React
-├── docs/                        # Documentación colaborativa
-│   ├── TECHNICAL.md             # Documentación técnica
-│   ├── CONTRIBUTING.md          # Guía de contribución
-│   ├── ARCHITECTURE.md          # Arquitectura del sistema
-│   ├── BRANCHING.md             # Estrategia de branching
-│   └── DECISIONS/               # Registros de decisiones (ADRs)
-├── .github/                     # Configuración de GitHub
-│   ├── workflows/               # GitHub Actions (CI/CD)
-│   ├── ISSUE_TEMPLATE/          # Plantillas de issues
-│   └── PULL_REQUEST_TEMPLATE.md # Plantilla de PRs
-├── testsprite_tests/            # Tests automatizados
-└── README.md                    # Este archivo
+├── src/
+│   ├── app/                 # Rutas y páginas (App Router)
+│   ├── components/          # UI y componentes por dominio
+│   ├── lib/                 # Servicios, clientes y utilidades
+│   └── contexts/            # Contextos de React
+├── docs/                    # Documentación colaborativa (MDs mejorados)
+├── .github/                 # Workflows, plantillas y labels
+├── testsprite_tests/        # Suite de pruebas automatizadas
+└── README.md                # Landing del repositorio (esta página)
 ```
 
-🛠️ **Instalación y Uso**
+---
 
-**Prerrequisitos**
-- Node.js 18+ 
+## ⚙️ Instalación y Uso
+
+### Prerrequisitos
+- Node.js 18+
 - npm o yarn
-- Cuenta de Supabase (para base de datos y auth)
-- API Key de Amadeus (opcional, para datos de vuelos)
+- Cuenta de Supabase (Auth/DB)
+- API Key de Amadeus (opcional)
 
-**Instalación**
+### Instalación
 ```bash
 # Clonar el repositorio
 git clone https://github.com/PabloJustDevelops/colaboracion-alejandro-app-viajes.git
@@ -73,88 +84,85 @@ cd colaboracion-alejandro-app-viajes
 npm install
 ```
 
-**Configuración**
+### Configuración
 ```bash
 # Copiar variables de entorno
 cp .env.example .env.local
 
-# Configurar las siguientes variables:
-# NEXT_PUBLIC_SUPABASE_URL=tu_supabase_url
-# NEXT_PUBLIC_SUPABASE_ANON_KEY=tu_supabase_anon_key
-# AMADEUS_CLIENT_ID=tu_amadeus_client_id (opcional)
-# AMADEUS_CLIENT_SECRET=tu_amadeus_client_secret (opcional)
+# Variables necesarias
+NEXT_PUBLIC_SUPABASE_URL=tu_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=tu_supabase_anon_key
+AMADEUS_CLIENT_ID=tu_amadeus_client_id
+AMADEUS_CLIENT_SECRET=tu_amadeus_client_secret
 ```
 
-**Ejecución**
-
+### Ejecución
 ```bash
-# Modo desarrollo
+# Desarrollo
 npm run dev
 
-# Ejecutar tests
+# Tests
 npm test
 
-# Build para producción
+# Producción
 npm run build
 
-# Linting y formato
+# Lint y formato
 npm run lint
 npm run format
 ```
 
-La aplicación estará disponible en `http://localhost:3000`
+La app corre en `http://localhost:3000`.
 
-**Uso básico**
-1. **Registro/Login**: Crear cuenta o iniciar sesión
-2. **Crear viaje**: Ir a `/trips` y añadir nuevo viaje
-3. **Gestionar gastos**: En `/expenses` registrar gastos por viaje
-4. **Ver presupuesto**: Revisar `/budget` para seguimiento financiero
-5. **Analizar datos**: Consultar `/analytics` para métricas y gráficos
+### Uso rápido
+- Autenticación: registro/login
+- Crear viaje: `/trips`
+- Gastos por viaje: `/expenses`
+- Presupuestos: `/budget`
+- Analíticas: `/analytics`
 
 📖 **Documentación Colaborativa**
 
-La documentación técnica detallada se encuentra en:
+La documentación detallada está en `docs/`:
 
-- **[TECHNICAL.md](docs/TECHNICAL.md)**: Guía técnica completa y configuración
-- **[CONTRIBUTING.md](docs/CONTRIBUTING.md)**: Cómo contribuir al proyecto
-- **[ARCHITECTURE.md](docs/ARCHITECTURE.md)**: Arquitectura y patrones de diseño
-- **[BRANCHING.md](docs/BRANCHING.md)**: Estrategia de ramas y workflow Git
+- **[TECHNICAL.md](docs/TECHNICAL.md)**: Guía técnica y configuración
+- **[CONTRIBUTING.md](docs/CONTRIBUTING.md)**: Cómo contribuir
+- **[ARCHITECTURE.md](docs/ARCHITECTURE.md)**: Arquitectura y patrones
+- **[BRANCHING.md](docs/BRANCHING.md)**: Estrategia de ramas y workflow
 - **[PR_PROCESS.md](docs/PR_PROCESS.md)**: Proceso de Pull Requests
 - **[COMMITS.md](docs/COMMITS.md)**: Convenciones de commits
 
-🧪 **Testing**
+---
 
-El proyecto incluye tests automatizados con **Testsprite**:
+## 🧪 Testing
 
+Suite con **Jest** y **Testsprite**:
 ```bash
-# Ejecutar suite completa de tests
-npm test
-
-# Tests específicos por funcionalidad
-npm run test:auth      # Tests de autenticación
-npm run test:trips     # Tests de gestión de viajes
-npm run test:expenses  # Tests de gastos
+npm test                  # Suite completa
+npm run test:auth         # Autenticación
+npm run test:trips        # Gestión de viajes
+npm run test:expenses     # Gastos
 ```
 
-Los tests cubren:
-- ✅ Autenticación y autorización
-- ✅ CRUD de viajes y gastos
-- ✅ Validaciones de formularios
-- ✅ Integración con APIs
-- ✅ Componentes de UI críticos
+Coberturas:
+- Autenticación y autorización
+- CRUD de viajes y gastos
+- Validaciones de formularios
+- Integración con APIs
+- Componentes de UI críticos
 
-🔧 **Tecnologías**
+## 🔧 Tecnologías
 
-- **Frontend**: Next.js 15, React 18, TypeScript
-- **Estilos**: Tailwind CSS, componentes personalizados
-- **Backend**: Supabase (PostgreSQL, Auth, Storage)
-- **APIs**: Amadeus API para datos de vuelos
-- **Testing**: Jest, Testsprite
-- **CI/CD**: GitHub Actions
-- **Linting**: ESLint, Prettier
-- **Commits**: Commitlint, Conventional Commits
+- Frontend: Next.js 15, React 18, TypeScript
+- Estilos: Tailwind CSS, componentes personalizados
+- Backend: Supabase (PostgreSQL, Auth, Storage)
+- APIs: Amadeus API
+- Testing: Jest, Testsprite
+- CI/CD: GitHub Actions
+- Linting: ESLint, Prettier
+- Commits: Commitlint, Conventional Commits
 
-📊 **Estado del Desarrollo**
+## 📊 Estado del Desarrollo
 
 **✅ Funcionalidades Completadas**
 - Sistema de autenticación completo
@@ -172,13 +180,13 @@ Los tests cubren:
 - Notificaciones push
 - Modo offline básico
 
-**📋 Roadmap**
+## 📋 Roadmap
 - Internacionalización (i18n)
 - Integración con más APIs de viajes
 - Sistema de colaboración en viajes
 - App móvil (React Native)
 
-👥 **Contribuidores**
+## 👥 Contribuidores
 
 - **[Pablo Rodríguez Garijo](https://github.com/PabloJustDevelops)** - Desarrollador principal
 - **Alejandro García Redondo** - Desarrollador ayudante
@@ -186,9 +194,9 @@ Los tests cubren:
 
 ---
 
-**Nota**: Este proyecto forma parte de un ejercicio colaborativo enfocado en mejores prácticas de desarrollo, documentación técnica y metodologías ágiles.
+> Nota: Proyecto colaborativo enfocado en buenas prácticas, documentación y flujo profesional.
 
-## 🤝 **Contribuir**
+## 🤝 Contribuir
 
 ¡Las contribuciones son bienvenidas! Por favor:
 
@@ -200,11 +208,11 @@ Los tests cubren:
 
 Consulta [CONTRIBUTING.md](docs/CONTRIBUTING.md) para más detalles.
 
-## 📄 **Licencia**
+## 📄 Licencia
 
 Este proyecto está bajo la Licencia MIT. Ver `LICENSE` para más información.
 
-## 📞 **Contacto**
+## 📞 Contacto
 
 Pablo Rodríguez Garijo - [@PabloJustDevelops](https://github.com/PabloJustDevelops)
 

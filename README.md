@@ -181,8 +181,8 @@ Los tests cubren:
 👥 **Contribuidores**
 
 - **[Pablo Rodríguez Garijo](https://github.com/PabloJustDevelops)** - Desarrollador principal
-- **Alejandro García Redondo** - Colaborador y documentación
-- **Carlos Martínez Gaspar** - Testing y QA
+- **Alejandro García Redondo** - Desarrollador ayudante
+
 
 ---
 

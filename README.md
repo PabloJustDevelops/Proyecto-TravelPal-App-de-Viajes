@@ -41,10 +41,10 @@ App Viajes es una aplicación web colaborativa para gestionar todo el ciclo de u
 
 ## 🖼️ Banner / Capturas
 
-> Vista previa de la aplicación (ejemplo). Reemplaza esta imagen por una captura real en `public/` cuando esté disponible.
-
 <div align="center">
-  <img src="public/window.svg" alt="Vista previa de App Viajes" width="800" />
+  <img src="./public/hero-app-viajes.svg" alt="Banner App Viajes" width="1000" />
+  <p><em>Banner hero del repositorio. Se puede reemplazar por capturas reales del dashboard o páginas clave.</em></p>
+  
 </div>
 
 ---

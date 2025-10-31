@@ -114,10 +114,37 @@ const nextConfig = {
   // Configuración de redirects para SEO
   async redirects() {
     return [
+      // Redirect principal existente
       {
         source: '/',
         destination: '/dashboard',
         permanent: false,
+      },
+      // Redirects de rutas legacy de autenticación
+      {
+        source: '/auth/login',
+        destination: '/signin',
+        permanent: true,
+      },
+      {
+        source: '/auth/register',
+        destination: '/signup',
+        permanent: true,
+      },
+      {
+        source: '/auth/reset-password',
+        destination: '/reset-password',
+        permanent: true,
+      },
+      {
+        source: '/auth/forgot-password',
+        destination: '/forgot-password',
+        permanent: true,
+      },
+      {
+        source: '/login',
+        destination: '/signin',
+        permanent: true,
       },
     ]
   },

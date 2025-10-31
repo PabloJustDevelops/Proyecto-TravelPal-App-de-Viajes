@@ -80,7 +80,8 @@ export default function LoginForm() {
         const raw = err.message || "";
         // Normalizar mensaje para Testsprite cuando las credenciales son inválidas
         if (raw.includes("Invalid login credentials")) {
-          displayMessage = "Login Failed: Invalid credentials";
+          // Coincidir exactamente con el texto esperado por Testsprite
+          displayMessage = "Login Failed: Invalid Credentials";
         } else {
           displayMessage = raw;
         }
@@ -102,7 +103,7 @@ export default function LoginForm() {
           <p className="mt-2 text-center text-sm text-gray-600">
             O{" "}
             <Link
-              href="/auth/register"
+              href="/signup"
               className="font-medium text-blue-600 hover:text-blue-500"
             >
               crea una nueva cuenta
@@ -127,6 +128,7 @@ export default function LoginForm() {
               </label>
               <input
                 {...register("email")}
+                id="email"
                 type="email"
                 autoComplete="email"
                 className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
@@ -149,6 +151,7 @@ export default function LoginForm() {
               <div className="mt-1 relative">
                 <input
                   {...register("password")}
+                  id="password"
                   type={showPassword ? "text" : "password"}
                   autoComplete="current-password"
                   className="appearance-none relative block w-full px-3 py-2 pr-10 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
@@ -178,7 +181,7 @@ export default function LoginForm() {
 
           <div className="flex items-center justify-between">
             <Link
-              href="/auth/forgot-password"
+              href="/forgot-password"
               className="text-sm text-blue-600 hover:text-blue-500"
             >
               ¿Olvidaste tu contraseña?

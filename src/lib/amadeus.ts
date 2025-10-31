@@ -11,10 +11,12 @@ let cachedToken: { token: string; expiresAt: number } | null = null
 const AMADEUS_HOST = process.env.AMADEUS_API_HOST || 'https://test.api.amadeus.com'
 
 async function fetchAccessToken(): Promise<string> {
-  const clientId = process.env.AMADEUS_API_KEY
-  const clientSecret = process.env.AMADEUS_API_SECRET
+  // Soportar ambas convenciones de nombres para evitar roturas:
+  // Preferir AMADEUS_CLIENT_ID/AMADEUS_CLIENT_SECRET; fallback a AMADEUS_API_KEY/AMADEUS_API_SECRET
+  const clientId = process.env.AMADEUS_CLIENT_ID || process.env.AMADEUS_API_KEY
+  const clientSecret = process.env.AMADEUS_CLIENT_SECRET || process.env.AMADEUS_API_SECRET
   if (!clientId || !clientSecret) {
-    throw new Error('Configuración de Amadeus incompleta: faltan AMADEUS_API_KEY/SECRET')
+    throw new Error('Configuración de Amadeus incompleta: faltan AMADEUS_CLIENT_ID/SECRET o AMADEUS_API_KEY/SECRET')
   }
 
   // Usa token en caché si no ha expirado

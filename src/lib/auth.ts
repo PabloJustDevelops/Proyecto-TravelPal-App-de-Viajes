@@ -85,7 +85,7 @@ export class AuthService {
     const normalizedEmail = email.trim().toLowerCase()
 
     const { error } = await this.supabase.auth.resetPasswordForEmail(normalizedEmail, {
-      redirectTo: `${window.location.origin}/auth/reset-password`,
+      redirectTo: `${window.location.origin}/reset-password`,
     })
 
     if (error) {

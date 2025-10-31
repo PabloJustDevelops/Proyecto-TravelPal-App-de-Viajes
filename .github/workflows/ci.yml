@@ -15,6 +15,13 @@ jobs:
       NEXT_PUBLIC_LOG_LEVEL: ${{ secrets.NEXT_PUBLIC_LOG_LEVEL }}
     steps:
       - uses: actions/checkout@v4
+      - name: Set default NEXT_PUBLIC_LOG_LEVEL when secret is missing
+        run: |
+          if [ -z "${{ secrets.NEXT_PUBLIC_LOG_LEVEL }}" ]; then
+            echo "NEXT_PUBLIC_LOG_LEVEL=warn" >> $GITHUB_ENV
+          else
+            echo "NEXT_PUBLIC_LOG_LEVEL=${{ secrets.NEXT_PUBLIC_LOG_LEVEL }}" >> $GITHUB_ENV
+          fi
       - uses: actions/setup-node@v4
         with:
           node-version: '18'

@@ -29,7 +29,12 @@ export async function middleware(req: NextRequest) {
   } = await supabase.auth.getSession()
 
   const protectedRoutes = ['/dashboard', '/trips', '/expenses', '/budget', '/notes', '/planning', '/analytics', '/alerts']
-  const authRoutes = ['/auth/login', '/auth/register']
+  const authRoutes = [
+    '/signin',
+    '/signup',
+    '/forgot-password',
+    '/reset-password'
+  ]
   const isProtectedRoute = protectedRoutes.some(route => req.nextUrl.pathname.startsWith(route))
   const isAuthRoute = authRoutes.some(route => req.nextUrl.pathname.startsWith(route))
 
@@ -43,7 +48,7 @@ export async function middleware(req: NextRequest) {
   }
 
   if (!session && isProtectedRoute) {
-    const redirectUrl = new URL('/auth/login', req.url)
+    const redirectUrl = new URL('/signin', req.url)
     redirectUrl.searchParams.set('redirectTo', req.nextUrl.pathname)
     const redirectRes = NextResponse.redirect(redirectUrl)
     return withTransferredCookies(redirectRes)

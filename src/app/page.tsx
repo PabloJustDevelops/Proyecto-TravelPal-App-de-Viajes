@@ -1,37 +1,37 @@
-'use client'
+"use client";
 
-import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { useAuth } from '@/contexts/AuthContext'
-import LoadingSpinner from '@/components/ui/LoadingSpinner'
-import Link from 'next/link'
-import { 
-  MapIcon, 
-  CurrencyDollarIcon, 
-  DocumentTextIcon, 
-  ShieldCheckIcon 
-} from '@heroicons/react/24/outline'
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import Link from "next/link";
+import {
+  MapIcon,
+  CurrencyDollarIcon,
+  DocumentTextIcon,
+  ShieldCheckIcon,
+} from "@heroicons/react/24/outline";
 
 export default function Home() {
-  const { user, loading } = useAuth()
-  const router = useRouter()
+  const { user, loading } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
     if (!loading && user) {
-      router.push('/dashboard')
+      router.push("/dashboard");
     }
-  }, [user, loading, router])
+  }, [user, loading, router]);
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <LoadingSpinner size="lg" />
       </div>
-    )
+    );
   }
 
   if (user) {
-    return null // Will redirect to dashboard
+    return null; // Will redirect to dashboard
   }
 
   return (
@@ -48,13 +48,13 @@ export default function Home() {
             </div>
             <div className="flex space-x-4">
               <Link
-                href="/auth/login"
+                href="/signin"
                 className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
               >
                 Iniciar Sesión
               </Link>
               <Link
-                href="/auth/register"
+                href="/signup"
                 className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium"
               >
                 Registrarse
@@ -72,18 +72,19 @@ export default function Home() {
             <span className="text-blue-600"> inteligente</span>
           </h2>
           <p className="mt-6 text-xl text-gray-600 max-w-3xl mx-auto">
-            Una aplicación completa para planificar, gestionar y documentar todos tus vuelos.
-            Mantén el control de tus itinerarios, gastos y documentos en un solo lugar.
+            Una aplicación completa para planificar, gestionar y documentar
+            todos tus vuelos. Mantén el control de tus itinerarios, gastos y
+            documentos en un solo lugar.
           </p>
           <div className="mt-10 flex justify-center space-x-6">
             <Link
-              href="/auth/register"
+              href="/signup"
               className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg text-lg font-medium shadow-lg transform hover:scale-105 transition-all duration-200"
             >
               Comenzar Gratis
             </Link>
             <Link
-              href="/auth/login"
+              href="/signin"
               className="bg-white hover:bg-gray-50 text-gray-900 px-8 py-3 rounded-lg text-lg font-medium border border-gray-300 shadow-lg transform hover:scale-105 transition-all duration-200"
             >
               Iniciar Sesión
@@ -102,7 +103,8 @@ export default function Home() {
                 Autenticación Segura
               </h3>
               <p className="text-gray-600">
-                Sistema de autenticación robusto con protección de datos y recuperación de contraseña.
+                Sistema de autenticación robusto con protección de datos y
+                recuperación de contraseña.
               </p>
             </div>
 
@@ -114,7 +116,8 @@ export default function Home() {
                 Planificación Avanzada
               </h3>
               <p className="text-gray-600">
-                Crea itinerarios detallados con calendario interactivo y alertas programables.
+                Crea itinerarios detallados con calendario interactivo y alertas
+                programables.
               </p>
             </div>
 
@@ -126,7 +129,8 @@ export default function Home() {
                 Gestión Financiera
               </h3>
               <p className="text-gray-600">
-                Registra y categoriza gastos con informes detallados y gráficos interactivos.
+                Registra y categoriza gastos con informes detallados y gráficos
+                interactivos.
               </p>
             </div>
 
@@ -138,7 +142,8 @@ export default function Home() {
                 Documentación
               </h3>
               <p className="text-gray-600">
-                Editor de notas con formato Markdown y sistema de organización por etiquetas.
+                Editor de notas con formato Markdown y sistema de organización
+                por etiquetas.
               </p>
             </div>
           </div>
@@ -153,7 +158,7 @@ export default function Home() {
             Únete a miles de viajeros que ya confían en nuestra plataforma.
           </p>
           <Link
-            href="/auth/register"
+            href="/signup"
             className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg text-lg font-medium shadow-lg transform hover:scale-105 transition-all duration-200"
           >
             Crear Cuenta Gratuita
@@ -170,5 +175,5 @@ export default function Home() {
         </div>
       </footer>
     </div>
-  )
+  );
 }

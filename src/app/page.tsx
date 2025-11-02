@@ -159,7 +159,9 @@ export default function Home() {
           </p>
           <Link
             href="/signup"
-            className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg text-lg font-medium shadow-lg transform hover:scale-105 transition-all duration-200"
+            aria-label="Crear cuenta gratuita"
+            title="Crear cuenta gratuita"
+            className="inline-block bg-blue-600 text-white px-8 py-3 rounded-lg text-lg font-medium shadow-lg transition-transform duration-200 hover:bg-blue-700 hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
           >
             Crear Cuenta Gratuita
           </Link>

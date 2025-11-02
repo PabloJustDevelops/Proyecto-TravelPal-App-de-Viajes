@@ -1,32 +1,35 @@
 name: CI
+
 on:
   push:
-    branches: [ main ]
+    branches: ["**"]
   pull_request:
-    branches: [ main ]
+    branches: ["main"]
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-      NEXT_PUBLIC_LOG_LEVEL: ${{ secrets.NEXT_PUBLIC_LOG_LEVEL }}
     steps:
-      - uses: actions/checkout@v4
-      - name: Set default NEXT_PUBLIC_LOG_LEVEL when secret is missing
-        run: |
-          if [ -z "${{ secrets.NEXT_PUBLIC_LOG_LEVEL }}" ]; then
-            echo "NEXT_PUBLIC_LOG_LEVEL=warn" >> $GITHUB_ENV
-          else
-            echo "NEXT_PUBLIC_LOG_LEVEL=${{ secrets.NEXT_PUBLIC_LOG_LEVEL }}" >> $GITHUB_ENV
-          fi
-      - uses: actions/setup-node@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
           cache: 'npm'
-      - run: npm ci
-      - run: npm run lint
-      - run: npm test --if-present
-      - run: npm run build
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npm run type-check
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test (CI)
+        run: npm run test:ci
+
+      - name: Build
+        run: npm run build

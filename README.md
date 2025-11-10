@@ -216,4 +216,4 @@ Este proyecto está bajo la Licencia MIT. Ver `LICENSE` para más información.
 
 Pablo Rodríguez Garijo - [@PabloJustDevelops](https://github.com/PabloJustDevelops)
 
-Link del proyecto: [https://github.com/PabloJustDevelops/colaboracion-alejandro-app-viajes](https://github.com/PabloJustDevelops/colaboracion-alejandro-app-viajes)
+Link del proyecto: [https://github.com/PabloJustDevelops/Proyecto-TravelPal-App-de-Viajes](https://github.com/PabloJustDevelops/Proyecto-TravelPal-App-de-Viajes)

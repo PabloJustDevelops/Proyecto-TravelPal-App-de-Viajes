@@ -48,7 +48,7 @@ export default function DashboardPage() {
       const { data: trips } = await (signal ? tripsQuery.abortSignal(signal) : tripsQuery)
 
       const now = new Date()
-      const upcomingTrips = trips?.filter(trip => new Date(trip.departure_date) > now) || []
+      const upcomingTrips = trips?.filter((trip: Trip) => new Date(trip.departure_date) > now) || []
 
       // Get expenses stats
       const expensesQuery = supabase
@@ -59,7 +59,7 @@ export default function DashboardPage() {
 
       const { data: expenses } = await (signal ? expensesQuery.abortSignal(signal) : expensesQuery)
 
-      const totalExpenses = expenses?.reduce((sum, expense) => sum + expense.amount, 0) || 0
+      const totalExpenses = expenses?.reduce((sum: number, expense: Expense) => sum + expense.amount, 0) || 0
 
       // Get notes count
       const notesQuery = supabase

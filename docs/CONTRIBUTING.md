@@ -7,6 +7,7 @@
 ## 🚀 Primeros Pasos
 
 ### 📚 **Lectura Obligatoria**
+
 Antes de empezar, asegúrate de leer:
 
 - 📖 [`README.md`](../README.md) - Visión general del proyecto
@@ -14,6 +15,7 @@ Antes de empezar, asegúrate de leer:
 - 🏗️ [`docs/ARCHITECTURE.md`](./ARCHITECTURE.md) - Arquitectura del sistema
 
 ### ⚙️ **Configuración Inicial**
+
 1. **Fork** el repositorio
 2. **Clona** tu fork localmente
 3. **Configura** `.env.local` (ver `TECHNICAL.md`)
@@ -68,11 +70,11 @@ git commit -m "docs(readme): actualizar instrucciones de instalación"
 
 ### 🔍 **Antes de Hacer Push**
 
-| Verificación | Comando | Estado |
-|--------------|---------|--------|
-| **Lint sin errores** | `npm run lint` | ✅ Debe pasar |
-| **Tests funcionando** | `npm test` | ✅ Debe pasar |
-| **Build exitoso** | `npm run build` | ✅ Debe pasar |
+| Verificación                | Comando              | Estado           |
+| ---------------------------- | -------------------- | ---------------- |
+| **Lint sin errores**   | `npm run lint`     | ✅ Debe pasar    |
+| **Tests funcionando**  | `npm test`         | ✅ Debe pasar    |
+| **Build exitoso**      | `npm run build`    | ✅ Debe pasar    |
 | **Formato de código** | `npm run lint:fix` | 🔧 Auto-corregir |
 
 ### 📝 **Convenciones de Código**
@@ -97,6 +99,7 @@ npm run test:coverage
 ```
 
 **Requisitos de testing:**
+
 - ✅ Nuevas funcionalidades deben incluir tests
 - ✅ Coverage mínimo del 80%
 - ✅ Tests unitarios para lógica de negocio
@@ -172,16 +175,16 @@ Los reviewers verificarán:
 
 ## 🏷️ Sistema de Etiquetas
 
-| Etiqueta | Descripción | Color |
-|----------|-------------|-------|
-| `bug` | 🐛 Errores y problemas | `#d73a4a` |
-| `feature` | ✨ Nuevas funcionalidades | `#a2eeef` |
-| `enhancement` | 🚀 Mejoras a funcionalidades existentes | `#84b6eb` |
-| `documentation` | 📚 Mejoras en documentación | `#0075ca` |
-| `good first issue` | 👶 Ideal para nuevos contribuidores | `#7057ff` |
-| `help wanted` | 🙋 Se necesita ayuda | `#008672` |
-| `priority: high` | 🔥 Alta prioridad | `#b60205` |
-| `priority: low` | 🔽 Baja prioridad | `#0e8a16` |
+| Etiqueta             | Descripción                            | Color       |
+| -------------------- | --------------------------------------- | ----------- |
+| `bug`              | 🐛 Errores y problemas                  | `#d73a4a` |
+| `feature`          | ✨ Nuevas funcionalidades               | `#a2eeef` |
+| `enhancement`      | 🚀 Mejoras a funcionalidades existentes | `#84b6eb` |
+| `documentation`    | 📚 Mejoras en documentación            | `#0075ca` |
+| `good first issue` | 👶 Ideal para nuevos contribuidores     | `#7057ff` |
+| `help wanted`      | 🙋 Se necesita ayuda                    | `#008672` |
+| `priority: high`   | 🔥 Alta prioridad                       | `#b60205` |
+| `priority: low`    | 🔽 Baja prioridad                       | `#0e8a16` |
 
 ---
 
@@ -208,6 +211,7 @@ Los reviewers verificarán:
 ### 🏆 **Contribuidores**
 
 Todos los contribuidores son reconocidos en:
+
 - 📄 README principal del proyecto
 - 🎖️ Sección de contribuidores en GitHub
 - 📊 All Contributors bot (próximamente)

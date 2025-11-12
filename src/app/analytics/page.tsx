@@ -264,7 +264,7 @@ export default function AnalyticsPage() {
         <div className="text-center py-12">
           <h3 className="text-lg font-semibold text-gray-900">Inicia sesión para ver el análisis</h3>
           <p className="mt-1 text-sm text-gray-500">La sección de análisis requiere autenticación.</p>
-          <Button className="mt-4" onClick={() => (window.location.href = '/login')}>Ir a Login</Button>
+          <Button className="mt-4" onClick={() => (window.location.href = '/signin')}>Ir a Login</Button>
         </div>
       </DashboardLayout>
     )

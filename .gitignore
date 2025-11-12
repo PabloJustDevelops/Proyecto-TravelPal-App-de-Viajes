@@ -42,3 +42,9 @@ yarn-error.log*
 next-env.d.ts
 
 .vercel
+
+# Testsprite
+# Ignora directorio temporal y artefactos generados por la herramienta de pruebas
+testsprite_tests/tmp/
+testsprite_tests/standard_prd.json
+testsprite_tests/testsprite_frontend_test_plan.json

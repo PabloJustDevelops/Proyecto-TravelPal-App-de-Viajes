@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import { AuthProvider } from '@/contexts/AuthContext'
@@ -12,8 +12,13 @@ export const metadata: Metadata = {
   description: 'Aplicación completa para la gestión de viajes, gastos y planificación',
   keywords: 'viajes, gastos, planificación, presupuesto, itinerario',
   authors: [{ name: 'Travel Management App' }],
-  viewport: 'width=device-width, initial-scale=1',
   robots: 'index, follow',
+}
+
+// En Next.js App Router, `viewport` debe exportarse por separado y como objeto
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
 }
 
 export default function RootLayout({

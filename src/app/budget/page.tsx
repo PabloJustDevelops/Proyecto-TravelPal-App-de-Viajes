@@ -38,6 +38,13 @@ interface Budget {
   updated_at: string
 }
 
+interface BudgetWithTrip extends Budget {
+  trips?: {
+    id: string
+    title: string
+  }
+}
+
 interface Trip {
   id: string
   title: string
@@ -143,8 +150,8 @@ export default function BudgetPage() {
       if (expensesError) throw expensesError
 
       // Calculate spent amounts for each budget
-      const budgetsWithSpent = budgetsData?.map(budget => {
-        const budgetExpenses = expensesData?.filter(expense => {
+      const budgetsWithSpent = budgetsData?.map((budget: BudgetWithTrip) => {
+        const budgetExpenses = expensesData?.filter((expense: Expense) => {
           const expenseDate = new Date(expense.date)
           const budgetStart = new Date(budget.start_date)
           const budgetEnd = new Date(budget.end_date)
@@ -156,7 +163,7 @@ export default function BudgetPage() {
           return dateInRange && categoryMatch && tripMatch && expense.currency === budget.currency
         }) || []
 
-        const spentAmount = budgetExpenses.reduce((sum, expense) => sum + expense.amount, 0)
+        const spentAmount = budgetExpenses.reduce((sum: number, expense: Expense) => sum + expense.amount, 0)
 
         return {
           ...budget,
@@ -204,7 +211,7 @@ export default function BudgetPage() {
         <div className="text-center py-12">
           <h3 className="text-lg font-semibold text-gray-900">Inicia sesión para gestionar tus presupuestos</h3>
           <p className="mt-1 text-sm text-gray-500">La sección de presupuesto requiere autenticación.</p>
-          <Button className="mt-4" onClick={() => (window.location.href = '/login')}>Ir a Login</Button>
+          <Button className="mt-4" onClick={() => (window.location.href = '/signin')}>Ir a Login</Button>
         </div>
       </DashboardLayout>
     )

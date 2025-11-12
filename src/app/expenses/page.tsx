@@ -18,6 +18,7 @@ import {
 import { formatCurrency } from '@/lib/utils'
 import Link from 'next/link'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
+import { logger } from '@/lib/logger'
 
 export default function ExpensesPage() {
   const { user } = useAuth()
@@ -176,7 +177,7 @@ export default function ExpensesPage() {
         <div className="text-center py-12">
           <h3 className="text-lg font-semibold text-gray-900">Inicia sesión para ver tus gastos</h3>
           <p className="mt-1 text-sm text-gray-500">La sección de gastos requiere autenticación.</p>
-          <Link href="/login">
+          <Link href="/signin">
             <Button className="mt-4">Ir a Login</Button>
           </Link>
         </div>

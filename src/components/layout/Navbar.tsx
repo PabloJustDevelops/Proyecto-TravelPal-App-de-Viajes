@@ -32,7 +32,7 @@ export default function Navbar({ navigation }: NavbarProps) {
 
   const handleSignOut = async () => {
     await signOut()
-    router.replace('/auth/login')
+    router.replace('/signin')
   }
 
   return (

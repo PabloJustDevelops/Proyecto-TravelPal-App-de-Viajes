@@ -1,106 +1,110 @@
 {
   "tech_stack": [
     "TypeScript",
-    "Next.js (App Router)",
+    "Next.js",
     "React",
-    "Supabase (Auth + Postgres)",
-    "Tailwind CSS",
+    "Supabase (PostgreSQL)",
     "Zod",
-    "react-hook-form",
-    "Heroicons",
-    "Turbopack"
+    "Jest",
+    "ESLint",
+    "PostCSS"
   ],
   "features": [
     {
-      "name": "Autenticación (servicio)",
-      "description": "Servicio de autenticación y perfil sobre Supabase: registro, login, logout, recuperación y actualización de perfil.",
+      "name": "Autenticación (UI y contexto)",
+      "description": "Pantallas y contexto de autenticación para iniciar sesión y proteger vistas.",
       "files": [
-        "src/lib/auth.ts",
-        "src/lib/supabase.ts"
+        "src/app/auth",
+        "src/app/login",
+        "src/contexts/AuthContext.tsx",
+        "src/lib/auth.ts"
       ]
     },
     {
-      "name": "Contexto de Autenticación",
-      "description": "Contexto React para estado de usuario, carga y acciones (signIn, signUp, signOut, resetPassword, updateProfile).",
+      "name": "Protección de rutas y middleware",
+      "description": "Middleware de Next para validar sesión y redirigir.",
       "files": [
-        "src/contexts/AuthContext.tsx"
-      ]
-    },
-    {
-      "name": "Protección de Rutas",
-      "description": "Componente para proteger rutas y redirigir a login si no hay usuario.",
-      "files": [
-        "src/components/auth/ProtectedRoute.tsx"
-      ]
-    },
-    {
-      "name": "Formularios de Auth",
-      "description": "Login/Register/ForgotPassword con validación (zod + react-hook-form).",
-      "files": [
-        "src/components/auth/LoginForm.tsx",
-        "src/components/auth/RegisterForm.tsx",
-        "src/components/auth/ForgotPasswordForm.tsx"
-      ]
-    },
-    {
-      "name": "Navbar y Layout",
-      "description": "Barra de navegación con enlaces, notificaciones, botón Nuevo Viaje y menú de perfil con fallback de avatar.",
-      "files": [
-        "src/components/layout/Navbar.tsx",
-        "src/components/layout/DashboardLayout.tsx",
+        "src/middleware.ts",
         "src/app/layout.tsx"
       ]
     },
     {
-      "name": "Sistema de Notificaciones",
-      "description": "Panel de notificaciones con contador y acciones (marcar/desechar), integrado con Supabase (tabla alerts).",
+      "name": "Cliente Supabase (user) y Admin (Service Role)",
+      "description": "Inicialización de cliente Supabase para cliente y Service Role para servidor.",
       "files": [
-        "src/components/notifications/NotificationSystem.tsx"
+        "src/lib/supabase.ts",
+        "src/lib/supabase-admin.ts",
+        "src/lib/supabase-functions.ts",
+        "src/lib/supabase-schema.sql",
+        "supabase-schema.sql",
+        "supabase-schema-fixed.sql"
       ]
     },
     {
-      "name": "Utilidades de Supabase (funciones)",
-      "description": "Funciones CRUD para bookings, itinerary_activities, reminders y calendar_events.",
+      "name": "Integración Amadeus y servicio de vuelos",
+      "description": "Gestión de OAuth, caché de tokens y búsqueda de ofertas de vuelo.",
       "files": [
-        "src/lib/supabase-functions.ts"
+        "src/lib/amadeus.ts",
+        "src/lib/flightService.ts",
+        "src/app/api/flights/search/route.ts"
       ]
     },
     {
-      "name": "Logger Centralizado",
-      "description": "Utilitario de logging con niveles y control por entorno (NEXT_PUBLIC_LOG_LEVEL).",
+      "name": "Página de Trips",
+      "description": "Listado y navegación de viajes, manejo de estados y login.",
       "files": [
-        "src/lib/logger.ts"
+        "src/app/trips/page.tsx",
+        "src/components/trips"
       ]
     },
     {
-      "name": "Utilidades comunes",
-      "description": "Helpers de formato (fecha, moneda), debounce y validaciones.",
+      "name": "Página de Expenses",
+      "description": "Visualización y filtrado de gastos por viaje y categoría.",
       "files": [
-        "src/lib/utils.ts"
+        "src/app/expenses/page.tsx",
+        "src/components/expenses"
       ]
     },
     {
-      "name": "Métricas de rendimiento",
-      "description": "Utilidades para medir performance con control de salida por nivel de log.",
+      "name": "Dashboard y landing",
+      "description": "Resumen principal y comportamiento de la raíz/landing.",
       "files": [
+        "src/app/dashboard/page.tsx",
+        "src/app/page.tsx"
+      ]
+    },
+    {
+      "name": "Notas y planificación",
+      "description": "Secciones de notas y planificación diaria.",
+      "files": [
+        "src/app/notes",
+        "src/app/planning",
+        "src/components/notes",
+        "src/components/planning"
+      ]
+    },
+    {
+      "name": "Analytics",
+      "description": "Vistas y utilidades de analítica dentro de la app.",
+      "files": [
+        "src/app/analytics",
         "src/utils/performance.ts"
       ]
     },
     {
-      "name": "Páginas App Router",
-      "description": "Entradas de App Router para dashboard, planning, expenses, budget, analytics, notes, alerts y auth.",
+      "name": "Logger y Toast",
+      "description": "Utilidades de logging y notificaciones toast.",
       "files": [
-        "src/app/page.tsx",
-        "src/app/dashboard/page.tsx",
-        "src/app/planning/page.tsx",
-        "src/app/expenses/page.tsx",
-        "src/app/budget/page.tsx",
-        "src/app/analytics/page.tsx",
-        "src/app/notes/page.tsx",
-        "src/app/alerts/page.tsx",
-        "src/app/auth/login/page.tsx",
-        "src/app/auth/register/page.tsx",
-        "src/app/auth/forgot-password/page.tsx"
+        "src/lib/logger.ts",
+        "src/lib/toast.ts"
+      ]
+    },
+    {
+      "name": "UI común y componentes",
+      "description": "Componentes comunes y UI compartida.",
+      "files": [
+        "src/components/ui",
+        "src/components/common"
       ]
     }
   ]

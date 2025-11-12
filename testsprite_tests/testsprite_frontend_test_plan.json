@@ -1,477 +1,619 @@
 [
   {
     "id": "TC001",
-    "title": "Registro de usuario exitoso",
-    "description": "Verificar que un nuevo usuario pueda registrarse con datos válidos y ser redirigido correctamente.",
+    "title": "User Registration Success",
+    "description": "Verify that a new user can register successfully with valid input data.",
     "category": "functional",
     "priority": "High",
     "steps": [
       {
         "type": "action",
-        "description": "Navegar a la página de registro."
+        "description": "Navigate to the registration page (/auth/register)."
       },
       {
         "type": "action",
-        "description": "Ingresar datos válidos en todos los campos obligatorios."
+        "description": "Input valid username, email, password, and confirm password."
       },
       {
         "type": "action",
-        "description": "Enviar el formulario de registro."
+        "description": "Click the register button."
       },
       {
         "type": "assertion",
-        "description": "Verificar que la cuenta se crea correctamente y que el usuario es redirigido al dashboard o página de login."
+        "description": "Verify registration is successful and user is redirected to the dashboard (/dashboard)."
       }
     ]
   },
   {
     "id": "TC002",
-    "title": "Registro con datos inválidos muestra errores claros",
-    "description": "Validar que errores claros y normalizados son mostrados cuando se ingresan datos inválidos en el formulario de registro.",
+    "title": "User Registration with Invalid Email",
+    "description": "Verify that registration fails with an invalid email format.",
     "category": "error handling",
     "priority": "High",
     "steps": [
       {
         "type": "action",
-        "description": "Navegar a la página de registro."
+        "description": "Navigate to the registration page."
       },
       {
         "type": "action",
-        "description": "Ingresar datos inválidos o incompletos (email mal formado, password débil, campos vacíos)."
+        "description": "Input valid username and password but an invalid email format."
       },
       {
         "type": "action",
-        "description": "Intentar enviar el formulario."
+        "description": "Attempt to register."
       },
       {
         "type": "assertion",
-        "description": "Verificar que se muestran mensajes de error claros que explican las correcciones necesarias."
+        "description": "Verify error message is displayed for invalid email and registration is blocked."
       }
     ]
   },
   {
     "id": "TC003",
-    "title": "Inicio de sesión exitoso con credenciales válidas",
-    "description": "Comprobar que un usuario válido puede iniciar sesión correctamente y es redirigido al dashboard.",
+    "title": "User Login Success",
+    "description": "Verify that a registered user can login successfully with correct credentials.",
     "category": "functional",
     "priority": "High",
     "steps": [
       {
         "type": "action",
-        "description": "Navegar a la página de login."
+        "description": "Navigate to the login page (/auth/login)."
       },
       {
         "type": "action",
-        "description": "Ingresar credenciales válidas (email y contraseña)."
+        "description": "Enter valid email and password."
       },
       {
         "type": "action",
-        "description": "Presionar el botón de iniciar sesión."
+        "description": "Click the login button."
       },
       {
         "type": "assertion",
-        "description": "Verificar que el usuario es autenticado y redirigido al dashboard."
+        "description": "Verify user is authenticated and redirected to dashboard (/dashboard)."
       }
     ]
   },
   {
     "id": "TC004",
-    "title": "Inicio de sesión con credenciales inválidas muestra error",
-    "description": "Verificar que al intentar iniciar sesión con credenciales incorrectas se muestra un mensaje de error normalizado y claro.",
+    "title": "User Login Failure - Incorrect Password",
+    "description": "Verify that login fails when the password is incorrect.",
     "category": "error handling",
     "priority": "High",
     "steps": [
       {
         "type": "action",
-        "description": "Navegar a la página de login."
+        "description": "Navigate to the login page."
       },
       {
         "type": "action",
-        "description": "Ingresar un email registrado con una contraseña incorrecta."
+        "description": "Enter valid email and incorrect password."
       },
       {
         "type": "action",
-        "description": "Intentar iniciar sesión."
+        "description": "Click the login button."
       },
       {
         "type": "assertion",
-        "description": "Comprobar que aparece un mensaje de error claro indicando fallo en la autenticación."
+        "description": "Verify error message is shown and user is not authenticated."
       }
     ]
   },
   {
     "id": "TC005",
-    "title": "Recuperación de contraseña con email válido",
-    "description": "Validar que al solicitar recuperación de contraseña con un email registrado se muestra mensaje de éxito y se inicia proceso de envío de enlace.",
+    "title": "Password Recovery Flow",
+    "description": "Verify that password recovery can be initiated and reset emails are sent appropriately.",
     "category": "functional",
     "priority": "High",
     "steps": [
       {
         "type": "action",
-        "description": "Navegar a la página de recuperación de contraseña."
+        "description": "Navigate to the password recovery page (/auth/recover)."
       },
       {
         "type": "action",
-        "description": "Ingresar un email válido registrado en el sistema."
+        "description": "Enter a registered email address."
       },
       {
         "type": "action",
-        "description": "Enviar solicitud de recuperación."
+        "description": "Submit the recovery request."
       },
       {
         "type": "assertion",
-        "description": "Verificar que se muestra mensaje de éxito notificando que se ha enviado un enlace a ese email."
+        "description": "Verify confirmation message about email sent appears."
+      },
+      {
+        "type": "action",
+        "description": "Use the password reset link from email to navigate to reset page."
+      },
+      {
+        "type": "action",
+        "description": "Input valid new password and confirm password."
+      },
+      {
+        "type": "action",
+        "description": "Submit password reset."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify password reset success message and ability to login with new password."
       }
     ]
   },
   {
     "id": "TC006",
-    "title": "Recuperación de contraseña con email inválido muestra error",
-    "description": "Comprobar que al ingresar un email no registrado o inválido en recuperación de contraseña se muestra un mensaje de error claro.",
-    "category": "error handling",
-    "priority": "High",
+    "title": "Dashboard Loads with No Trips",
+    "description": "Verify that dashboard loads correctly and shows appropriate messages or empty states when the user has no upcoming trips.",
+    "category": "functional",
+    "priority": "Medium",
     "steps": [
       {
         "type": "action",
-        "description": "Navegar a la página de recuperación de contraseña."
+        "description": "Login with a user account that has no trips."
       },
       {
         "type": "action",
-        "description": "Ingresar un email no registrado o formato inválido."
-      },
-      {
-        "type": "action",
-        "description": "Enviar solicitud."
+        "description": "Navigate to the dashboard (/dashboard)."
       },
       {
         "type": "assertion",
-        "description": "Comprobar que aparece un mensaje claro y normalizado indicando el error."
+        "description": "Verify dashboard renders without errors and displays message indicating no upcoming trips."
       }
     ]
   },
   {
     "id": "TC007",
-    "title": "Logout redirige a página de login",
-    "description": "Verificar que al hacer logout el usuario es desautenticado y redirigido a la página de login.",
+    "title": "Create New Trip",
+    "description": "Verify that a user can create a new trip with valid input data and that the trip is persisted and visible in the trips list.",
     "category": "functional",
     "priority": "High",
     "steps": [
       {
         "type": "action",
-        "description": "Iniciar sesión con un usuario válido."
+        "description": "Login and navigate to the trips module (/trips)."
       },
       {
         "type": "action",
-        "description": "Ejecutar la acción de logout."
+        "description": "Click on create new trip."
+      },
+      {
+        "type": "action",
+        "description": "Fill in required trip details including destination, dates, and notes."
+      },
+      {
+        "type": "action",
+        "description": "Submit the new trip."
       },
       {
         "type": "assertion",
-        "description": "Comprobar que el usuario es redirigido a la página de login y ya no tiene acceso a rutas protegidas."
+        "description": "Verify the new trip appears in the trips list with correct details."
       }
     ]
   },
   {
     "id": "TC008",
-    "title": "Protección de rutas para usuarios no autenticados",
-    "description": "Confirmar que todas las rutas internas están protegidas y redirigen a login si el usuario no está autenticado.",
-    "category": "security",
+    "title": "Edit Existing Trip",
+    "description": "Verify that a user can edit existing trip details, save changes and the updates are reflected properly.",
+    "category": "functional",
     "priority": "High",
     "steps": [
       {
         "type": "action",
-        "description": "Intentar acceder a páginas internas sin sesión activa."
+        "description": "Login and navigate to trips list."
+      },
+      {
+        "type": "action",
+        "description": "Select an existing trip to edit."
+      },
+      {
+        "type": "action",
+        "description": "Modify trip details and save changes."
       },
       {
         "type": "assertion",
-        "description": "Verificar que el sistema redirige automáticamente a la página de login."
+        "description": "Verify updated trip details persist and are accurately displayed."
       }
     ]
   },
   {
     "id": "TC009",
-    "title": "Dashboard muestra resumen actualizado",
-    "description": "Comprobar que el dashboard presenta las métricas de usuario, próximos viajes, actividades y alertas reflejando datos actuales.",
+    "title": "Filter and Sort Trips",
+    "description": "Verify that trips can be filtered by date, destination, or status and sorted properly in ascending and descending order.",
     "category": "functional",
-    "priority": "High",
+    "priority": "Medium",
     "steps": [
       {
         "type": "action",
-        "description": "Iniciar sesión y navegar al dashboard."
+        "description": "Navigate to trips listing page."
+      },
+      {
+        "type": "action",
+        "description": "Apply filters: by date range, destination keyword, and trip status."
+      },
+      {
+        "type": "action",
+        "description": "Change sorting between ascending and descending for each column."
       },
       {
         "type": "assertion",
-        "description": "Verificar que se muestran correctamente el resumen de métricas, próximos viajes y alertas actualizadas."
+        "description": "Verify that the trips list updates correctly according to filter and sorting criteria."
       }
     ]
   },
   {
     "id": "TC010",
-    "title": "Creación, edición y listado de viajes funciona correctamente",
-    "description": "Validar la funcionalidad CRUD para viajes incluyendo creación, edición, filtrado y ordenación en la lista.",
+    "title": "Add, Edit and Remove Daily Activities",
+    "description": "Verify that activities can be created, modified and deleted within the daily planning module linked to specific trips.",
     "category": "functional",
     "priority": "High",
     "steps": [
       {
         "type": "action",
-        "description": "Crear un nuevo viaje completando todos los campos obligatorios."
-      },
-      {
-        "type": "assertion",
-        "description": "Verificar que el viaje creado aparece listado y con datos correctos."
+        "description": "Navigate to planning module for a selected trip."
       },
       {
         "type": "action",
-        "description": "Editar detalles de un viaje existente y guardar cambios."
+        "description": "Add a new activity with time, description and linked reservation."
       },
       {
         "type": "assertion",
-        "description": "Comprobar que los cambios se reflejan correctamente en la lista."
+        "description": "Verify the activity is present with correct details."
       },
       {
         "type": "action",
-        "description": "Aplicar filtros por fecha y estado en la lista de viajes."
+        "description": "Edit the activity's details."
       },
       {
         "type": "assertion",
-        "description": "Verificar que solo se muestran los viajes que cumplen con los criterios aplicados."
+        "description": "Confirm that the updated activity information is saved and displayed."
+      },
+      {
+        "type": "action",
+        "description": "Delete the activity."
+      },
+      {
+        "type": "assertion",
+        "description": "Ensure the activity is removed from the list."
       }
     ]
   },
   {
     "id": "TC011",
-    "title": "Planificación diaria muestra actividades, reservas y recordatorios",
-    "description": "Confirmar que la planificación permite crear, editar y mostrar actividades diarias, reservas vinculadas y gestión de recordatorios correctamente.",
+    "title": "Register and Categorize Expenses per Trip",
+    "description": "Verify that the user can add expenses linked to a trip with proper category assignment, currency selection and amount, and that totals are updated.",
     "category": "functional",
     "priority": "High",
     "steps": [
       {
         "type": "action",
-        "description": "Acceder al módulo de planificación."
+        "description": "Navigate to expenses page for a specific trip."
       },
       {
         "type": "action",
-        "description": "Crear nuevas actividades diarias con y sin reservas vinculadas."
-      },
-      {
-        "type": "action",
-        "description": "Agregar recordatorios a actividades."
+        "description": "Add a new expense with category, description, amount and currency."
       },
       {
         "type": "assertion",
-        "description": "Verificar que todas las actividades, reservas y recordatorios aparecen ordenados y se pueden editar o eliminar correctamente."
+        "description": "Verify that the expense appears in the list and totals are recalculated."
       }
     ]
   },
   {
     "id": "TC012",
-    "title": "Gestión de gastos: creación y visualización con totales",
-    "description": "Probar que los gastos pueden ser creados con categorías y monedas, y se visualizan correctamente con totales por viaje.",
+    "title": "View Budget Analytics and Expense Breakdown",
+    "description": "Verify the budget visualization component renders correctly with graphs and expenses analysis per category.",
     "category": "functional",
-    "priority": "High",
+    "priority": "Medium",
     "steps": [
       {
         "type": "action",
-        "description": "Acceder a la sección de gastos."
-      },
-      {
-        "type": "action",
-        "description": "Crear gastos con diferentes categorías y monedas."
+        "description": "Navigate to the budget/analytics page."
       },
       {
         "type": "assertion",
-        "description": "Verificar que los gastos se muestran correctamente listados y que los totales agrupados por categoría y moneda son calculados adecuadamente."
+        "description": "Ensure budget graphs load with correct data and are responsive."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify expense breakdown by category matches recorded expenses."
       }
     ]
   },
   {
     "id": "TC013",
-    "title": "Visualización y análisis básico de presupuesto por viaje",
-    "description": "Confirmar que el presupuesto por viaje se presenta con gráficos simples y métricas claras basadas en gastos registrados.",
+    "title": "CRUD Notes with Tags and Favorites",
+    "description": "Verify user can create, read, update and delete notes and organize notes via tags and mark notes as favorites.",
     "category": "functional",
     "priority": "Medium",
     "steps": [
       {
         "type": "action",
-        "description": "Navegar a la sección de presupuesto y análisis."
+        "description": "Navigate to notes section."
+      },
+      {
+        "type": "action",
+        "description": "Create a new note with title, content and assign tags."
       },
       {
         "type": "assertion",
-        "description": "Verificar que los gráficos muestran el presupuesto versus gastos actuales y que los datos se actualizan con la información ingresada."
+        "description": "Verify the new note appears with correct tags."
+      },
+      {
+        "type": "action",
+        "description": "Edit the note content and tags."
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm updated note reflects changes correctly."
+      },
+      {
+        "type": "action",
+        "description": "Mark the note as favorite."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the note appears in favorites filter."
+      },
+      {
+        "type": "action",
+        "description": "Delete the note."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the note is removed from the notes list."
       }
     ]
   },
   {
     "id": "TC014",
-    "title": "Notas CRUD completo con etiquetado y marcado favorito",
-    "description": "Verificar que se pueden crear, editar, eliminar notas, asignar etiquetas y marcar/desmarcar favoritas en el sistema de notas.",
+    "title": "Notification Panel - Display, Mark as Read, and Dismiss",
+    "description": "Verify the alerts panel shows notifications, updates counter correctly, allows marking notifications as read and dismissing them.",
     "category": "functional",
     "priority": "Medium",
     "steps": [
       {
         "type": "action",
-        "description": "Crear una nueva nota con título, contenido y etiquetas."
-      },
-      {
-        "type": "assertion",
-        "description": "Verificar que la nota aparece en la lista con las etiquetas asignadas."
+        "description": "Trigger or wait for new notifications."
       },
       {
         "type": "action",
-        "description": "Editar una nota existente y guardar los cambios."
+        "description": "Open the alerts panel."
       },
       {
         "type": "assertion",
-        "description": "Comprobar que los cambios son reflejados correctamente."
+        "description": "Verify notifications are listed with unread indicator and counter is accurate."
       },
       {
         "type": "action",
-        "description": "Marcar una nota como favorita y verificar su estado."
+        "description": "Mark one or more notifications as read."
       },
       {
         "type": "assertion",
-        "description": "Confirmar que la nota aparece señalada como favorita."
+        "description": "Confirm unread counters update and notifications visually change state."
       },
       {
         "type": "action",
-        "description": "Eliminar una nota."
+        "description": "Dismiss one or multiple notifications."
       },
       {
         "type": "assertion",
-        "description": "Verificar que la nota desaparece de la lista."
+        "description": "Verify dismissed notifications disappear and are not shown again."
       }
     ]
   },
   {
     "id": "TC015",
-    "title": "Sistema de alertas y notificaciones con contador y acciones",
-    "description": "Probar que las notificaciones se cargan, el contador funciona correctamente, y que se pueden marcar como leídas o descartar desde el panel desplegable.",
-    "category": "functional",
+    "title": "Route Protection and Authentication Middleware",
+    "description": "Verify that private routes are protected and properly redirect unauthenticated users to login, and authenticated users have access without interruption.",
+    "category": "security",
     "priority": "High",
     "steps": [
       {
         "type": "action",
-        "description": "Generar varias notificaciones pendientes."
+        "description": "Attempt to access protected route (/dashboard) without authentication."
       },
       {
         "type": "assertion",
-        "description": "Verificar que el contador muestra la cantidad correcta de notificaciones no leídas."
+        "description": "Verify user is redirected to login page (/auth)."
       },
       {
         "type": "action",
-        "description": "Abrir el panel de notificaciones."
+        "description": "Login with valid credentials."
       },
       {
         "type": "action",
-        "description": "Marcar una o varias notificaciones como leídas y descartar otras."
+        "description": "Access the protected route again."
       },
       {
         "type": "assertion",
-        "description": "Comprobar que las notificaciones seleccionadas son actualizadas correctamente y el contador se actualiza."
+        "description": "Verify user can access the protected route and content loads correctly."
       }
     ]
   },
   {
     "id": "TC016",
-    "title": "Logging centralizado refleja niveles configurables y métricas",
-    "description": "Validar que el sistema de logging centralizado responde a la configuración de niveles y registra eventos y métricas de rendimiento según el nivel definido.",
+    "title": "Logout Functionality",
+    "description": "Verify that a logged-in user can logout successfully and is redirected to the login or landing page.",
     "category": "functional",
-    "priority": "Medium",
+    "priority": "High",
     "steps": [
       {
         "type": "action",
-        "description": "Configurar diferentes niveles de logging (error, warn, info, debug)."
+        "description": "Login to the application."
       },
       {
         "type": "action",
-        "description": "Ejecutar acciones en la aplicación que produzcan logs de distintos niveles."
+        "description": "Open the profile menu."
+      },
+      {
+        "type": "action",
+        "description": "Click the logout button."
       },
       {
         "type": "assertion",
-        "description": "Verificar que solo los eventos correspondientes al nivel configurado son registrados y que métricas de rendimiento son capturadas adecuadamente."
+        "description": "Verify user session is cleared and user is redirected to the login page (/auth)."
       }
     ]
   },
   {
     "id": "TC017",
-    "title": "Navegación responsive y accesible en navbar y módulos",
-    "description": "Comprobar que la barra de navegación y cambios entre módulos funcionan correctamente en diferentes dispositivos y cumplen criterios de accesibilidad.",
-    "category": "ui",
-    "priority": "Medium",
+    "title": "Amadeus Flight Search Integration",
+    "description": "Verify the flight search functionality calls Amadeus API, handles OAuth token correctly, caches token, and displays search results properly.",
+    "category": "integration",
+    "priority": "High",
     "steps": [
       {
         "type": "action",
-        "description": "Abrir la aplicación en dispositivos y resoluciones variadas (móvil, tablet, desktop)."
+        "description": "Navigate to flight search page or module."
       },
       {
         "type": "action",
-        "description": "Navegar mediante la barra navbar hacia módulos: Dashboard, Viajes, Planificación, Gastos, Presupuesto, Análisis, Notas, Alertas."
+        "description": "Enter valid flight search parameters (origin, destination, dates)."
+      },
+      {
+        "type": "action",
+        "description": "Submit the flight search request."
       },
       {
         "type": "assertion",
-        "description": "Verificar que la navegación es fluida, elementos visibles y usables, y que cumplen con estándares de accesibilidad (teclado, lector de pantalla)."
+        "description": "Verify API calls to Amadeus succeed and token caching mechanics are triggered."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify search results are displayed with correct flight details in UI."
+      },
+      {
+        "type": "assertion",
+        "description": "Handle and display error messages gracefully if API returns errors or invalid responses."
       }
     ]
   },
   {
     "id": "TC018",
-    "title": "Gestión de viajes: manejo de filtros con valores límites y sin resultados",
-    "description": "Probar filtros de viajes con rangos en límites (fechas extremas) y escenarios donde no existan viajes que cumplan para validar manejo correcto.",
-    "category": "error handling",
+    "title": "UI Responsiveness and Accessibility",
+    "description": "Verify that all main app pages and components render responsively on different screen sizes and support keyboard navigation and ARIA roles.",
+    "category": "ui",
     "priority": "Medium",
     "steps": [
       {
         "type": "action",
-        "description": "Aplicar filtros con fechas en el límite inferior y superior válidos."
+        "description": "Open the app pages (dashboard, trips, planning, expenses, notes, alerts) on desktop, tablet, and mobile viewport sizes."
       },
       {
         "type": "assertion",
-        "description": "Confirmar que los viajes filtrados cumplen el criterio correctamente."
+        "description": "Verify layout adjusts correctly without overlapping or clipping content."
       },
       {
         "type": "action",
-        "description": "Aplicar filtros con criterios que no devuelvan ningún viaje."
+        "description": "Test keyboard navigation throughout pages and components."
       },
       {
         "type": "assertion",
-        "description": "Verificar que se muestra un mensaje adecuado indicando ausencia de resultados."
+        "description": "Ensure focus states are visible, tab order is logical, and ARIA roles are present and correct."
       }
     ]
   },
   {
     "id": "TC019",
-    "title": "Planificación diaria: creación de actividades con datos inválidos",
-    "description": "Comprobar que el sistema valida correctamente los datos al crear actividades diarias y notifica errores claros con campos inválidos o faltantes.",
-    "category": "error handling",
+    "title": "Profile Update and Validation",
+    "description": "Verify that authenticated users can update their profile information with valid input and changes persist.",
+    "category": "functional",
     "priority": "Medium",
     "steps": [
       {
         "type": "action",
-        "description": "Intentar crear una actividad diaria sin completar campos obligatorios o con datos erróneos."
+        "description": "Login and open profile settings."
+      },
+      {
+        "type": "action",
+        "description": "Update profile fields such as name, email, and password."
+      },
+      {
+        "type": "action",
+        "description": "Submit profile updates."
       },
       {
         "type": "assertion",
-        "description": "Verificar que el sistema muestra mensajes de error claros y evita guardar la actividad hasta corregir los datos."
+        "description": "Verify updates are saved and reflected in UI."
+      },
+      {
+        "type": "action",
+        "description": "Attempt to update with invalid data such as malformed email."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify error messages appear and invalid submission is rejected."
       }
     ]
   },
   {
     "id": "TC020",
-    "title": "Gastos: manejo de moneda y categorización no permitidas",
-    "description": "Verificar que al ingresar una moneda no soportada o categoría inválida para un gasto, se muestra error y no permite guardar el registro.",
-    "category": "error handling",
+    "title": "Performance - Dashboard Load Time",
+    "description": "Verify that dashboard loads within acceptable performance thresholds (e.g., under 2 seconds) with a typical user dataset.",
+    "category": "performance",
     "priority": "Medium",
     "steps": [
       {
         "type": "action",
-        "description": "Crear un gasto y seleccionar una moneda o categoría no contemplada en la lista."
+        "description": "Login with a user having multiple trips, expenses, notes and notifications."
       },
       {
         "type": "action",
-        "description": "Intentar guardar el gasto."
+        "description": "Measure page load time of dashboard (/dashboard)."
       },
       {
         "type": "assertion",
-        "description": "Confirmar que el sistema bloquea la acción y presenta un mensaje explicativo sobre la selecciones inválidas."
+        "description": "Ensure dashboard loads completely within defined time limits."
+      }
+    ]
+  },
+  {
+    "id": "TC021",
+    "title": "Error Handling on API Failure",
+    "description": "Verify the application properly handles backend API failures such as network errors or server errors with user-friendly feedback.",
+    "category": "error handling",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Simulate backend API failure (e.g., 500 Internal Server Error) during trips fetch."
+      },
+      {
+        "type": "action",
+        "description": "Navigate to trips page."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify appropriate error message is shown, UI remains stable without crash."
+      }
+    ]
+  },
+  {
+    "id": "TC022",
+    "title": "Logging Levels and Metrics Visibility",
+    "description": "Verify that logging occurs at different levels, and visibility of logs and metrics matches configuration for authorized users only.",
+    "category": "security",
+    "priority": "Low",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Configure logging level to INFO."
+      },
+      {
+        "type": "action",
+        "description": "Perform app operations to generate logs."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify INFO and above logs are recorded and viewable only by authorized users."
+      },
+      {
+        "type": "action",
+        "description": "Change logging level to ERROR."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify only ERROR-level logs are recorded and visible."
       }
     ]
   }

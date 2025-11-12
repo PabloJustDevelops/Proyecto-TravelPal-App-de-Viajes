@@ -102,7 +102,7 @@ export default function TripsPage() {
         <div className="text-center py-12">
           <h3 className="text-lg font-semibold text-gray-900">Inicia sesión para ver tus viajes</h3>
           <p className="mt-1 text-sm text-gray-500">La sección de viajes requiere autenticación.</p>
-          <Link href="/login">
+          <Link href="/signin">
             <Button className="mt-4">Ir a Login</Button>
           </Link>
         </div>

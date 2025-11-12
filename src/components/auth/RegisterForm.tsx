@@ -60,7 +60,7 @@ export default function RegisterForm() {
       await signUp(data.email, data.password, data.fullName)
       setSuccess(true)
       setTimeout(() => {
-        router.replace('/auth/login')
+        router.replace('/signin')
       }, 2000)
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -109,7 +109,7 @@ export default function RegisterForm() {
           <p className="mt-2 text-center text-sm text-gray-600">
             O{' '}
             <Link
-              href="/auth/login"
+              href="/signin"
               className="font-medium text-blue-600 hover:text-blue-500"
             >
               inicia sesión si ya tienes cuenta

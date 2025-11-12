@@ -1,8 +1,8 @@
 'use client'
 
 import React, { createContext, useContext, useEffect, useState } from 'react'
-import { AuthUser, authService } from '@/lib/auth'
-import { logger } from '@/lib/logger'
+import { AuthUser, authService as defaultAuthService } from '@/lib/auth'
+import { logger as defaultLogger } from '@/lib/logger'
 import { getErrorMessage } from '@/lib/utils'
 
 interface AuthContextType {
@@ -17,9 +17,15 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+type AuthProviderDeps = {
+  authService?: typeof defaultAuthService
+  logger?: typeof defaultLogger
+}
+export function AuthProvider({ children, deps }: { children: React.ReactNode; deps?: AuthProviderDeps }) {
   const [user, setUser] = useState<AuthUser | null>(null)
   const [loading, setLoading] = useState(true)
+  const authService = deps?.authService ?? defaultAuthService
+  const logger = deps?.logger ?? defaultLogger
 
   useEffect(() => {
     logger.debug('AuthContext: Inicializando useEffect')

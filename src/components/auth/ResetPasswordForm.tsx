@@ -54,7 +54,7 @@ export default function ResetPasswordForm() {
       await new Promise(resolve => setTimeout(resolve, 1000))
       
       // Redirigir al login con mensaje de éxito
-      router.replace('/auth/login?message=password-updated')
+      router.replace('/signin?message=password-updated')
     } catch (err) {
       console.error('Error al actualizar contraseña:', err)
       setError(
@@ -183,7 +183,7 @@ export default function ResetPasswordForm() {
 
       <div className="text-center">
         <Link
-          href="/auth/login"
+          href="/signin"
           className="font-medium text-indigo-600 hover:text-indigo-500"
         >
           Volver al inicio de sesión

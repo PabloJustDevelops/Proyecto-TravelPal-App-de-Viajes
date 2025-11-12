@@ -1,17 +1,25 @@
 import { createClient } from '@supabase/supabase-js'
 import { createBrowserClient } from '@supabase/ssr'
+import { logger } from '@/lib/logger'
 
-// Environment variables with fallbacks for development
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co'
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key'
+// Variables de entorno requeridas (sin valores placeholder para evitar confusiones)
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-// Create Supabase client for server-side operations
+if (!supabaseUrl || !supabaseAnonKey) {
+  // Falla temprana y clara para facilitar diagnóstico de Testsprite y desarrollo
+  const msg = 'Supabase no configurado: define NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_ANON_KEY en .env.local'
+  logger.error(msg)
+  throw new Error(msg)
+}
+
+// Cliente Supabase para servidor (crear bajo demanda si se necesita)
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
-// Singleton instance for client-side operations
+// Singleton de cliente en navegador
 let supabaseClientInstance: ReturnType<typeof createBrowserClient> | null = null
 
-// Create Supabase client for client-side operations (singleton pattern)
+// Crear cliente Supabase para operaciones en cliente (patrón singleton)
 export const createSupabaseClient = () => {
   if (!supabaseClientInstance) {
     supabaseClientInstance = createBrowserClient(supabaseUrl, supabaseAnonKey)

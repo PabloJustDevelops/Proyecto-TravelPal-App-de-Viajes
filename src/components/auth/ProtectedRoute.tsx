@@ -12,7 +12,7 @@ interface ProtectedRouteProps {
 
 export default function ProtectedRoute({ 
   children, 
-  redirectTo = '/auth/login' 
+  redirectTo = '/signin' 
 }: ProtectedRouteProps) {
   const { user, loading } = useAuth()
   const router = useRouter()

@@ -73,7 +73,7 @@ export default function ForgotPasswordForm() {
             </div>
             <div className="mt-4">
               <Link
-                href="/auth/login"
+                href="/signin"
                 className="text-sm font-medium text-green-800 hover:text-green-600"
               >
                 Volver al inicio de sesión
@@ -146,7 +146,7 @@ export default function ForgotPasswordForm() {
 
       <div className="text-center">
         <Link
-          href="/auth/login"
+          href="/signin"
           className="font-medium text-indigo-600 hover:text-indigo-500"
         >
           Volver al inicio de sesión

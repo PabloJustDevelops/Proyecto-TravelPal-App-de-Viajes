@@ -108,7 +108,7 @@ export default function DashboardPage() {
 
       // Efficient In-Memory Join for Recent Expenses
       // Create a map of tripId -> tripTitle for O(1) lookup
-      const tripMap = new Map(tripsData.map((t) => [t.id, t.title]));
+      const tripMap = new Map(tripsData.map((t: any) => [t.id, t.title]));
 
       const enrichedExpenses = expensesData.map((expense) => ({
         ...expense,

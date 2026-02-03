@@ -1,5 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Configuración para Turbopack (silencia advertencia de conflicto con webpack)
+  turbopack: {},
+
   // Configuración experimental para mejorar rendimiento
   experimental: {
     // Optimizar CSS

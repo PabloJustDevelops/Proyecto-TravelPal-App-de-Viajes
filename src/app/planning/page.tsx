@@ -67,6 +67,7 @@ interface CalendarEvent {
   tripId?: string;
   bookingId?: string;
   activityId?: string;
+  icon?: React.ReactNode;
 }
 
 export default function PlanningPage() {

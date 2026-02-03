@@ -110,7 +110,7 @@ export default function DashboardPage() {
       // Create a map of tripId -> tripTitle for O(1) lookup
       const tripMap = new Map(tripsData.map((t: any) => [t.id, t.title]));
 
-      const enrichedExpenses = expensesData.map((expense) => ({
+      const enrichedExpenses = expensesData.map((expense: any) => ({
         ...expense,
         trips: expense.trip_id
           ? { title: tripMap.get(expense.trip_id) || "Viaje desconocido" }

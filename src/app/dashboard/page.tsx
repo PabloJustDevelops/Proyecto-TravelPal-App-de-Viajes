@@ -122,13 +122,13 @@ export default function DashboardPage() {
 
       // Calculate Totals
       const calculatedSpent = (allExpensesResult.data || []).reduce(
-        (acc, curr) => acc + curr.amount,
+        (acc: any, curr: any) => acc + curr.amount,
         0,
       );
       setTotalSpent(calculatedSpent);
 
       const calculatedBudget = (budgetsResult.data || []).reduce(
-        (acc, curr) => acc + curr.total_amount,
+        (acc: any, curr: any) => acc + curr.total_amount,
         0,
       );
       setTotalBudget(calculatedBudget);

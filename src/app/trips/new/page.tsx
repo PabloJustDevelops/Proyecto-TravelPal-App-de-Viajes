@@ -1,66 +1,95 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import DashboardLayout from '@/components/layout/DashboardLayout'
-import Button from '@/components/ui/Button'
-import Input from '@/components/ui/Input'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
-import { useAuth } from '@/contexts/AuthContext'
-import { createSupabaseClient } from '@/lib/supabase'
-import { ArrowLeftIcon } from '@heroicons/react/24/outline'
-import Link from 'next/link'
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import DashboardLayout from "@/components/layout/DashboardLayout";
+import Button from "@/components/ui/Button";
+import Input from "@/components/ui/Input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { useAuth } from "@/contexts/AuthContext";
+import { createSupabaseClient } from "@/lib/supabase";
+import { logger } from "@/lib/logger";
+import { ArrowLeftIcon } from "@heroicons/react/24/outline";
+import Link from "next/link";
 
 export default function NewTripPage() {
-  const { user } = useAuth()
-  const router = useRouter()
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
+  const { user } = useAuth();
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const [formData, setFormData] = useState({
-    title: '',
-    origin: '',
-    destination: '',
-    departure_date: '',
-    return_date: '',
-    airline: '',
-    flight_number: '',
-    confirmation_code: '',
-    notes: '',
-    status: 'planned' as const,
-  })
+    title: "",
+    origin: "",
+    destination: "",
+    departure_date: "",
+    return_date: "",
+    airline: "",
+    flight_number: "",
+    confirmation_number: "",
+    notes: "",
+    status: "planned" as const,
+    travelers: 1,
+    budget: 0,
+  });
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target
-    setFormData(prev => ({
+  const handleInputChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >,
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
-    }))
-  }
+      [name]: name === "travelers" || name === "budget" ? Number(value) : value,
+    }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError('')
+    e.preventDefault();
+    logger.info("Iniciando proceso de creación de viaje");
+
+    if (!user) {
+      logger.error("Intento de crear viaje sin usuario autenticado");
+      setError("Debes iniciar sesión para crear un viaje");
+      return;
+    }
+
+    setLoading(true);
+    setError("");
 
     try {
-      const supabase = createSupabaseClient()
+      const supabase = createSupabaseClient();
 
       // Validate required fields
-      if (!formData.title || !formData.origin || !formData.destination || !formData.departure_date) {
-        throw new Error('Por favor completa todos los campos requeridos')
+      if (
+        !formData.title ||
+        !formData.origin ||
+        !formData.destination ||
+        !formData.departure_date
+      ) {
+        throw new Error("Por favor completa todos los campos requeridos");
       }
 
       // Validate dates
-      const departureDate = new Date(formData.departure_date)
-      const returnDate = formData.return_date ? new Date(formData.return_date) : null
+      const departureDate = new Date(formData.departure_date);
+      const returnDate = formData.return_date
+        ? new Date(formData.return_date)
+        : null;
 
       if (returnDate && returnDate <= departureDate) {
-        throw new Error('La fecha de regreso debe ser posterior a la fecha de salida')
+        throw new Error(
+          "La fecha de regreso debe ser posterior a la fecha de salida",
+        );
       }
 
+      // Append travelers info to notes
+      const notesWithTravelers = formData.notes
+        ? `${formData.notes}\n\nViajeros: ${formData.travelers}`
+        : `Viajeros: ${formData.travelers}`;
+
       const tripData = {
-        user_id: user!.id,
+        user_id: user.id,
         title: formData.title,
         origin: formData.origin,
         destination: formData.destination,
@@ -68,27 +97,97 @@ export default function NewTripPage() {
         return_date: formData.return_date || null,
         airline: formData.airline || null,
         flight_number: formData.flight_number || null,
-        confirmation_code: formData.confirmation_code || null,
-        notes: formData.notes || null,
+        confirmation_number: formData.confirmation_number || null,
+        notes: notesWithTravelers,
         status: formData.status,
-      }
+      };
 
-      const { data, error } = await supabase
-        .from('trips')
+      logger.debug("Enviando datos a Supabase:", tripData);
+
+      // Timeout de seguridad para evitar carga infinita (15 segundos)
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(
+          () =>
+            reject(
+              new Error(
+                "La conexión ha tardado demasiado. Por favor verifica tu conexión a internet e inténtalo de nuevo.",
+              ),
+            ),
+          15000,
+        ),
+      );
+
+      const dbPromise = supabase
+        .from("trips")
         .insert([tripData])
         .select()
-        .single()
+        .single();
 
-      if (error) throw error
+      // Usamos Promise.race para competir entre la DB y el timeout
+      const { data, error } = (await Promise.race([
+        dbPromise,
+        timeoutPromise,
+      ])) as any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
-      router.push(`/trips/${data.id}`)
+      if (error) {
+        logger.error("Error devuelto por Supabase:", error);
+        throw error;
+      }
+
+      logger.info("Viaje creado exitosamente:", data.id);
+
+      // Create budget if provided
+      if (formData.budget > 0) {
+        logger.info("Creando presupuesto inicial para el viaje");
+        const { error: budgetError } = await supabase.from("budgets").insert([
+          {
+            user_id: user.id,
+            trip_id: data.id,
+            name: "Presupuesto General",
+            total_amount: formData.budget,
+            category: "General",
+            start_date: formData.departure_date.split("T")[0],
+            end_date: formData.return_date
+              ? formData.return_date.split("T")[0]
+              : formData.departure_date.split("T")[0],
+            currency: "EUR", // Defaulting to EUR as per region context, or could be dynamic
+          },
+        ]);
+
+        if (budgetError) {
+          logger.warn("Error al crear presupuesto inicial:", budgetError);
+          // Non-blocking error, just warn
+        }
+      }
+
+      // Navegación exitosa
+      router.push(`/trips/${data.id}`);
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Error creating trip'
-      setError(errorMessage)
+      logger.error("Excepción al crear viaje:", error);
+      let errorMessage = "Error al crear el viaje. Por favor intenta de nuevo.";
+
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (
+        typeof error === "object" &&
+        error !== null &&
+        "message" in error
+      ) {
+        errorMessage = (error as { message: string }).message;
+      }
+
+      setError(errorMessage);
     } finally {
-      setLoading(false)
+      // Aseguramos que el estado de carga se desactive siempre
+      if (document.body.contains(e.target as Node)) {
+        setLoading(false);
+      } else {
+        // Si el componente se desmontó (por navegación exitosa), esto podría no ser necesario,
+        // pero lo dejamos por seguridad si la navegación falló o es lenta.
+        setLoading(false);
+      }
     }
-  }
+  };
 
   return (
     <DashboardLayout>
@@ -103,7 +202,9 @@ export default function NewTripPage() {
           </Link>
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Nuevo Viaje</h1>
-            <p className="text-sm text-gray-500">Crea un nuevo viaje y organiza todos los detalles</p>
+            <p className="text-sm text-gray-500">
+              Crea un nuevo viaje y organiza todos los detalles
+            </p>
           </div>
         </div>
 
@@ -122,8 +223,10 @@ export default function NewTripPage() {
 
               {/* Basic Information */}
               <div className="space-y-4">
-                <h3 className="text-lg font-medium text-gray-900">Información Básica</h3>
-                
+                <h3 className="text-lg font-medium text-gray-900">
+                  Información Básica
+                </h3>
+
                 <Input
                   label="Título del Viaje *"
                   name="title"
@@ -170,6 +273,28 @@ export default function NewTripPage() {
                   />
                 </div>
 
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Input
+                    label="Número de Personas"
+                    name="travelers"
+                    type="number"
+                    min="1"
+                    value={formData.travelers}
+                    onChange={handleInputChange}
+                    placeholder="1"
+                  />
+                  <Input
+                    label="Presupuesto Estimado (EUR)"
+                    name="budget"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={formData.budget}
+                    onChange={handleInputChange}
+                    placeholder="0.00"
+                  />
+                </div>
+
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
                     Estado del Viaje
@@ -188,8 +313,10 @@ export default function NewTripPage() {
 
               {/* Flight Information */}
               <div className="space-y-4">
-                <h3 className="text-lg font-medium text-gray-900">Información de Vuelo</h3>
-                
+                <h3 className="text-lg font-medium text-gray-900">
+                  Información de Vuelo
+                </h3>
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Input
                     label="Aerolínea"
@@ -209,8 +336,8 @@ export default function NewTripPage() {
 
                 <Input
                   label="Código de Confirmación"
-                  name="confirmation_code"
-                  value={formData.confirmation_code}
+                  name="confirmation_number"
+                  value={formData.confirmation_number}
                   onChange={handleInputChange}
                   placeholder="ej. ABC123"
                 />
@@ -251,5 +378,5 @@ export default function NewTripPage() {
         </Card>
       </div>
     </DashboardLayout>
-  )
+  );
 }

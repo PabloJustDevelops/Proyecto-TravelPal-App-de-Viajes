@@ -97,7 +97,19 @@ export const NotificationSystem: React.FC<NotificationSystemProps> = ({
           return [...prev, ...newNotifications];
         });
       } catch (err: unknown) {
-        if (err instanceof DOMException && err.name === "AbortError") return;
+        if (
+          (err instanceof Error && err.name === "AbortError") ||
+          (typeof err === "object" && err !== null && "code" in err && (err as any).code === 20) ||
+          (err instanceof DOMException && err.name === "AbortError")
+        ) {
+          return;
+        }
+        
+        const errObj = err as any;
+        if (errObj?.message?.includes("AbortError") || errObj?.details?.includes("AbortError")) {
+            return;
+        }
+
         const message = getErrorMessage(err);
         logger.error("NotificationSystem: Error loading alerts", { error: message });
       } finally {

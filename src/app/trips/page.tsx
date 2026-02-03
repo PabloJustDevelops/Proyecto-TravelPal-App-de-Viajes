@@ -1,49 +1,84 @@
-'use client'
+"use client";
 
-import { useEffect, useState, useCallback } from 'react'
-import DashboardLayout from '@/components/layout/DashboardLayout'
-import Button from '@/components/ui/Button'
-import Input from '@/components/ui/Input'
-import { useAuth } from '@/contexts/AuthContext'
-import { createSupabaseClient, Trip } from '@/lib/supabase'
-import { PlusIcon, MagnifyingGlassIcon, PlayIcon } from '@heroicons/react/24/outline'
-import Link from 'next/link'
-import LoadingSpinner from '@/components/ui/LoadingSpinner'
+import { useEffect, useState, useCallback } from "react";
+import DashboardLayout from "@/components/layout/DashboardLayout";
+import Button from "@/components/ui/Button";
+import Input from "@/components/ui/Input";
+import { useAuth } from "@/contexts/AuthContext";
+import { createSupabaseClient, Trip } from "@/lib/supabase";
+import {
+  PlusIcon,
+  MagnifyingGlassIcon,
+  PlayIcon,
+} from "@heroicons/react/24/outline";
+import Link from "next/link";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import { logger } from "@/lib/logger";
 
 export default function TripsPage() {
-  const { user } = useAuth()
-  const [trips, setTrips] = useState<Trip[]>([])
-  const [filteredTrips, setFilteredTrips] = useState<Trip[]>([])
-  const [loading, setLoading] = useState(true)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [statusFilter, setStatusFilter] = useState<string>('all')
+  const { user, loading: authLoading } = useAuth();
+  const [trips, setTrips] = useState<Trip[]>([]);
+  const [filteredTrips, setFilteredTrips] = useState<Trip[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
 
-  const loadTrips = useCallback(async (signal?: AbortSignal) => {
-    if (!user) return
-    const supabase = createSupabaseClient()
+  const loadTrips = useCallback(
+    async (signal?: AbortSignal) => {
+      try {
+        if (!user?.id) {
+          return;
+        }
+        // No setear loading(true) aquí si ya estamos cargando, para evitar parpadeos o bucles
+        // Pero como es una función llamada por efecto, sí debemos indicar que estamos buscando datos
+        setLoading(true);
 
-    try {
-      const query = supabase
-        .from('trips')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('departure_date', { ascending: false })
+        logger.debug("TripsPage: Loading trips for user", user.id);
+        const supabase = createSupabaseClient();
 
-      const { data, error } = await (signal ? query.abortSignal(signal) : query)
+        const query = supabase
+          .from("trips")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("departure_date", { ascending: false });
 
-      if (error) throw error
+        const { data, error } = await (signal
+          ? query.abortSignal(signal)
+          : query);
 
-      setTrips(data || [])
-    } catch (error) {
-      if (error instanceof Error && error.name === 'AbortError') return
-      console.error('Error loading trips:', error)
-    } finally {
-      setLoading(false)
-    }
-  }, [user])
+        if (error) throw error;
+
+        logger.debug("TripsPage: Trips loaded", data?.length);
+        setTrips(data || []);
+      } catch (error: unknown) {
+        // Check for various forms of AbortError
+        const isAbortError =
+          (error instanceof Error && error.name === "AbortError") ||
+          (typeof error === "object" &&
+            error !== null &&
+            "code" in error &&
+            (error as { code: number }).code === 20) ||
+          (error instanceof Error && error.message?.includes("AbortError")) ||
+          (typeof error === "object" &&
+            error !== null &&
+            "message" in error &&
+            (error as { message: string }).message.includes("AbortError"));
+
+        if (isAbortError) {
+          return;
+        }
+        logger.error("Error loading trips:", error);
+      } finally {
+        if (!signal?.aborted) {
+          setLoading(false);
+        }
+      }
+    },
+    [user?.id],
+  );
 
   const filterTrips = useCallback(() => {
-    let filtered = trips
+    let filtered = trips;
 
     // Filter by search term
     if (searchTerm) {
@@ -53,38 +88,45 @@ export default function TripsPage() {
           trip.origin.toLowerCase().includes(searchTerm.toLowerCase()) ||
           trip.destination.toLowerCase().includes(searchTerm.toLowerCase()) ||
           trip.airline?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          trip.flight_number?.toLowerCase().includes(searchTerm.toLowerCase())
-      )
+          trip.flight_number?.toLowerCase().includes(searchTerm.toLowerCase()),
+      );
     }
 
     // Filter by status
-    if (statusFilter !== 'all') {
-      if (statusFilter === 'upcoming') {
+    if (statusFilter !== "all") {
+      if (statusFilter === "upcoming") {
         filtered = filtered.filter(
-          (trip) => new Date(trip.departure_date) > new Date() && trip.status !== 'cancelled'
-        )
+          (trip) =>
+            new Date(trip.departure_date) > new Date() &&
+            trip.status !== "cancelled",
+        );
       } else {
-        filtered = filtered.filter((trip) => trip.status === statusFilter)
+        filtered = filtered.filter((trip) => trip.status === statusFilter);
       }
     }
 
-    setFilteredTrips(filtered)
-  }, [trips, searchTerm, statusFilter])
+    setFilteredTrips(filtered);
+  }, [trips, searchTerm, statusFilter]);
 
   useEffect(() => {
-    if (user) {
-      const controller = new AbortController()
-      loadTrips(controller.signal)
-      return () => controller.abort()
-    } else {
-      // Evitar spinner infinito cuando no hay usuario
-      setLoading(false)
+    // Si auth está cargando, esperamos. Mantenemos loading local true.
+    if (authLoading) {
+      return;
     }
-  }, [user, loadTrips])
+
+    if (user?.id) {
+      const controller = new AbortController();
+      loadTrips(controller.signal);
+      return () => controller.abort();
+    } else {
+      // Si no hay usuario y auth terminó, paramos spinner local
+      setLoading(false);
+    }
+  }, [user?.id, authLoading, loadTrips]);
 
   useEffect(() => {
-    filterTrips()
-  }, [trips, searchTerm, statusFilter, filterTrips])
+    filterTrips();
+  }, [trips, searchTerm, statusFilter, filterTrips]);
 
   if (loading) {
     return (
@@ -93,21 +135,25 @@ export default function TripsPage() {
           <LoadingSpinner size="lg" />
         </div>
       </DashboardLayout>
-    )
+    );
   }
 
   if (!user) {
     return (
       <DashboardLayout>
         <div className="text-center py-12">
-          <h3 className="text-lg font-semibold text-gray-900">Inicia sesión para ver tus viajes</h3>
-          <p className="mt-1 text-sm text-gray-500">La sección de viajes requiere autenticación.</p>
+          <h3 className="text-lg font-semibold text-gray-900">
+            Inicia sesión para ver tus viajes
+          </h3>
+          <p className="mt-1 text-sm text-gray-500">
+            La sección de viajes requiere autenticación.
+          </p>
           <Link href="/signin">
             <Button className="mt-4">Ir a Login</Button>
           </Link>
         </div>
       </DashboardLayout>
-    )
+    );
   }
 
   return (
@@ -168,29 +214,43 @@ export default function TripsPage() {
         {filteredTrips.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredTrips.map((trip) => (
-              <div key={trip.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+              <div
+                key={trip.id}
+                className="bg-white rounded-lg shadow-sm border border-gray-200 p-4"
+              >
                 <div className="flex items-start justify-between">
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900">{trip.title}</h3>
-                    <p className="text-sm text-gray-500">{trip.origin} → {trip.destination}</p>
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      {trip.title}
+                    </h3>
+                    <p className="text-sm text-gray-500">
+                      {trip.origin} → {trip.destination}
+                    </p>
                   </div>
                   <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-700 capitalize">
                     {trip.status}
                   </span>
                 </div>
                 <div className="mt-4 text-sm text-gray-600">
-                  <div>Salida: {new Date(trip.departure_date).toLocaleDateString()}</div>
+                  <div>
+                    Salida: {new Date(trip.departure_date).toLocaleDateString()}
+                  </div>
                   {trip.return_date && (
-                    <div>Regreso: {new Date(trip.return_date).toLocaleDateString()}</div>
+                    <div>
+                      Regreso: {new Date(trip.return_date).toLocaleDateString()}
+                    </div>
                   )}
                 </div>
                 <div className="mt-4 flex items-center justify-between">
-                  <Link href={`/trips/${trip.id}`} className="text-blue-600 hover:text-blue-700 text-sm font-medium">
+                  <Link
+                    href={`/trips/${trip.id}`}
+                    className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                  >
                     Ver detalles
                   </Link>
                   <div className="flex items-center text-gray-500">
                     <PlayIcon className="h-5 w-5 mr-1" />
-                    {trip.airline || 'Sin aerolínea'}
+                    {trip.airline || "Sin aerolínea"}
                   </div>
                 </div>
               </div>
@@ -200,10 +260,27 @@ export default function TripsPage() {
           <div className="text-center py-12">
             <div className="mx-auto h-12 w-12 text-gray-400">
               {/* Placeholder icon */}
-              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-12 w-12"><path d="M2 16l20-12M2 16l7-1m13-11l-4 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-12 w-12"
+              >
+                <path
+                  d="M2 16l20-12M2 16l7-1m13-11l-4 8"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
             </div>
-            <h3 className="mt-2 text-sm font-medium text-gray-900">No tienes viajes registrados</h3>
-            <p className="mt-1 text-sm text-gray-500">Crea tu primer viaje para empezar a planificar.</p>
+            <h3 className="mt-2 text-sm font-medium text-gray-900">
+              No tienes viajes registrados
+            </h3>
+            <p className="mt-1 text-sm text-gray-500">
+              Crea tu primer viaje para empezar a planificar.
+            </p>
             <div className="mt-6">
               <Link href="/trips/new">
                 <Button>
@@ -216,5 +293,5 @@ export default function TripsPage() {
         )}
       </div>
     </DashboardLayout>
-  )
+  );
 }

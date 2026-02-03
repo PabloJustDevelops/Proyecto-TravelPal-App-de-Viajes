@@ -1,302 +1,397 @@
-'use client'
+"use client";
 
-import { useEffect, useState, useCallback } from 'react'
-import DashboardLayout from '@/components/layout/DashboardLayout'
-import { useAuth } from '@/contexts/AuthContext'
-import { createSupabaseClient, Trip, Expense } from '@/lib/supabase'
-import {
-  MapIcon,
-  CurrencyDollarIcon,
-  DocumentTextIcon,
-  CalendarIcon,
-} from '@heroicons/react/24/outline'
-import Link from 'next/link'
-import { formatCurrency, formatDate } from '@/lib/utils'
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { useAuth } from "@/contexts/AuthContext";
+import { createSupabaseClient, Trip, Expense } from "@/lib/supabase";
+import DashboardLayout from "@/components/layout/DashboardLayout";
+import { Plane, DollarSign, Calendar, MapPin, CreditCard } from "lucide-react";
+import { logger } from "@/lib/logger";
+import { getErrorMessage, formatCurrency } from "@/lib/utils";
 
-interface DashboardStats {
-  totalTrips: number
-  upcomingTrips: number
-  totalExpenses: number
-  totalNotes: number
-  recentTrips: Trip[]
-  recentExpenses: Expense[]
+// Skeleton Component
+const DashboardSkeleton = () => (
+  <div className="space-y-6 animate-pulse">
+    <div className="h-8 bg-gray-200 rounded w-1/3"></div>
+    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+      {[...Array(4)].map((_, i) => (
+        <div key={i} className="bg-white overflow-hidden shadow rounded-lg p-5">
+          <div className="flex items-center">
+            <div className="flex-shrink-0 bg-gray-200 rounded-md p-3 h-12 w-12"></div>
+            <div className="ml-5 w-0 flex-1">
+              <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
+              <div className="h-6 bg-gray-200 rounded w-3/4"></div>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      {[...Array(2)].map((_, i) => (
+        <div key={i} className="bg-white shadow rounded-lg h-64"></div>
+      ))}
+    </div>
+  </div>
+);
+
+interface ExpenseWithTrip extends Expense {
+  trips?: {
+    title: string;
+  };
 }
 
 export default function DashboardPage() {
-  const { user } = useAuth()
-  const [stats, setStats] = useState<DashboardStats>({
-    totalTrips: 0,
-    upcomingTrips: 0,
-    totalExpenses: 0,
-    totalNotes: 0,
-    recentTrips: [],
-    recentExpenses: [],
-  })
-  const [loading, setLoading] = useState(true)
+  const { user } = useAuth();
+  const router = useRouter();
+  const [trips, setTrips] = useState<Trip[]>([]);
+  const [recentExpenses, setRecentExpenses] = useState<ExpenseWithTrip[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [totalBudget, setTotalBudget] = useState(0);
+  const [totalSpent, setTotalSpent] = useState(0);
 
-  const loadDashboardData = useCallback(async (signal?: AbortSignal) => {
-    const supabase = createSupabaseClient()
+  const loadData = useCallback(async () => {
+    if (!user?.id) return;
+
+    // Use AbortController to cancel requests if component unmounts
+    const controller = new AbortController();
+    const signal = controller.signal;
 
     try {
-      // Get trips stats
-      const tripsQuery = supabase
-        .from('trips')
-        .select('*')
-        .eq('user_id', user!.id)
-        .order('created_at', { ascending: false })
+      const supabase = createSupabaseClient();
 
-      const { data: trips } = await (signal ? tripsQuery.abortSignal(signal) : tripsQuery)
+      // Parallel Data Fetching
+      const [tripsResult, expensesResult, allExpensesResult, budgetsResult] =
+        await Promise.all([
+          // 1. Fetch Trips
+          supabase
+            .from("trips")
+            .select("*")
+            .eq("user_id", user.id)
+            .order("departure_date", { ascending: true })
+            .abortSignal(signal),
 
-      const now = new Date()
-      const upcomingTrips = trips?.filter((trip: Trip) => new Date(trip.departure_date) > now) || []
+          // 2. Fetch Recent Expenses (Limit 5)
+          supabase
+            .from("expenses")
+            .select("*")
+            .eq("user_id", user.id)
+            .order("date", { ascending: false })
+            .limit(5)
+            .abortSignal(signal),
 
-      // Get expenses stats
-      const expensesQuery = supabase
-        .from('expenses')
-        .select('*')
-        .eq('user_id', user!.id)
-        .order('created_at', { ascending: false })
+          // 3. Fetch All Expenses (for totals) - Optimized: select only amount
+          supabase
+            .from("expenses")
+            .select("amount, currency")
+            .eq("user_id", user.id)
+            .abortSignal(signal),
 
-      const { data: expenses } = await (signal ? expensesQuery.abortSignal(signal) : expensesQuery)
+          // 4. Fetch Budgets
+          supabase
+            .from("budgets")
+            .select("total_amount")
+            .eq("user_id", user.id)
+            .abortSignal(signal),
+        ]);
 
-      const totalExpenses = expenses?.reduce((sum: number, expense: Expense) => sum + expense.amount, 0) || 0
+      if (tripsResult.error) throw tripsResult.error;
+      if (expensesResult.error) throw expensesResult.error;
+      // Continue even if totals fail, just log
+      if (allExpensesResult.error)
+        logger.error("Error fetching total expenses", allExpensesResult.error);
+      if (budgetsResult.error)
+        logger.error("Error fetching budgets", budgetsResult.error);
 
-      // Get notes count
-      const notesQuery = supabase
-        .from('notes')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', user!.id)
+      const tripsData = tripsResult.data || [];
+      const expensesData = expensesResult.data || [];
 
-      const { count: notesCount } = await (signal ? notesQuery.abortSignal(signal) : notesQuery)
+      // Efficient In-Memory Join for Recent Expenses
+      // Create a map of tripId -> tripTitle for O(1) lookup
+      const tripMap = new Map(tripsData.map((t) => [t.id, t.title]));
 
-      setStats({
-        totalTrips: trips?.length || 0,
-        upcomingTrips: upcomingTrips.length,
-        totalExpenses,
-        totalNotes: notesCount || 0,
-        recentTrips: trips?.slice(0, 5) || [],
-        recentExpenses: expenses?.slice(0, 5) || [],
-      })
-    } catch (error) {
-      if (error instanceof Error && error.name === 'AbortError') return
-      console.error('Error loading dashboard data:', error)
+      const enrichedExpenses = expensesData.map((expense) => ({
+        ...expense,
+        trips: expense.trip_id
+          ? { title: tripMap.get(expense.trip_id) || "Viaje desconocido" }
+          : undefined,
+      }));
+
+      setTrips(tripsData);
+      setRecentExpenses(enrichedExpenses);
+
+      // Calculate Totals
+      const calculatedSpent = (allExpensesResult.data || []).reduce(
+        (acc, curr) => acc + curr.amount,
+        0,
+      );
+      setTotalSpent(calculatedSpent);
+
+      const calculatedBudget = (budgetsResult.data || []).reduce(
+        (acc, curr) => acc + curr.total_amount,
+        0,
+      );
+      setTotalBudget(calculatedBudget);
+    } catch (error: any) {
+      // Ignore abort errors
+      if (error.name === "AbortError") return;
+
+      const msg = getErrorMessage(error);
+      logger.error("Dashboard: Error loading data", { error: msg });
     } finally {
-      setLoading(false)
+      if (!signal.aborted) {
+        setLoading(false);
+      }
     }
-  }, [user])
+
+    return () => controller.abort();
+  }, [user?.id]); // Only re-run if user ID changes
 
   useEffect(() => {
-    if (user) {
-      const controller = new AbortController()
-      loadDashboardData(controller.signal)
-      return () => controller.abort()
-    }
-  }, [user, loadDashboardData])
+    let cleanup: (() => void) | undefined;
 
-  const statCards = [
-    {
-      name: 'Total de Viajes',
-      value: stats.totalTrips,
-      icon: MapIcon,
-      color: 'bg-blue-500',
-      href: '/trips',
-    },
-    {
-      name: 'Próximos Viajes',
-      value: stats.upcomingTrips,
-      icon: CalendarIcon,
-      color: 'bg-green-500',
-      href: '/trips',
-    },
-    {
-      name: 'Gastos Totales',
-      value: formatCurrency(stats.totalExpenses),
-      icon: CurrencyDollarIcon,
-      color: 'bg-yellow-500',
-      href: '/expenses',
-    },
-    {
-      name: 'Notas',
-      value: stats.totalNotes,
-      icon: DocumentTextIcon,
-      color: 'bg-purple-500',
-      href: '/notes',
-    },
-  ]
+    // Execute loadData and capture cleanup function
+    loadData().then((c) => {
+      cleanup = c;
+    });
+
+    return () => {
+      if (cleanup) cleanup();
+    };
+  }, [loadData]);
+
+  const activeTrips = useMemo(
+    () =>
+      trips.filter(
+        (trip) =>
+          trip.status === "confirmed" ||
+          (new Date(trip.departure_date) <= new Date() &&
+            new Date(trip.return_date || "") >= new Date()),
+      ).length,
+    [trips],
+  );
+
+  const upcomingTrips = useMemo(
+    () =>
+      trips.filter((trip) => new Date(trip.departure_date) > new Date()).length,
+    [trips],
+  );
 
   if (loading) {
     return (
       <DashboardLayout>
-        <div className="animate-pulse">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="bg-white p-6 rounded-lg shadow h-32"></div>
-            ))}
-          </div>
-        </div>
+        <DashboardSkeleton />
       </DashboardLayout>
-    )
+    );
   }
 
   return (
     <DashboardLayout>
-      <div className="space-y-8">
-        {/* Welcome Section */}
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">
-            ¡Bienvenido, {user?.full_name || 'Usuario'}!
-          </h1>
-          <p className="mt-2 text-gray-600">
-            Aquí tienes un resumen de tus viajes y actividades recientes.
-          </p>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">
+              Bienvenido, {user?.full_name?.split(" ")[0] || "Viajero"}
+            </h1>
+            <p className="text-sm text-gray-500 mt-1">
+              Aquí tienes un resumen de tus viajes y actividades recientes.
+            </p>
+          </div>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {statCards.map((card) => (
-            <Link
-              key={card.name}
-              href={card.href}
-              className="bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow"
-            >
-              <div className="p-5">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <div className={`${card.color} p-3 rounded-md`}>
-                      <card.icon className="h-6 w-6 text-white" />
-                    </div>
-                  </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">
-                        {card.name}
-                      </dt>
-                      <dd className="text-lg font-medium text-gray-900">
-                        {card.value}
-                      </dd>
-                    </dl>
-                  </div>
+        {/* Stats Overview */}
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          {/* Card 1: Presupuesto Total */}
+          <div className="bg-white overflow-hidden shadow rounded-lg">
+            <div className="p-5">
+              <div className="flex items-center">
+                <div className="flex-shrink-0 bg-blue-100 rounded-md p-3">
+                  <DollarSign className="h-6 w-6 text-blue-600" />
+                </div>
+                <div className="ml-5 w-0 flex-1">
+                  <dl>
+                    <dt className="text-sm font-medium text-gray-500 truncate">
+                      Presupuesto Total
+                    </dt>
+                    <dd className="text-lg font-semibold text-gray-900">
+                      ${totalBudget.toLocaleString()}
+                    </dd>
+                  </dl>
                 </div>
               </div>
-            </Link>
-          ))}
-        </div>
-
-        {/* Recent Activity */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Recent Trips */}
-          <div className="bg-white shadow rounded-lg">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-medium text-gray-900">Viajes Recientes</h3>
             </div>
-            <div className="divide-y divide-gray-200">
-              {stats.recentTrips.length > 0 ? (
-                stats.recentTrips.map((trip) => (
-                  <div key={trip.id} className="px-6 py-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">
-                          {trip.title}
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          {trip.origin} → {trip.destination}
-                        </p>
-                        <p className="text-xs text-gray-400">
-                          {formatDate(trip.departure_date)}
-                        </p>
-                      </div>
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        trip.status === 'completed' ? 'bg-green-100 text-green-800' :
-                        trip.status === 'confirmed' ? 'bg-blue-100 text-blue-800' :
-                        trip.status === 'cancelled' ? 'bg-red-100 text-red-800' :
-                        'bg-yellow-100 text-yellow-800'
-                      }`}>
-                        {trip.status === 'completed' ? 'Completado' :
-                         trip.status === 'confirmed' ? 'Confirmado' :
-                         trip.status === 'cancelled' ? 'Cancelado' :
-                         'Planeado'}
-                      </span>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="px-6 py-8 text-center">
-                  <p className="text-gray-500">No tienes viajes registrados aún.</p>
-                  <Link
-                    href="/trips/new"
-                    className="mt-2 inline-flex items-center text-sm text-blue-600 hover:text-blue-500"
-                  >
-                    Crear tu primer viaje
-                  </Link>
-                </div>
-              )}
-            </div>
-            {stats.recentTrips.length > 0 && (
-              <div className="px-6 py-3 bg-gray-50">
-                <Link
-                  href="/trips"
-                  className="text-sm text-blue-600 hover:text-blue-500"
-                >
-                  Ver todos los viajes →
-                </Link>
-              </div>
-            )}
           </div>
 
-          {/* Recent Expenses */}
-          <div className="bg-white shadow rounded-lg">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-medium text-gray-900">Gastos Recientes</h3>
+          {/* Card 2: Gastado */}
+          <div className="bg-white overflow-hidden shadow rounded-lg">
+            <div className="p-5">
+              <div className="flex items-center">
+                <div className="flex-shrink-0 bg-red-100 rounded-md p-3">
+                  <CreditCard className="h-6 w-6 text-red-600" />
+                </div>
+                <div className="ml-5 w-0 flex-1">
+                  <dl>
+                    <dt className="text-sm font-medium text-gray-500 truncate">
+                      Gastado
+                    </dt>
+                    <dd className="text-lg font-semibold text-gray-900">
+                      ${totalSpent.toLocaleString()}
+                    </dd>
+                  </dl>
+                </div>
+              </div>
             </div>
-            <div className="divide-y divide-gray-200">
-              {stats.recentExpenses.length > 0 ? (
-                stats.recentExpenses.map((expense) => (
-                  <div key={expense.id} className="px-6 py-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">
-                          {expense.title}
+          </div>
+
+          {/* Card 3: Viajes Activos */}
+          <div className="bg-white overflow-hidden shadow rounded-lg">
+            <div className="p-5">
+              <div className="flex items-center">
+                <div className="flex-shrink-0 bg-green-100 rounded-md p-3">
+                  <Plane className="h-6 w-6 text-green-600" />
+                </div>
+                <div className="ml-5 w-0 flex-1">
+                  <dl>
+                    <dt className="text-sm font-medium text-gray-500 truncate">
+                      Viajes Activos
+                    </dt>
+                    <dd className="text-lg font-semibold text-gray-900">
+                      {activeTrips}
+                    </dd>
+                  </dl>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 4: Próximos Viajes */}
+          <div className="bg-white overflow-hidden shadow rounded-lg">
+            <div className="p-5">
+              <div className="flex items-center">
+                <div className="flex-shrink-0 bg-yellow-100 rounded-md p-3">
+                  <Calendar className="h-6 w-6 text-yellow-600" />
+                </div>
+                <div className="ml-5 w-0 flex-1">
+                  <dl>
+                    <dt className="text-sm font-medium text-gray-500 truncate">
+                      Próximos Viajes
+                    </dt>
+                    <dd className="text-lg font-semibold text-gray-900">
+                      {upcomingTrips}
+                    </dd>
+                  </dl>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          {/* Recent Trips Section */}
+          <div className="bg-white shadow rounded-lg">
+            <div className="px-4 py-5 sm:px-6 flex justify-between items-center border-b border-gray-200">
+              <h2 className="text-lg font-medium leading-6 text-gray-900">
+                Viajes Recientes
+              </h2>
+              <Link
+                href="/trips"
+                className="text-sm font-medium text-blue-600 hover:text-blue-500"
+              >
+                Ver todos
+              </Link>
+            </div>
+            <ul role="list" className="divide-y divide-gray-200">
+              {trips.slice(0, 3).map((trip) => (
+                <li key={trip.id}>
+                  <Link
+                    href={`/trips/${trip.id}`}
+                    className="block hover:bg-gray-50 transition-colors"
+                  >
+                    <div className="px-4 py-4 sm:px-6">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-medium text-blue-600 truncate">
+                          {trip.title}
                         </p>
-                        <p className="text-sm text-gray-500">
-                          {expense.category}
-                        </p>
-                        <p className="text-xs text-gray-400">
-                          {formatDate(expense.date)}
-                        </p>
+                        <div className="ml-2 flex-shrink-0 flex">
+                          <span
+                            className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                              trip.status === "ongoing"
+                                ? "bg-green-100 text-green-800"
+                                : trip.status === "upcoming"
+                                  ? "bg-yellow-100 text-yellow-800"
+                                  : "bg-gray-100 text-gray-800"
+                            }`}
+                          >
+                            {trip.status === "ongoing"
+                              ? "En curso"
+                              : trip.status === "upcoming"
+                                ? "Próximo"
+                                : "Completado"}
+                          </span>
+                        </div>
                       </div>
-                      <div className="text-right">
-                        <p className="text-sm font-medium text-gray-900">
-                          {formatCurrency(expense.amount, expense.currency)}
-                        </p>
+                      <div className="mt-2 sm:flex sm:justify-between">
+                        <div className="sm:flex">
+                          <p className="flex items-center text-sm text-gray-500">
+                            <MapPin className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" />
+                            {trip.destination}
+                          </p>
+                        </div>
+                        <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
+                          <Calendar className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" />
+                          <p>{new Date(trip.startDate).toLocaleDateString()}</p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))
-              ) : (
-                <div className="px-6 py-8 text-center">
-                  <p className="text-gray-500">No tienes gastos registrados aún.</p>
-                  <Link
-                    href="/expenses/new"
-                    className="mt-2 inline-flex items-center text-sm text-blue-600 hover:text-blue-500"
-                  >
-                    Registrar tu primer gasto
                   </Link>
-                </div>
-              )}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Recent Expenses Section */}
+          <div className="bg-white shadow rounded-lg">
+            <div className="px-4 py-5 sm:px-6 flex justify-between items-center border-b border-gray-200">
+              <h2 className="text-lg font-medium leading-6 text-gray-900">
+                Gastos Recientes
+              </h2>
+              <Link
+                href="/expenses"
+                className="text-sm font-medium text-blue-600 hover:text-blue-500"
+              >
+                Ver todos
+              </Link>
             </div>
-            {stats.recentExpenses.length > 0 && (
-              <div className="px-6 py-3 bg-gray-50">
-                <Link
-                  href="/expenses"
-                  className="text-sm text-blue-600 hover:text-blue-500"
+            <ul role="list" className="divide-y divide-gray-200">
+              {recentExpenses.slice(0, 5).map((expense) => (
+                <li
+                  key={expense.id}
+                  className="px-4 py-4 sm:px-6 hover:bg-gray-50 transition-colors"
                 >
-                  Ver todos los gastos →
-                </Link>
-              </div>
-            )}
+                  <div className="flex items-center justify-between">
+                    <div className="flex flex-col">
+                      <p className="text-sm font-medium text-gray-900">
+                        {expense.description}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {expense.trips?.title}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-semibold text-gray-900">
+                        {expense.currency} {expense.amount.toLocaleString()}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {new Date(expense.date).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
       </div>
     </DashboardLayout>
-  )
+  );
 }

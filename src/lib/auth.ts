@@ -6,6 +6,10 @@ import { getErrorMessage } from '@/lib/utils'
 export interface AuthUser extends User {
   full_name?: string
   avatar_url?: string
+  bio?: string
+  phone?: string
+  location?: string
+  website?: string
 }
 
 export class AuthService {
@@ -110,42 +114,148 @@ export class AuthService {
   }
 
   async getCurrentUser(): Promise<AuthUser | null> {
-    const { data: { user }, error } = await this.supabase.auth.getUser()
-    
-    if (error || !user) return null
+    try {
+      logger.debug('AuthService: Getting current user...');
+      // Timeout for getUser to avoid hanging
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('getUser timed out')), 5000)
+      );
+      
+      const getUserPromise = this.supabase.auth.getUser();
+      const { data: { user }, error } = await Promise.race([getUserPromise, timeoutPromise]) as any;
+      
+      if (error || !user) {
+        if (error) logger.debug('AuthService: Error obteniendo usuario (esperado si no hay sesión):', error.message)
+        return null
+      }
 
-    // Get additional user data from our users table
-    const { data: userData } = await this.supabase
-      .from('users')
-      .select('full_name, avatar_url')
-      .eq('id', user.id)
-      .single()
+      // Get additional user data from our profiles table
+      // Usamos maybeSingle para no lanzar error si no existe perfil aun
+      const { data: userData, error: dbError } = await this.supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .maybeSingle() 
 
-    return {
-      ...user,
-      full_name: userData?.full_name,
-      avatar_url: userData?.avatar_url,
+      if (dbError) {
+        logger.warn('AuthService: Error obteniendo datos extra del usuario:', dbError.message)
+        // Retornamos el usuario básico aunque falle la DB
+      }
+
+      logger.debug('AuthService: User retrieved successfully', { id: user.id });
+      return {
+        ...user,
+        full_name: userData?.full_name,
+        avatar_url: userData?.avatar_url,
+        bio: userData?.bio,
+        phone: userData?.phone,
+        location: userData?.location,
+        website: userData?.website,
+      }
+    } catch (err) {
+      logger.error('AuthService: Excepción inesperada en getCurrentUser:', err)
+      return null
     }
   }
 
-  async updateProfile(updates: { full_name?: string; avatar_url?: string }) {
+  async updateProfile(updates: { full_name?: string; avatar_url?: string; bio?: string; phone?: string; location?: string; website?: string }) {
+    logger.info('AuthService: Updating profile...', updates)
+    
+    let user;
+    try {
+        user = await this.getCurrentUser()
+    } catch (e) {
+        logger.error('AuthService: Failed to get user for update', e);
+        throw new Error('Could not verify current session');
+    }
+
+    if (!user) {
+      logger.error('AuthService: Update failed - No user logged in')
+      throw new Error('No user logged in')
+    }
+
+    // Add timeout to prevent infinite hanging
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Update profile timed out after 10s')), 10000)
+    );
+
+    try {
+      // 1. Update auth metadata
+      const updateAuthPromise = this.supabase.auth.updateUser({
+        data: {
+          full_name: updates.full_name,
+          avatar_url: updates.avatar_url,
+        },
+      });
+
+      // 2. Update profiles table
+      const updateDbPromise = this.supabase
+        .from('profiles')
+        .upsert({
+          id: user.id,
+          updated_at: new Date().toISOString(),
+          ...updates,
+        });
+
+      // Execute both in parallel with timeout
+      const [authResult, dbResult] = await Promise.race([
+        Promise.all([updateAuthPromise, updateDbPromise]),
+        timeoutPromise
+      ]) as [any, any];
+
+      if (authResult.error) {
+        logger.error('AuthService: Auth metadata update failed', authResult.error)
+        throw authResult.error
+      }
+
+      if (dbResult.error) {
+        logger.error('AuthService: Profile DB update failed', dbResult.error)
+        throw dbResult.error
+      }
+
+      logger.info('AuthService: Profile updated successfully')
+    } catch (error) {
+      logger.error('AuthService: Profile update exception', error)
+      throw error
+    }
+  }
+
+  async uploadAvatar(file: File): Promise<string> {
+    logger.info('AuthService: Uploading avatar...', { fileName: file.name, size: file.size })
     const user = await this.getCurrentUser()
     if (!user) throw new Error('No user logged in')
 
-    // Update auth metadata
-    const { error: authError } = await this.supabase.auth.updateUser({
-      data: updates,
-    })
+    const fileExt = file.name.split('.').pop()
+    const fileName = `${user.id}/${Math.random().toString(36).substring(2)}.${fileExt}`
+    const filePath = `${fileName}`
 
-    if (authError) throw authError
+    // Add timeout for upload
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Avatar upload timed out after 30s')), 30000)
+    );
 
-    // Update users table
-    const { error: dbError } = await this.supabase
-      .from('users')
-      .update(updates)
-      .eq('id', user.id)
+    try {
+      const uploadPromise = this.supabase.storage
+        .from('avatars')
+        .upload(filePath, file);
 
-    if (dbError) throw dbError
+      const { error: uploadError } = await Promise.race([uploadPromise, timeoutPromise]) as any;
+
+      if (uploadError) {
+        logger.error('AuthService: Error uploading avatar:', uploadError)
+        throw uploadError
+      }
+
+      const { data } = this.supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath)
+
+      logger.info('AuthService: Avatar uploaded successfully', { publicUrl: data.publicUrl })
+      return data.publicUrl
+    } catch (error) {
+      logger.error('AuthService: Avatar upload exception', error)
+      throw error
+    }
   }
 
   onAuthStateChange(callback: (user: AuthUser | null) => void) {

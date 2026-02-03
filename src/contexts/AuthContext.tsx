@@ -13,6 +13,7 @@ interface AuthContextType {
   signOut: () => Promise<void>
   resetPassword: (email: string) => Promise<void>
   updateProfile: (updates: { full_name?: string; avatar_url?: string }) => Promise<void>
+  uploadAvatar: (file: File) => Promise<string>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -28,27 +29,54 @@ export function AuthProvider({ children, deps }: { children: React.ReactNode; de
   const logger = deps?.logger ?? defaultLogger
 
   useEffect(() => {
-    logger.debug('AuthContext: Inicializando useEffect')
-    // Get initial user
-    authService.getCurrentUser().then((user) => {
-      logger.debug('AuthContext: Usuario inicial obtenido:', user)
-      setUser(user)
-      setLoading(false)
-    })
+    let mounted = true;
+    logger.debug("AuthContext: Inicializando useEffect");
+
+    const initAuth = async () => {
+      try {
+        // Timeout de seguridad para evitar carga infinita
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Auth timeout')), 8000)
+        );
+        
+        const userPromise = authService.getCurrentUser();
+        
+        // Race entre obtener usuario y timeout
+        const user = await Promise.race([userPromise, timeoutPromise]) as AuthUser | null;
+        
+        if (mounted) {
+          logger.debug("AuthContext: Usuario inicial obtenido:", user);
+          setUser(user);
+        }
+      } catch (error) {
+        logger.error("AuthContext: Error o timeout inicializando auth:", { error });
+        // En caso de error, asumimos no autenticado para permitir renderizar (y que ProtectedRoute redirija si es necesario)
+        if (mounted) setUser(null);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+
+    initAuth();
 
     // Listen for auth changes
-    logger.debug('AuthContext: Configurando listener de cambios de auth')
-    const { data: { subscription } } = authService.onAuthStateChange((user) => {
-      logger.debug('AuthContext: Cambio de estado de auth:', user)
-      setUser(user)
-      setLoading(false)
-    })
+    logger.debug("AuthContext: Configurando listener de cambios de auth");
+    const {
+      data: { subscription },
+    } = authService.onAuthStateChange((user) => {
+      if (mounted) {
+        logger.debug("AuthContext: Cambio de estado de auth:", user);
+        setUser(user);
+        setLoading(false);
+      }
+    });
 
     return () => {
-      logger.debug('AuthContext: Limpiando subscription')
-      subscription.unsubscribe()
-    }
-  }, [])
+      mounted = false;
+      logger.debug("AuthContext: Limpiando subscription");
+      subscription.unsubscribe();
+    };
+  }, []);
 
   const signIn = async (email: string, password: string) => {
     logger.info('AuthContext: Iniciando signIn')
@@ -94,6 +122,10 @@ export function AuthProvider({ children, deps }: { children: React.ReactNode; de
     setUser(updatedUser)
   }
 
+  const uploadAvatar = async (file: File) => {
+    return authService.uploadAvatar(file)
+  }
+
   const value = {
     user,
     loading,
@@ -102,6 +134,7 @@ export function AuthProvider({ children, deps }: { children: React.ReactNode; de
     signOut,
     resetPassword,
     updateProfile,
+    uploadAvatar,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

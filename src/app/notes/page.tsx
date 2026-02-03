@@ -34,10 +34,14 @@ export default function NotesPage() {
   const [editorLoading, setEditorLoading] = useState(false)
 
   const loadNotes = useCallback(async (signal?: AbortSignal) => {
-    if (!user) return
-    const supabase = createSupabaseClient()
-
     try {
+      if (!user?.id) {
+         setLoading(false)
+         return
+      }
+      setLoading(true)
+      const supabase = createSupabaseClient()
+
       const query = supabase
         .from('notes')
         .select(`
@@ -54,25 +58,39 @@ export default function NotesPage() {
       setNotes(data || [])
     } catch (err: unknown) {
       // Silenciar abortos de navegación
-      if (err instanceof Error && err.name === 'AbortError') return
+      if (
+        (err instanceof Error && err.name === 'AbortError') ||
+        (typeof err === 'object' && err !== null && 'code' in err && (err as any).code === 20) ||
+        (err instanceof DOMException && err.name === 'AbortError')
+      ) {
+        return
+      }
+      
+      // Check for message content if it's not a standard Error object
+      const errObj = err as any;
+      if (errObj?.message?.includes('AbortError') || errObj?.details?.includes('AbortError')) {
+          return;
+      }
+
       const message = getErrorMessage(err)
       logger.error('NotesPage: Error loading notes', { error: message })
     } finally {
-      setLoading(false)
+      if (!signal?.aborted) {
+        setLoading(false)
+      }
     }
-  }, [user])
+  }, [user?.id])
 
   const loadTrips = useCallback(async (signal?: AbortSignal) => {
-    if (!user) return
-    const supabase = createSupabaseClient()
-
     try {
+      if (!user?.id) return
+      const supabase = createSupabaseClient()
+
       const query = supabase
-          .from('trips')
-          .select('id, title, user_id, origin, destination, departure_date, return_date, budget, status, created_at, updated_at')
-          .eq('user_id', user.id)
-          .order('departure_date', { ascending: false })
-          .order('departure_date', { ascending: false })
+        .from('trips')
+        .select('id, title, user_id, origin, destination, departure_date, return_date, status, created_at, updated_at')
+        .eq('user_id', user.id)
+        .order('departure_date', { ascending: false })
 
       const { data, error } = await (signal ? query.abortSignal(signal) : query)
 
@@ -80,11 +98,24 @@ export default function NotesPage() {
 
       setTrips(data || [])
     } catch (err: unknown) {
-      if (err instanceof Error && err.name === 'AbortError') return
+      if (
+        (err instanceof Error && err.name === 'AbortError') ||
+        (typeof err === 'object' && err !== null && 'code' in err && (err as any).code === 20) ||
+        (err instanceof DOMException && err.name === 'AbortError')
+      ) {
+        return
+      }
+      
+       // Check for message content if it's not a standard Error object
+       const errObj = err as any;
+       if (errObj?.message?.includes('AbortError') || errObj?.details?.includes('AbortError')) {
+           return;
+       }
+
       const message = getErrorMessage(err)
       logger.error('NotesPage: Error loading trips', { error: message })
     }
-  }, [user])
+  }, [user?.id])
 
   const filterNotes = useCallback(() => {
     let filtered = notes
@@ -113,7 +144,7 @@ export default function NotesPage() {
   }, [notes, searchTerm, categoryFilter, tripFilter])
 
   useEffect(() => {
-    if (user) {
+    if (user?.id) {
       const controller = new AbortController()
       loadNotes(controller.signal)
       loadTrips(controller.signal)
@@ -122,7 +153,7 @@ export default function NotesPage() {
       // Evitar spinner infinito cuando no hay usuario
       setLoading(false)
     }
-  }, [user, loadNotes, loadTrips])
+  }, [user?.id, loadNotes, loadTrips])
 
   useEffect(() => {
     filterNotes()

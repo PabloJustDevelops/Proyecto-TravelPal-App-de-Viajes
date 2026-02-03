@@ -82,6 +82,36 @@ CREATE TABLE IF NOT EXISTS calendar_events (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Tabla para notas de viaje
+CREATE TABLE IF NOT EXISTS trip_notes (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  trip_id UUID REFERENCES trips(id) ON DELETE CASCADE,
+  title VARCHAR(255) NOT NULL,
+  content TEXT NOT NULL,
+  tags TEXT[] DEFAULT ARRAY[]::TEXT[],
+  category VARCHAR(50) DEFAULT 'general',
+  is_favorite BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Tabla de perfiles de usuario
+CREATE TABLE IF NOT EXISTS profiles (
+  id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL PRIMARY KEY,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  username TEXT UNIQUE,
+  full_name TEXT,
+  avatar_url TEXT,
+  website TEXT,
+  bio TEXT,
+  phone TEXT,
+  location TEXT,
+  preferences JSONB DEFAULT '{}'::jsonb,
+  
+  CONSTRAINT username_length CHECK (char_length(username) >= 3)
+);
+
 -- Índices para mejorar el rendimiento
 CREATE INDEX IF NOT EXISTS idx_bookings_user_id ON bookings(user_id);
 CREATE INDEX IF NOT EXISTS idx_bookings_trip_id ON bookings(trip_id);
@@ -128,15 +158,19 @@ ALTER TABLE reminders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE calendar_events ENABLE ROW LEVEL SECURITY;
 
 -- Políticas para bookings
+DROP POLICY IF EXISTS "Users can view their own bookings" ON bookings;
 CREATE POLICY "Users can view their own bookings" ON bookings
     FOR SELECT USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert their own bookings" ON bookings;
 CREATE POLICY "Users can insert their own bookings" ON bookings
     FOR INSERT WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update their own bookings" ON bookings;
 CREATE POLICY "Users can update their own bookings" ON bookings
     FOR UPDATE USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can delete their own bookings" ON bookings;
 CREATE POLICY "Users can delete their own bookings" ON bookings
     FOR DELETE USING (auth.uid() = user_id);
 
@@ -178,3 +212,18 @@ CREATE POLICY "Users can update their own events" ON calendar_events
 
 CREATE POLICY "Users can delete their own events" ON calendar_events
     FOR DELETE USING (auth.uid() = user_id);
+
+-- Políticas para profiles
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Public profiles are viewable by everyone." ON profiles;
+CREATE POLICY "Public profiles are viewable by everyone." ON profiles
+    FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Users can insert their own profile." ON profiles;
+CREATE POLICY "Users can insert their own profile." ON profiles
+    FOR INSERT WITH CHECK (auth.uid() = id);
+
+DROP POLICY IF EXISTS "Users can update own profile." ON profiles;
+CREATE POLICY "Users can update own profile." ON profiles
+    FOR UPDATE USING (auth.uid() = id);

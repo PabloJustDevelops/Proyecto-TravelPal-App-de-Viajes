@@ -1,19 +1,41 @@
 'use client';
 
-import React, { useState } from 'react';
-import { ChevronLeftIcon, ChevronRightIcon, PlusIcon } from '@heroicons/react/24/outline';
-import Button from '../ui/Button';
-import { formatDate } from '../../lib/utils';
+import React, { useState, useEffect } from 'react';
+import { 
+  ChevronLeftIcon, 
+  ChevronRightIcon, 
+  PlusIcon,
+  TrashIcon
+} from '@heroicons/react/24/outline';
+import { 
+  format, 
+  addMonths, 
+  subMonths, 
+  startOfMonth, 
+  endOfMonth, 
+  startOfWeek, 
+  endOfWeek, 
+  eachDayOfInterval, 
+  isSameMonth, 
+  isSameDay, 
+  isToday,
+  addWeeks,
+  subWeeks
+} from 'date-fns';
+import { es } from 'date-fns/locale';
 
 interface CalendarEvent {
   id: string;
   title: string;
-  date: string;
+  date: string; // YYYY-MM-DD
   type: 'trip' | 'activity' | 'booking' | 'reminder';
   color: string;
   time?: string;
   description?: string;
   tripId?: string;
+  bookingId?: string;
+  activityId?: string;
+  icon?: React.ReactNode;
 }
 
 interface CalendarProps {
@@ -21,277 +43,310 @@ interface CalendarProps {
   onDateSelect?: (date: Date) => void;
   onEventClick?: (event: CalendarEvent) => void;
   onAddEvent?: (date: Date) => void;
+  onDeleteEvent?: (event: CalendarEvent) => void;
   selectedDate?: Date;
   className?: string;
 }
-
-const MONTHS = [
-  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
-];
-
-const DAYS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 
 export const Calendar: React.FC<CalendarProps> = ({
   events = [],
   onDateSelect,
   onEventClick,
   onAddEvent,
+  onDeleteEvent,
   selectedDate,
   className = ''
 }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<'month' | 'week'>('month');
+  const [contextMenu, setContextMenu] = useState<{ x: number, y: number, event: CalendarEvent } | null>(null);
 
-  const today = new Date();
-  const currentMonth = currentDate.getMonth();
-  const currentYear = currentDate.getFullYear();
+  useEffect(() => {
+    const handleClickOutside = () => setContextMenu(null);
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
 
-  // Obtener el primer día del mes y calcular los días a mostrar
-  const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
-  const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0);
-  const firstDayWeekday = firstDayOfMonth.getDay();
-  const daysInMonth = lastDayOfMonth.getDate();
-
-  // Generar array de días para mostrar en el calendario
-  const calendarDays = [];
-  
-  // Días del mes anterior
-  const prevMonth = new Date(currentYear, currentMonth - 1, 0);
-  for (let i = firstDayWeekday - 1; i >= 0; i--) {
-    calendarDays.push({
-      date: new Date(currentYear, currentMonth - 1, prevMonth.getDate() - i),
-      isCurrentMonth: false
+  const handleContextMenu = (e: React.MouseEvent, event: CalendarEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setContextMenu({
+      x: e.clientX,
+      y: e.clientY,
+      event
     });
-  }
-
-  // Días del mes actual
-  for (let day = 1; day <= daysInMonth; day++) {
-    calendarDays.push({
-      date: new Date(currentYear, currentMonth, day),
-      isCurrentMonth: true
-    });
-  }
-
-  // Días del mes siguiente para completar la grilla
-  const remainingDays = 42 - calendarDays.length;
-  for (let day = 1; day <= remainingDays; day++) {
-    calendarDays.push({
-      date: new Date(currentYear, currentMonth + 1, day),
-      isCurrentMonth: false
-    });
-  }
-
-  // Obtener eventos para una fecha específica
-  const getEventsForDate = (date: Date) => {
-    const dateStr = formatDate(date);
-    return events.filter(event => event.date === dateStr);
   };
 
-  // Navegación del calendario
-  const navigateMonth = (direction: 'prev' | 'next') => {
-    setCurrentDate(prev => {
-      const newDate = new Date(prev);
-      if (direction === 'prev') {
-        newDate.setMonth(prev.getMonth() - 1);
-      } else {
-        newDate.setMonth(prev.getMonth() + 1);
-      }
-      return newDate;
-    });
+  // Navegación
+  const next = () => {
+    if (viewMode === 'month') {
+      setCurrentDate(addMonths(currentDate, 1));
+    } else {
+      setCurrentDate(addWeeks(currentDate, 1));
+    }
+  };
+
+  const prev = () => {
+    if (viewMode === 'month') {
+      setCurrentDate(subMonths(currentDate, 1));
+    } else {
+      setCurrentDate(subWeeks(currentDate, 1));
+    }
   };
 
   const goToToday = () => {
     setCurrentDate(new Date());
   };
 
-  // Verificar si una fecha está seleccionada
-  const isDateSelected = (date: Date) => {
-    if (!selectedDate) return false;
-    return date.toDateString() === selectedDate.toDateString();
+  // Generación de días
+  const getDays = () => {
+    if (viewMode === 'month') {
+      const monthStart = startOfMonth(currentDate);
+      const monthEnd = endOfMonth(monthStart);
+      const startDate = startOfWeek(monthStart, { weekStartsOn: 1 }); // Lunes
+      const endDate = endOfWeek(monthEnd, { weekStartsOn: 1 });
+      
+      return eachDayOfInterval({ start: startDate, end: endDate });
+    } else {
+      const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
+      const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 });
+      
+      return eachDayOfInterval({ start: weekStart, end: weekEnd });
+    }
   };
 
-  // Verificar si una fecha es hoy
-  const isToday = (date: Date) => {
-    return date.toDateString() === today.toDateString();
+  const days = getDays();
+  const weekDays = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+
+  // Filtrar eventos
+  const getEventsForDay = (day: Date) => {
+    const dayStr = format(day, 'yyyy-MM-dd');
+    return events.filter(event => event.date === dayStr);
   };
 
-  // Manejar click en una fecha
-  const handleDateClick = (date: Date) => {
-    onDateSelect?.(date);
+  const renderEvent = (event: CalendarEvent, isCompact = false) => {
+    return (
+      <div
+        key={event.id}
+        onClick={(e) => {
+          e.stopPropagation();
+          onEventClick?.(event);
+        }}
+        onContextMenu={(e) => handleContextMenu(e, event)}
+        className={`
+          group flex items-center gap-1 p-1 rounded cursor-pointer 
+          hover:opacity-90 transition-all shadow-sm mb-1
+          ${event.color} border-l-2 border-white/20 relative
+        `}
+        title={`${event.title}${event.time ? ` - ${event.time}` : ''}\n${event.description || ''}`}
+      >
+        {event.icon && (
+          <span className="text-white/90 flex-shrink-0 w-3 h-3">
+            {event.icon}
+          </span>
+        )}
+        {event.time && !isCompact && (
+          <span className="text-[10px] font-medium opacity-90 whitespace-nowrap bg-black/10 px-1 rounded">
+            {event.time.substring(0, 5)}
+          </span>
+        )}
+        <span className="text-xs font-medium truncate flex-1 text-white">
+          {event.title}
+        </span>
+      </div>
+    );
   };
 
-  // Manejar click en agregar evento
-  const handleAddEvent = (date: Date, e: React.MouseEvent) => {
-    e.stopPropagation();
-    onAddEvent?.(date);
-  };
+  const renderMonthView = () => (
+    <div className="grid grid-cols-7 border-l border-t border-gray-200 bg-white">
+      {days.map((day, idx) => {
+        const dayEvents = getEventsForDay(day);
+        const isSelected = selectedDate && isSameDay(day, selectedDate);
+        const isTodayDay = isToday(day);
+        const isCurrentMonth = isSameMonth(day, currentDate);
+
+        return (
+          <div
+            key={day.toISOString()}
+            className={`
+              min-h-[120px] p-2 border-r border-b border-gray-200 cursor-pointer 
+              transition-colors relative hover:bg-gray-50
+              ${!isCurrentMonth ? 'bg-gray-50/50 text-gray-400' : 'text-gray-900'}
+              ${isSelected ? 'bg-blue-50/50' : ''}
+            `}
+            onClick={() => onDateSelect?.(day)}
+            onDoubleClick={(e) => {
+              e.stopPropagation();
+              onAddEvent?.(day);
+            }}
+          >
+            <div className="flex items-center justify-between mb-2">
+              <span
+                className={`
+                  text-sm font-medium w-7 h-7 flex items-center justify-center rounded-full
+                  ${isTodayDay ? 'bg-blue-600 text-white shadow-sm' : ''}
+                `}
+              >
+                {format(day, 'd')}
+              </span>
+            </div>
+            
+            <div className="space-y-1 overflow-y-auto max-h-[90px] custom-scrollbar">
+              {dayEvents.map(event => renderEvent(event, true))}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+
+  const renderWeekView = () => (
+    <div className="grid grid-cols-7 border-l border-t border-gray-200 bg-white h-[600px]">
+      {days.map((day) => {
+        const dayEvents = getEventsForDay(day);
+        const isTodayDay = isToday(day);
+
+        return (
+          <div
+            key={day.toISOString()}
+            className={`
+              border-r border-b border-gray-200 p-2 overflow-y-auto
+              ${isTodayDay ? 'bg-blue-50/30' : ''}
+            `}
+            onClick={() => onDateSelect?.(day)}
+            onDoubleClick={(e) => {
+              e.stopPropagation();
+              onAddEvent?.(day);
+            }}
+          >
+             <div className="text-center mb-4 sticky top-0 bg-inherit pb-2 border-b border-gray-100">
+               <span className="text-xs text-gray-500 uppercase block mb-1">
+                 {format(day, 'EEE', { locale: es })}
+               </span>
+               <span className={`
+                 inline-flex items-center justify-center w-8 h-8 rounded-full text-lg font-semibold
+                 ${isTodayDay ? 'bg-blue-600 text-white' : 'text-gray-900'}
+               `}>
+                 {format(day, 'd')}
+               </span>
+             </div>
+             
+             <div className="space-y-2">
+               {dayEvents
+                 .sort((a, b) => (a.time || '').localeCompare(b.time || ''))
+                 .map(event => renderEvent(event))}
+             </div>
+          </div>
+        );
+      })}
+    </div>
+  );
 
   return (
-    <div className={`bg-white rounded-lg shadow-sm border border-gray-200 ${className}`}>
-      {/* Header del calendario */}
+    <div className={`bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden ${className}`}>
+      {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-200">
-        <div className="flex items-center space-x-4">
-          <h2 className="text-lg font-semibold text-gray-900">
-            {MONTHS[currentMonth]} {currentYear}
+        <div className="flex items-center gap-4">
+          <h2 className="text-xl font-bold text-gray-900 capitalize min-w-[200px]">
+            {format(currentDate, 'MMMM yyyy', { locale: es })}
           </h2>
-          <div className="flex items-center space-x-1">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigateMonth('prev')}
-              className="p-1"
+          <div className="flex items-center rounded-md border border-gray-200 bg-white shadow-sm">
+            <button
+              onClick={prev}
+              className="p-1.5 hover:bg-gray-50 text-gray-600 border-r border-gray-200"
             >
-              <ChevronLeftIcon className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigateMonth('next')}
-              className="p-1"
+              <ChevronLeftIcon className="h-5 w-5" />
+            </button>
+            <button
+              onClick={goToToday}
+              className="px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
             >
-              <ChevronRightIcon className="h-4 w-4" />
-            </Button>
+              Hoy
+            </button>
+            <button
+              onClick={next}
+              className="p-1.5 hover:bg-gray-50 text-gray-600 border-l border-gray-200"
+            >
+              <ChevronRightIcon className="h-5 w-5" />
+            </button>
           </div>
         </div>
 
-        <div className="flex items-center space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={goToToday}
+        <div className="flex rounded-lg border border-gray-200 p-1 bg-gray-50">
+          <button
+            onClick={() => setViewMode('month')}
+            className={`
+              px-4 py-1.5 text-sm font-medium rounded-md transition-all
+              ${viewMode === 'month' 
+                ? 'bg-white text-blue-600 shadow-sm' 
+                : 'text-gray-600 hover:text-gray-900'}
+            `}
           >
-            Hoy
-          </Button>
-          <div className="flex rounded-md shadow-sm">
-            <button
-              onClick={() => setViewMode('month')}
-              className={`px-3 py-1 text-sm font-medium rounded-l-md border ${
-                viewMode === 'month'
-                  ? 'bg-blue-50 text-blue-700 border-blue-200'
-                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-              }`}
-            >
-              Mes
-            </button>
-            <button
-              onClick={() => setViewMode('week')}
-              className={`px-3 py-1 text-sm font-medium rounded-r-md border-l-0 border ${
-                viewMode === 'week'
-                  ? 'bg-blue-50 text-blue-700 border-blue-200'
-                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-              }`}
-            >
-              Semana
-            </button>
-          </div>
+            Mes
+          </button>
+          <button
+            onClick={() => setViewMode('week')}
+            className={`
+              px-4 py-1.5 text-sm font-medium rounded-md transition-all
+              ${viewMode === 'week' 
+                ? 'bg-white text-blue-600 shadow-sm' 
+                : 'text-gray-600 hover:text-gray-900'}
+            `}
+          >
+            Semana
+          </button>
         </div>
       </div>
 
-      {/* Días de la semana */}
-      <div className="grid grid-cols-7 border-b border-gray-200">
-        {DAYS.map(day => (
+      {/* Días de la semana (Header) */}
+      <div className="grid grid-cols-7 border-b border-gray-200 bg-gray-50/50">
+        {weekDays.map(day => (
           <div
             key={day}
-            className="p-3 text-center text-sm font-medium text-gray-500 bg-gray-50"
+            className="py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider"
           >
             {day}
           </div>
         ))}
       </div>
 
-      {/* Grilla del calendario */}
-      <div className="grid grid-cols-7">
-        {calendarDays.map((calendarDay, index) => {
-          const dayEvents = getEventsForDate(calendarDay.date);
-          const isSelected = isDateSelected(calendarDay.date);
-          const isTodayDate = isToday(calendarDay.date);
-
-          return (
-            <div
-              key={index}
-              className={`min-h-[100px] p-2 border-r border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors ${
-                !calendarDay.isCurrentMonth ? 'bg-gray-50/50' : ''
-              } ${isSelected ? 'bg-blue-50 border-blue-200' : ''}`}
-              onClick={() => handleDateClick(calendarDay.date)}
-            >
-              <div className="flex items-center justify-between mb-1">
-                <span
-                  className={`text-sm font-medium ${
-                    !calendarDay.isCurrentMonth
-                      ? 'text-gray-400'
-                      : isTodayDate
-                      ? 'text-blue-600 bg-blue-100 rounded-full w-6 h-6 flex items-center justify-center'
-                      : 'text-gray-900'
-                  }`}
-                >
-                  {calendarDay.date.getDate()}
-                </span>
-                {calendarDay.isCurrentMonth && (
-                  <button
-                    onClick={(e: React.MouseEvent<HTMLButtonElement>) => handleAddEvent(calendarDay.date, e)}
-                    className="opacity-0 group-hover:opacity-100 hover:opacity-100 p-1 rounded-full hover:bg-gray-200 transition-opacity"
-                    title="Agregar evento"
-                  >
-                    <PlusIcon className="h-3 w-3 text-gray-400" />
-                  </button>
-                )}
-              </div>
-
-              {/* Eventos del día */}
-              <div className="space-y-1">
-                {dayEvents.slice(0, 3).map(event => (
-                  <div
-                    key={event.id}
-                    onClick={(e: React.MouseEvent<HTMLDivElement>) => {
-                      e.stopPropagation();
-                      onEventClick?.(event);
-                    }}
-                    className={`text-xs p-1 rounded cursor-pointer hover:opacity-80 transition-opacity ${event.color}`}
-                    title={`${event.title}${event.time ? ` - ${event.time}` : ''}`}
-                  >
-                    <div className="truncate font-medium">
-                      {event.title}
-                    </div>
-                    {event.time && (
-                      <div className="text-xs opacity-75">
-                        {event.time}
-                      </div>
-                    )}
-                  </div>
-                ))}
-                {dayEvents.length > 3 && (
-                  <div className="text-xs text-gray-500 font-medium">
-                    +{dayEvents.length - 3} más
-                  </div>
-                )}
-              </div>
-            </div>
-          );
-        })}
+      {/* Vistas */}
+      {viewMode === 'month' ? renderMonthView() : renderWeekView()}
+      
+      {/* Footer Leyenda */}
+      <div className="px-6 py-4 border-t border-gray-200 bg-gray-50/30 flex flex-wrap gap-6 text-xs">
+        {[
+          { label: 'Viajes', color: 'bg-blue-500' },
+          { label: 'Reservas', color: 'bg-green-500' },
+          { label: 'Pendiente', color: 'bg-yellow-500' },
+          { label: 'Actividades', color: 'bg-purple-500' },
+        ].map((item) => (
+          <div key={item.label} className="flex items-center gap-2">
+            <span className={`w-3 h-3 rounded-full ${item.color} ring-2 ring-white shadow-sm`} />
+            <span className="font-medium text-gray-600">{item.label}</span>
+          </div>
+        ))}
       </div>
 
-      {/* Leyenda de tipos de eventos */}
-      <div className="p-4 border-t border-gray-200 bg-gray-50">
-        <div className="flex flex-wrap gap-4 text-xs">
-          <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 rounded bg-blue-500"></div>
-            <span className="text-gray-600">Viajes</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 rounded bg-green-500"></div>
-            <span className="text-gray-600">Actividades</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 rounded bg-purple-500"></div>
-            <span className="text-gray-600">Reservas</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 rounded bg-orange-500"></div>
-            <span className="text-gray-600">Recordatorios</span>
-          </div>
+      {/* Context Menu */}
+      {contextMenu && (
+        <div
+          className="fixed bg-white border border-gray-200 shadow-lg rounded-md py-1 z-50 min-w-[120px]"
+          style={{ top: contextMenu.y, left: contextMenu.x }}
+        >
+          <button
+            className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDeleteEvent?.(contextMenu.event);
+              setContextMenu(null);
+            }}
+          >
+            <TrashIcon className="h-4 w-4" />
+            Eliminar
+          </button>
         </div>
-      </div>
+      )}
     </div>
   );
 };

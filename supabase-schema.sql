@@ -1,195 +1,146 @@
--- Enable Row Level Security
--- Note: JWT secret is managed by Supabase automatically
+-- WARNING: This schema is for context only and is not meant to be run.
+-- Table order and constraints may not be valid for execution.
 
--- Create custom types
-CREATE TYPE trip_status AS ENUM ('planned', 'confirmed', 'completed', 'cancelled');
-
--- Users table (extends auth.users)
-CREATE TABLE public.users (
-  id UUID REFERENCES auth.users(id) PRIMARY KEY,
-  email TEXT UNIQUE NOT NULL,
-  full_name TEXT,
-  avatar_url TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Trips table
-CREATE TABLE public.trips (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES public.users(id) ON DELETE CASCADE NOT NULL,
-  title TEXT NOT NULL,
-  origin TEXT NOT NULL,
-  destination TEXT NOT NULL,
-  departure_date TIMESTAMP WITH TIME ZONE NOT NULL,
-  return_date TIMESTAMP WITH TIME ZONE,
-  airline TEXT,
-  flight_number TEXT,
-  status trip_status DEFAULT 'planned',
-  notes TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Expenses table
-CREATE TABLE public.expenses (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES public.users(id) ON DELETE CASCADE NOT NULL,
-  trip_id UUID REFERENCES public.trips(id) ON DELETE SET NULL,
-  title TEXT NOT NULL,
-  amount DECIMAL(10,2) NOT NULL,
-  currency TEXT DEFAULT 'USD',
-  category TEXT NOT NULL,
-  date TIMESTAMP WITH TIME ZONE NOT NULL,
-  description TEXT,
-  receipt_url TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Notes table
-CREATE TABLE public.notes (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES public.users(id) ON DELETE CASCADE NOT NULL,
-  trip_id UUID REFERENCES public.trips(id) ON DELETE SET NULL,
-  title TEXT NOT NULL,
-  content TEXT NOT NULL,
-  tags TEXT[] DEFAULT '{}',
-  folder TEXT,
-  is_favorite BOOLEAN DEFAULT FALSE,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Alerts table
 CREATE TABLE public.alerts (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES public.users(id) ON DELETE CASCADE NOT NULL,
-  trip_id UUID REFERENCES public.trips(id) ON DELETE CASCADE,
-  type TEXT NOT NULL DEFAULT 'info',
-  title TEXT NOT NULL,
-  message TEXT NOT NULL,
-  alert_date TIMESTAMP WITH TIME ZONE NOT NULL,
-  is_read BOOLEAN DEFAULT FALSE,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  trip_id uuid NOT NULL,
+  title text NOT NULL,
+  message text NOT NULL,
+  alert_date timestamp with time zone NOT NULL,
+  is_sent boolean DEFAULT false,
+  created_at timestamp with time zone DEFAULT now(),
+  is_read boolean DEFAULT false,
+  CONSTRAINT alerts_pkey PRIMARY KEY (id),
+  CONSTRAINT alerts_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
+  CONSTRAINT alerts_trip_id_fkey FOREIGN KEY (trip_id) REFERENCES public.trips(id)
 );
-
--- Create indexes for better performance
-CREATE INDEX idx_trips_user_id ON public.trips(user_id);
-CREATE INDEX idx_trips_departure_date ON public.trips(departure_date);
-CREATE INDEX idx_expenses_user_id ON public.expenses(user_id);
-CREATE INDEX idx_expenses_trip_id ON public.expenses(trip_id);
-CREATE INDEX idx_expenses_date ON public.expenses(date);
-CREATE INDEX idx_notes_user_id ON public.notes(user_id);
-CREATE INDEX idx_notes_trip_id ON public.notes(trip_id);
-CREATE INDEX idx_alerts_user_id ON public.alerts(user_id);
-CREATE INDEX idx_alerts_alert_date ON public.alerts(alert_date);
-
--- Enable Row Level Security
-ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.trips ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.expenses ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.notes ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.alerts ENABLE ROW LEVEL SECURITY;
-
--- Create RLS policies
--- Users policies
-CREATE POLICY "Users can view own profile" ON public.users
-  FOR SELECT USING (auth.uid() = id);
-
-CREATE POLICY "Users can update own profile" ON public.users
-  FOR UPDATE USING (auth.uid() = id);
-
--- Trips policies
-CREATE POLICY "Users can view own trips" ON public.trips
-  FOR SELECT USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can insert own trips" ON public.trips
-  FOR INSERT WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can update own trips" ON public.trips
-  FOR UPDATE USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can delete own trips" ON public.trips
-  FOR DELETE USING (auth.uid() = user_id);
-
--- Expenses policies
-CREATE POLICY "Users can view own expenses" ON public.expenses
-  FOR SELECT USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can insert own expenses" ON public.expenses
-  FOR INSERT WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can update own expenses" ON public.expenses
-  FOR UPDATE USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can delete own expenses" ON public.expenses
-  FOR DELETE USING (auth.uid() = user_id);
-
--- Notes policies
-CREATE POLICY "Users can view own notes" ON public.notes
-  FOR SELECT USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can insert own notes" ON public.notes
-  FOR INSERT WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can update own notes" ON public.notes
-  FOR UPDATE USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can delete own notes" ON public.notes
-  FOR DELETE USING (auth.uid() = user_id);
-
--- Alerts policies
-CREATE POLICY "Users can view own alerts" ON public.alerts
-  FOR SELECT USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can insert own alerts" ON public.alerts
-  FOR INSERT WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can update own alerts" ON public.alerts
-  FOR UPDATE USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can delete own alerts" ON public.alerts
-  FOR DELETE USING (auth.uid() = user_id);
-
--- Create functions for automatic user creation
-CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS TRIGGER AS $$
-BEGIN
-  INSERT INTO public.users (id, email, full_name, avatar_url)
-  VALUES (
-    NEW.id,
-    NEW.email,
-    NEW.raw_user_meta_data->>'full_name',
-    NEW.raw_user_meta_data->>'avatar_url'
-  );
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- Create trigger for new user creation
-CREATE TRIGGER on_auth_user_created
-  AFTER INSERT ON auth.users
-  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
-
--- Create function to update updated_at timestamp
-CREATE OR REPLACE FUNCTION public.update_updated_at_column()
-RETURNS TRIGGER AS $$
-BEGIN
-  NEW.updated_at = NOW();
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
--- Create triggers for updated_at
-CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON public.users
-  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
-
-CREATE TRIGGER update_trips_updated_at BEFORE UPDATE ON public.trips
-  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
-
-CREATE TRIGGER update_expenses_updated_at BEFORE UPDATE ON public.expenses
-  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
-
-CREATE TRIGGER update_notes_updated_at BEFORE UPDATE ON public.notes
-  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+CREATE TABLE public.bookings (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid,
+  trip_id uuid,
+  type character varying NOT NULL CHECK (type::text = ANY (ARRAY['flight'::character varying, 'hotel'::character varying, 'car'::character varying, 'activity'::character varying, 'restaurant'::character varying, 'other'::character varying]::text[])),
+  title character varying NOT NULL,
+  description text,
+  confirmation_number character varying,
+  status character varying DEFAULT 'pending'::character varying CHECK (status::text = ANY (ARRAY['confirmed'::character varying, 'pending'::character varying, 'cancelled'::character varying]::text[])),
+  start_date date NOT NULL,
+  end_date date,
+  start_time time without time zone,
+  end_time time without time zone,
+  location character varying,
+  address text,
+  contact_name character varying,
+  contact_phone character varying,
+  contact_email character varying,
+  cost numeric,
+  currency character varying DEFAULT 'EUR'::character varying,
+  notes text,
+  documents jsonb DEFAULT '[]'::jsonb,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT bookings_pkey PRIMARY KEY (id),
+  CONSTRAINT bookings_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id),
+  CONSTRAINT bookings_trip_id_fkey FOREIGN KEY (trip_id) REFERENCES public.trips(id)
+);
+CREATE TABLE public.budgets (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  trip_id uuid,
+  name text NOT NULL,
+  total_amount numeric NOT NULL,
+  spent_amount numeric DEFAULT 0,
+  currency text DEFAULT 'USD'::text,
+  category text NOT NULL,
+  start_date date NOT NULL,
+  end_date date NOT NULL,
+  description text,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT budgets_pkey PRIMARY KEY (id),
+  CONSTRAINT budgets_trip_id_fkey FOREIGN KEY (trip_id) REFERENCES public.trips(id),
+  CONSTRAINT budgets_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
+);
+CREATE TABLE public.expenses (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  trip_id uuid,
+  title text NOT NULL,
+  amount numeric NOT NULL,
+  currency text DEFAULT 'USD'::text,
+  category text NOT NULL,
+  date timestamp with time zone NOT NULL,
+  description text,
+  receipt_url text,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT expenses_pkey PRIMARY KEY (id),
+  CONSTRAINT expenses_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
+  CONSTRAINT expenses_trip_id_fkey FOREIGN KEY (trip_id) REFERENCES public.trips(id)
+);
+CREATE TABLE public.itinerary_activities (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid,
+  trip_id uuid,
+  date date NOT NULL,
+  title character varying NOT NULL,
+  description text,
+  start_time time without time zone,
+  end_time time without time zone,
+  location character varying,
+  address text,
+  category character varying DEFAULT 'general'::character varying,
+  cost numeric,
+  currency character varying DEFAULT 'EUR'::character varying,
+  notes text,
+  completed boolean DEFAULT false,
+  order_index integer DEFAULT 0,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT itinerary_activities_pkey PRIMARY KEY (id),
+  CONSTRAINT itinerary_activities_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id),
+  CONSTRAINT itinerary_activities_trip_id_fkey FOREIGN KEY (trip_id) REFERENCES public.trips(id)
+);
+CREATE TABLE public.notes (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  trip_id uuid,
+  title text NOT NULL,
+  content text NOT NULL,
+  tags ARRAY DEFAULT '{}'::text[],
+  folder text,
+  is_favorite boolean DEFAULT false,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT notes_pkey PRIMARY KEY (id),
+  CONSTRAINT notes_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
+  CONSTRAINT notes_trip_id_fkey FOREIGN KEY (trip_id) REFERENCES public.trips(id)
+);
+CREATE TABLE public.trips (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  title text NOT NULL,
+  origin text NOT NULL,
+  destination text NOT NULL,
+  departure_date timestamp with time zone NOT NULL,
+  return_date timestamp with time zone,
+  airline text,
+  flight_number text,
+  status USER-DEFINED DEFAULT 'planned'::trip_status,
+  notes text,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  confirmation_number text,
+  CONSTRAINT trips_pkey PRIMARY KEY (id),
+  CONSTRAINT trips_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
+);
+CREATE TABLE public.users (
+  id uuid NOT NULL,
+  email text NOT NULL UNIQUE,
+  full_name text,
+  avatar_url text,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT users_pkey PRIMARY KEY (id),
+  CONSTRAINT users_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id)
+);

@@ -22,6 +22,15 @@
 
 ---
 
+## 📢 Aviso Importante: Reversión de Diseño (01/02/2026)
+
+Se ha realizado una reversión completa del diseño para eliminar el estilo "neobrutalista" y restaurar la interfaz profesional original.
+- **Commit de referencia**: `7880499` (Estado previo al rediseño).
+- **Cambios**: Eliminación de componentes `Neo*`, restauración de layouts clásicos y limpieza de estilos.
+- **Motivo**: Inconsistencia visual y problemas de usabilidad reportados.
+
+---
+
 ## 📋 Descripción
 
 App Viajes es una aplicación web colaborativa para gestionar todo el ciclo de un viaje: creación de itinerarios, control de gastos, presupuestos inteligentes y analíticas visuales. El proyecto enfatiza documentación clara, estándares de calidad y un flujo de trabajo profesional.

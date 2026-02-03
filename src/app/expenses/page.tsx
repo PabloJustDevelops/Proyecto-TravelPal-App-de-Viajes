@@ -1,140 +1,187 @@
-'use client'
+"use client";
 
-import { useState, useEffect, useCallback } from 'react'
-import { useAuth } from '@/contexts/AuthContext'
-import { createSupabaseClient, Expense, Trip } from '@/lib/supabase'
-import DashboardLayout from '@/components/layout/DashboardLayout'
-import ExpenseCard from '@/components/expenses/ExpenseCard'
-import Button from '@/components/ui/Button'
-import Input from '@/components/ui/Input'
-import { Card, CardContent } from '@/components/ui/Card'
-import { 
+import { useState, useEffect, useCallback } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { createSupabaseClient, Expense, Trip } from "@/lib/supabase";
+import DashboardLayout from "@/components/layout/DashboardLayout";
+import ExpenseCard from "@/components/expenses/ExpenseCard";
+import Button from "@/components/ui/Button";
+import Input from "@/components/ui/Input";
+import { Card, CardContent } from "@/components/ui/Card";
+import {
   PlusIcon,
   MagnifyingGlassIcon,
   CurrencyDollarIcon,
   ChartBarIcon,
-  CalendarIcon
-} from '@heroicons/react/24/outline'
-import { formatCurrency } from '@/lib/utils'
-import Link from 'next/link'
-import LoadingSpinner from '@/components/ui/LoadingSpinner'
-import { logger } from '@/lib/logger'
+  CalendarIcon,
+  ArrowDownTrayIcon,
+} from "@heroicons/react/24/outline";
+import { formatCurrency, getErrorMessage } from "@/lib/utils";
+import { exportExpensesToPDF, exportExpensesToCSV } from "@/lib/exportUtils";
+import Link from "next/link";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import { logger } from "@/lib/logger";
 
 export default function ExpensesPage() {
-  const { user } = useAuth()
-  const [expenses, setExpenses] = useState<(Expense & { trip?: Trip })[]>([])
-  const [filteredExpenses, setFilteredExpenses] = useState<(Expense & { trip?: Trip })[]>([])
-  const [loading, setLoading] = useState(true)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [categoryFilter, setCategoryFilter] = useState<string>('all')
-  const [tripFilter, setTripFilter] = useState<string>('all')
-  const [trips, setTrips] = useState<Trip[]>([])
+  const { user } = useAuth();
+  const [expenses, setExpenses] = useState<(Expense & { trip?: Trip })[]>([]);
+  const [filteredExpenses, setFilteredExpenses] = useState<
+    (Expense & { trip?: Trip })[]
+  >([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [tripFilter, setTripFilter] = useState<string>("all");
+  const [trips, setTrips] = useState<Trip[]>([]);
 
-  const loadExpenses = useCallback(async (signal?: AbortSignal) => {
-    const supabase = createSupabaseClient()
+  const loadExpenses = useCallback(
+    async (signal?: AbortSignal) => {
+      const supabase = createSupabaseClient();
 
-    try {
-      const query = supabase
-        .from('expenses')
-        .select(`
+      try {
+        const query = supabase
+          .from("expenses")
+          .select(
+            `
           *,
           trip:trips(*)
-        `)
-        .eq('user_id', user!.id)
-        .order('date', { ascending: false })
+        `,
+          )
+          .eq("user_id", user!.id)
+          .order("date", { ascending: false });
 
-      const { data, error } = await (signal ? query.abortSignal(signal) : query)
+        const { data, error } = await (signal
+          ? query.abortSignal(signal)
+          : query);
 
-      if (error) throw error
+        if (error) throw error;
 
-      setExpenses(data || [])
-    } catch (error) {
-      if (error instanceof Error && error.name === 'AbortError') return
-      // Unificar errores con logger
-      const msg = error instanceof Error ? error.message : 'Error desconocido'
-      logger.error('ExpensesPage: Error loading expenses', { error: msg })
-    } finally {
-      setLoading(false)
-    }
-  }, [user])
+        setExpenses(data || []);
+      } catch (error: any) {
+        if (
+          (error instanceof Error && error.name === "AbortError") ||
+          error?.code === 20 ||
+          error?.message?.includes("AbortError")
+        ) {
+          return;
+        }
+        // Unificar errores con logger
+        const msg = getErrorMessage(error, "Error loading expenses");
+        logger.error("ExpensesPage: Error loading expenses", {
+          error: msg,
+          raw: error,
+        });
+      } finally {
+        setLoading(false);
+      }
+    },
+    [user],
+  );
 
-  const loadTrips = useCallback(async (signal?: AbortSignal) => {
-    const supabase = createSupabaseClient()
+  const loadTrips = useCallback(
+    async (signal?: AbortSignal) => {
+      const supabase = createSupabaseClient();
 
-    try {
-      const query = supabase
-        .from('trips')
-        .select('id, title, user_id, origin, destination, departure_date, return_date, budget, status, created_at, updated_at')
-        .eq('user_id', user!.id)
-        .order('departure_date', { ascending: false })
+      try {
+        const query = supabase
+          .from("trips")
+          .select(
+            "id, title, user_id, origin, destination, departure_date, return_date, status, created_at, updated_at",
+          )
+          .eq("user_id", user!.id)
+          .order("departure_date", { ascending: false });
 
-      const { data, error } = await (signal ? query.abortSignal(signal) : query)
+        const { data, error } = await (signal
+          ? query.abortSignal(signal)
+          : query);
 
-      if (error) throw error
+        if (error) throw error;
 
-      setTrips(data || [])
-    } catch (error) {
-      if (error instanceof Error && error.name === 'AbortError') return
-      const msg = error instanceof Error ? error.message : 'Error desconocido'
-      logger.error('ExpensesPage: Error loading trips', { error: msg })
-    }
-  }, [user])
+        setTrips(data || []);
+      } catch (error: any) {
+        if (
+          (error instanceof Error && error.name === "AbortError") ||
+          error?.code === 20 ||
+          error?.message?.includes("AbortError")
+        ) {
+          return;
+        }
+        const msg = getErrorMessage(error, "Error loading trips");
+        logger.error("ExpensesPage: Error loading trips", {
+          error: msg,
+          raw: error,
+        });
+      }
+    },
+    [user],
+  );
 
   const filterExpenses = useCallback(() => {
-    let filtered = expenses
+    let filtered = expenses;
 
     // Filter by search term
     if (searchTerm) {
       filtered = filtered.filter(
         (expense) =>
-          expense.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          expense.trip?.title.toLowerCase().includes(searchTerm.toLowerCase())
-      )
+          expense.description
+            ?.toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
+          expense.trip?.title.toLowerCase().includes(searchTerm.toLowerCase()),
+      );
     }
 
     // Filter by category
-    if (categoryFilter !== 'all') {
-      filtered = filtered.filter((expense) => expense.category === categoryFilter)
+    if (categoryFilter !== "all") {
+      filtered = filtered.filter(
+        (expense) => expense.category === categoryFilter,
+      );
     }
 
     // Filter by trip
-    if (tripFilter !== 'all') {
-      filtered = filtered.filter((expense) => expense.trip_id === tripFilter)
+    if (tripFilter !== "all") {
+      filtered = filtered.filter((expense) => expense.trip_id === tripFilter);
     }
 
-    setFilteredExpenses(filtered)
-  }, [expenses, searchTerm, categoryFilter, tripFilter])
+    setFilteredExpenses(filtered);
+  }, [expenses, searchTerm, categoryFilter, tripFilter]);
 
   useEffect(() => {
     if (user) {
-      const controller = new AbortController()
-      loadExpenses(controller.signal)
-      loadTrips(controller.signal)
-      return () => controller.abort()
+      const controller = new AbortController();
+      loadExpenses(controller.signal);
+      loadTrips(controller.signal);
+      return () => controller.abort();
     } else {
       // Evitar spinner infinito cuando no hay usuario
-      setLoading(false)
+      setLoading(false);
     }
-  }, [user, loadExpenses, loadTrips])
+  }, [user, loadExpenses, loadTrips]);
 
   useEffect(() => {
-    filterExpenses()
-  }, [expenses, searchTerm, categoryFilter, tripFilter, filterExpenses])
+    filterExpenses();
+  }, [expenses, searchTerm, categoryFilter, tripFilter, filterExpenses]);
 
   const getExpenseStats = () => {
     const totalAmount = expenses.reduce((sum, expense) => {
       // Convert to EUR for calculation (simplified)
-      const amount = expense.currency === 'EUR' ? expense.amount : expense.amount * 0.85
-      return sum + amount
-    }, 0)
+      const amount =
+        expense.currency === "EUR" ? expense.amount : expense.amount * 0.85;
+      return sum + amount;
+    }, 0);
 
-    const categoryTotals = expenses.reduce((acc, expense) => {
-      const amount = expense.currency === 'EUR' ? expense.amount : expense.amount * 0.85
-      acc[expense.category] = (acc[expense.category] || 0) + amount
-      return acc
-    }, {} as Record<string, number>)
+    const categoryTotals = expenses.reduce(
+      (acc, expense) => {
+        const amount =
+          expense.currency === "EUR" ? expense.amount : expense.amount * 0.85;
+        acc[expense.category] = (acc[expense.category] || 0) + amount;
+        return acc;
+      },
+      {} as Record<string, number>,
+    );
 
-    const topCategory = Object.entries(categoryTotals).sort(([,a], [,b]) => b - a)[0]
+    const topCategory = Object.entries(categoryTotals).sort(
+      ([, a], [, b]) => b - a,
+    )[0];
 
     return {
       total: totalAmount,
@@ -142,24 +189,24 @@ export default function ExpensesPage() {
       topCategory: topCategory ? topCategory[0] : null,
       topCategoryAmount: topCategory ? topCategory[1] : 0,
       avgPerExpense: expenses.length > 0 ? totalAmount / expenses.length : 0,
-    }
-  }
+    };
+  };
 
   const getCategoryName = (category: string) => {
     const names: Record<string, string> = {
-      accommodation: 'Alojamiento',
-      transport: 'Transporte',
-      food: 'Comida',
-      entertainment: 'Entretenimiento',
-      shopping: 'Compras',
-      health: 'Salud',
-      insurance: 'Seguro',
-      other: 'Otros',
-    }
-    return names[category] || category
-  }
+      accommodation: "Alojamiento",
+      transport: "Transporte",
+      food: "Comida",
+      entertainment: "Entretenimiento",
+      shopping: "Compras",
+      health: "Salud",
+      insurance: "Seguro",
+      other: "Otros",
+    };
+    return names[category] || category;
+  };
 
-  const stats = getExpenseStats()
+  const stats = getExpenseStats();
 
   if (loading) {
     return (
@@ -168,21 +215,25 @@ export default function ExpensesPage() {
           <LoadingSpinner size="lg" />
         </div>
       </DashboardLayout>
-    )
+    );
   }
 
   if (!user) {
     return (
       <DashboardLayout>
         <div className="text-center py-12">
-          <h3 className="text-lg font-semibold text-gray-900">Inicia sesión para ver tus gastos</h3>
-          <p className="mt-1 text-sm text-gray-500">La sección de gastos requiere autenticación.</p>
+          <h3 className="text-lg font-semibold text-gray-900">
+            Inicia sesión para ver tus gastos
+          </h3>
+          <p className="mt-1 text-sm text-gray-500">
+            La sección de gastos requiere autenticación.
+          </p>
           <Link href="/signin">
             <Button className="mt-4">Ir a Login</Button>
           </Link>
         </div>
       </DashboardLayout>
-    )
+    );
   }
 
   return (
@@ -213,9 +264,11 @@ export default function ExpensesPage() {
                   <CurrencyDollarIcon className="h-8 w-8 text-green-600" />
                 </div>
                 <div className="ml-4">
-                  <div className="text-sm font-medium text-gray-500">Total Gastado</div>
+                  <div className="text-sm font-medium text-gray-500">
+                    Total Gastado
+                  </div>
                   <div className="text-2xl font-bold text-gray-900">
-                    {formatCurrency(stats.total, 'EUR')}
+                    {formatCurrency(stats.total, "EUR")}
                   </div>
                 </div>
               </div>
@@ -229,8 +282,12 @@ export default function ExpensesPage() {
                   <ChartBarIcon className="h-8 w-8 text-blue-600" />
                 </div>
                 <div className="ml-4">
-                  <div className="text-sm font-medium text-gray-500">Total Gastos</div>
-                  <div className="text-2xl font-bold text-gray-900">{stats.count}</div>
+                  <div className="text-sm font-medium text-gray-500">
+                    Total Gastos
+                  </div>
+                  <div className="text-2xl font-bold text-gray-900">
+                    {stats.count}
+                  </div>
                 </div>
               </div>
             </CardContent>
@@ -243,9 +300,11 @@ export default function ExpensesPage() {
                   <CalendarIcon className="h-8 w-8 text-purple-600" />
                 </div>
                 <div className="ml-4">
-                  <div className="text-sm font-medium text-gray-500">Promedio por Gasto</div>
+                  <div className="text-sm font-medium text-gray-500">
+                    Promedio por Gasto
+                  </div>
                   <div className="text-2xl font-bold text-gray-900">
-                    {formatCurrency(stats.avgPerExpense, 'EUR')}
+                    {formatCurrency(stats.avgPerExpense, "EUR")}
                   </div>
                 </div>
               </div>
@@ -259,9 +318,13 @@ export default function ExpensesPage() {
                   <div className="h-8 w-8 text-2xl">🏆</div>
                 </div>
                 <div className="ml-4">
-                  <div className="text-sm font-medium text-gray-500">Categoría Principal</div>
+                  <div className="text-sm font-medium text-gray-500">
+                    Categoría Principal
+                  </div>
                   <div className="text-lg font-bold text-gray-900">
-                    {stats.topCategory ? getCategoryName(stats.topCategory) : 'N/A'}
+                    {stats.topCategory
+                      ? getCategoryName(stats.topCategory)
+                      : "N/A"}
                   </div>
                 </div>
               </div>
@@ -336,28 +399,30 @@ export default function ExpensesPage() {
               <CurrencyDollarIcon className="h-12 w-12" />
             </div>
             <h3 className="mt-2 text-sm font-medium text-gray-900">
-              {searchTerm || categoryFilter !== 'all' || tripFilter !== 'all'
-                ? 'No se encontraron gastos'
-                : 'No tienes gastos registrados'}
+              {searchTerm || categoryFilter !== "all" || tripFilter !== "all"
+                ? "No se encontraron gastos"
+                : "No tienes gastos registrados"}
             </h3>
             <p className="mt-1 text-sm text-gray-500">
-              {searchTerm || categoryFilter !== 'all' || tripFilter !== 'all'
-                ? 'Intenta ajustar los filtros de búsqueda'
-                : 'Comienza registrando tu primer gasto'}
+              {searchTerm || categoryFilter !== "all" || tripFilter !== "all"
+                ? "Intenta ajustar los filtros de búsqueda"
+                : "Comienza registrando tu primer gasto"}
             </p>
-            {(!searchTerm && categoryFilter === 'all' && tripFilter === 'all') && (
-              <div className="mt-6">
-                <Link href="/expenses/new">
-                  <Button>
-                    <PlusIcon className="h-4 w-4 mr-2" />
-                    Registrar Primer Gasto
-                  </Button>
-                </Link>
-              </div>
-            )}
+            {!searchTerm &&
+              categoryFilter === "all" &&
+              tripFilter === "all" && (
+                <div className="mt-6">
+                  <Link href="/expenses/new">
+                    <Button>
+                      <PlusIcon className="h-4 w-4 mr-2" />
+                      Registrar Primer Gasto
+                    </Button>
+                  </Link>
+                </div>
+              )}
           </div>
         )}
       </div>
     </DashboardLayout>
-  )
+  );
 }

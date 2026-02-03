@@ -1,179 +1,118 @@
-"use client";
+'use client'
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { useAuth } from "@/contexts/AuthContext";
-import LoadingSpinner from "@/components/ui/LoadingSpinner";
-import Link from "next/link";
-import {
-  MapIcon,
-  CurrencyDollarIcon,
-  DocumentTextIcon,
-  ShieldCheckIcon,
-} from "@heroicons/react/24/outline";
+import Link from 'next/link'
+import { MapPin, Calendar, DollarSign, ShieldCheck } from 'lucide-react'
 
-export default function Home() {
-  const { user, loading } = useAuth();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (!loading && user) {
-      router.push("/dashboard");
-    }
-  }, [user, loading, router]);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <LoadingSpinner size="lg" />
-      </div>
-    );
-  }
-
-  if (user) {
-    return null; // Will redirect to dashboard
-  }
-
+export default function HomePage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-white">
       {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div className="flex items-center">
-              <MapIcon className="h-8 w-8 text-blue-600" />
-              <h1 className="ml-2 text-2xl font-bold text-gray-900">
-                Gestión de Vuelos
-              </h1>
-            </div>
-            <div className="flex space-x-4">
-              <Link
-                href="/signin"
-                className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
-              >
-                Iniciar Sesión
-              </Link>
-              <Link
-                href="/signup"
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium"
-              >
-                Registrarse
-              </Link>
-            </div>
+      <header className="absolute inset-x-0 top-0 z-50">
+        <nav className="flex items-center justify-between p-6 lg:px-8" aria-label="Global">
+          <div className="flex lg:flex-1">
+            <a href="#" className="-m-1.5 p-1.5">
+              <span className="sr-only">Gestión de Vuelos</span>
+              <span className="text-2xl font-bold text-blue-600">✈️ Gestión de Vuelos</span>
+            </a>
           </div>
-        </div>
+          <div className="flex flex-1 justify-end space-x-4">
+            <Link href="/signin" className="text-sm font-semibold leading-6 text-gray-900 hover:text-blue-600 transition-colors">
+              Iniciar Sesión
+            </Link>
+            <Link 
+              href="/signup" 
+              className="rounded-md bg-blue-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 transition-colors"
+            >
+              Registrarse
+            </Link>
+          </div>
+        </nav>
       </header>
 
       {/* Hero Section */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="text-center">
-          <h2 className="text-4xl font-extrabold text-gray-900 sm:text-5xl">
-            Organiza tus viajes de manera
-            <span className="text-blue-600"> inteligente</span>
-          </h2>
-          <p className="mt-6 text-xl text-gray-600 max-w-3xl mx-auto">
-            Una aplicación completa para planificar, gestionar y documentar
-            todos tus vuelos. Mantén el control de tus itinerarios, gastos y
-            documentos en un solo lugar.
-          </p>
-          <div className="mt-10 flex justify-center space-x-6">
-            <Link
-              href="/signup"
-              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg text-lg font-medium shadow-lg transform hover:scale-105 transition-all duration-200"
-            >
-              Comenzar Gratis
-            </Link>
-            <Link
-              href="/signin"
-              className="bg-white hover:bg-gray-50 text-gray-900 px-8 py-3 rounded-lg text-lg font-medium border border-gray-300 shadow-lg transform hover:scale-105 transition-all duration-200"
-            >
-              Iniciar Sesión
-            </Link>
-          </div>
-        </div>
-
-        {/* Features */}
-        <div className="mt-20">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <div className="text-center">
-              <div className="bg-blue-100 rounded-full p-4 w-16 h-16 mx-auto mb-4">
-                <ShieldCheckIcon className="h-8 w-8 text-blue-600" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Autenticación Segura
-              </h3>
-              <p className="text-gray-600">
-                Sistema de autenticación robusto con protección de datos y
-                recuperación de contraseña.
-              </p>
-            </div>
-
-            <div className="text-center">
-              <div className="bg-green-100 rounded-full p-4 w-16 h-16 mx-auto mb-4">
-                <MapIcon className="h-8 w-8 text-green-600" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Planificación Avanzada
-              </h3>
-              <p className="text-gray-600">
-                Crea itinerarios detallados con calendario interactivo y alertas
-                programables.
-              </p>
-            </div>
-
-            <div className="text-center">
-              <div className="bg-yellow-100 rounded-full p-4 w-16 h-16 mx-auto mb-4">
-                <CurrencyDollarIcon className="h-8 w-8 text-yellow-600" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Gestión Financiera
-              </h3>
-              <p className="text-gray-600">
-                Registra y categoriza gastos con informes detallados y gráficos
-                interactivos.
-              </p>
-            </div>
-
-            <div className="text-center">
-              <div className="bg-purple-100 rounded-full p-4 w-16 h-16 mx-auto mb-4">
-                <DocumentTextIcon className="h-8 w-8 text-purple-600" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Documentación
-              </h3>
-              <p className="text-gray-600">
-                Editor de notas con formato Markdown y sistema de organización
-                por etiquetas.
-              </p>
+      <div className="relative isolate px-6 pt-14 lg:px-8">
+        <div className="mx-auto max-w-2xl py-32 sm:py-48 lg:py-56">
+          <div className="text-center">
+            <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl">
+              Organiza tus viajes de manera inteligente
+            </h1>
+            <p className="mt-6 text-lg leading-8 text-gray-600">
+              Planifica, gestiona y controla todos los aspectos de tus viajes en un solo lugar. Desde el itinerario hasta el presupuesto, todo bajo control.
+            </p>
+            <div className="mt-10 flex items-center justify-center gap-x-6">
+              <Link
+                href="/signin"
+                className="rounded-md bg-blue-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+              >
+                Comenzar ahora
+              </Link>
+              <Link href="#features" className="text-sm font-semibold leading-6 text-gray-900">
+                Saber más <span aria-hidden="true">→</span>
+              </Link>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* CTA Section */}
-        <div className="mt-20 bg-white rounded-2xl shadow-xl p-8 text-center">
-          <h3 className="text-2xl font-bold text-gray-900 mb-4">
-            ¿Listo para organizar tus viajes?
-          </h3>
-          <p className="text-gray-600 mb-6">
-            Únete a miles de viajeros que ya confían en nuestra plataforma.
-          </p>
-          <Link
-            href="/signup"
-            className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg text-lg font-medium shadow-lg transform hover:scale-105 transition-all duration-200"
-          >
-            Crear Cuenta Gratuita
-          </Link>
-        </div>
-      </main>
-
-      {/* Footer */}
-      <footer className="bg-white border-t border-gray-200 mt-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="text-center text-gray-600">
-            <p>&copy; 2024 Gestión de Vuelos. Todos los derechos reservados.</p>
+      {/* Features Section */}
+      <div id="features" className="bg-gray-50 py-24 sm:py-32">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <div className="mx-auto max-w-2xl lg:text-center">
+            <h2 className="text-base font-semibold leading-7 text-blue-600">Todo en uno</h2>
+            <p className="mt-2 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+              Todo lo que necesitas para tu próximo viaje
+            </p>
+          </div>
+          <div className="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-4xl">
+            <dl className="grid max-w-xl grid-cols-1 gap-x-8 gap-y-10 lg:max-w-none lg:grid-cols-2 lg:gap-y-16">
+              <div className="relative pl-16">
+                <dt className="text-base font-semibold leading-7 text-gray-900">
+                  <div className="absolute left-0 top-0 flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600">
+                    <MapPin className="h-6 w-6 text-white" aria-hidden="true" />
+                  </div>
+                  Gestión de Itinerarios
+                </dt>
+                <dd className="mt-2 text-base leading-7 text-gray-600">
+                  Organiza tus destinos, vuelos y alojamientos de forma visual y sencilla.
+                </dd>
+              </div>
+              <div className="relative pl-16">
+                <dt className="text-base font-semibold leading-7 text-gray-900">
+                  <div className="absolute left-0 top-0 flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600">
+                    <DollarSign className="h-6 w-6 text-white" aria-hidden="true" />
+                  </div>
+                  Control de Gastos
+                </dt>
+                <dd className="mt-2 text-base leading-7 text-gray-600">
+                  Mantén tu presupuesto a raya registrando cada gasto durante tu viaje.
+                </dd>
+              </div>
+              <div className="relative pl-16">
+                <dt className="text-base font-semibold leading-7 text-gray-900">
+                  <div className="absolute left-0 top-0 flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600">
+                    <Calendar className="h-6 w-6 text-white" aria-hidden="true" />
+                  </div>
+                  Planificación Flexible
+                </dt>
+                <dd className="mt-2 text-base leading-7 text-gray-600">
+                  Ajusta tus planes sobre la marcha y mantén todo sincronizado.
+                </dd>
+              </div>
+              <div className="relative pl-16">
+                <dt className="text-base font-semibold leading-7 text-gray-900">
+                  <div className="absolute left-0 top-0 flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600">
+                    <ShieldCheck className="h-6 w-6 text-white" aria-hidden="true" />
+                  </div>
+                  Seguro y Privado
+                </dt>
+                <dd className="mt-2 text-base leading-7 text-gray-600">
+                  Tus datos están protegidos y solo tú tienes acceso a ellos.
+                </dd>
+              </div>
+            </dl>
           </div>
         </div>
-      </footer>
+      </div>
     </div>
-  );
+  )
 }

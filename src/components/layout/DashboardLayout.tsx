@@ -11,7 +11,6 @@ const navigation = [
   { name: 'Presupuesto', href: '/budget', icon: ChartBarIcon },
   { name: 'Análisis', href: '/analytics', icon: ChartPieIcon },
   { name: 'Notas', href: '/notes', icon: DocumentTextIcon },
-  { name: 'Alertas', href: '/alerts', icon: BellIcon },
 ]
 
 interface DashboardLayoutProps {

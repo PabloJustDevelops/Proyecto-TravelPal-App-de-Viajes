@@ -84,6 +84,7 @@ export default function BudgetPage() {
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const categories = [
     { value: "travel", label: "Viaje General" },
@@ -632,6 +633,11 @@ export default function BudgetPage() {
           title={editingBudget ? "Editar Presupuesto" : "Nuevo Presupuesto"}
         >
           <form onSubmit={handleSubmit} className="space-y-6">
+            {submitError && (
+              <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md text-sm">
+                {submitError}
+              </div>
+            )}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Nombre del Presupuesto *

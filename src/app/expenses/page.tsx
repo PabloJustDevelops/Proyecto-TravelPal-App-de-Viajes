@@ -14,10 +14,8 @@ import {
   CurrencyDollarIcon,
   ChartBarIcon,
   CalendarIcon,
-  ArrowDownTrayIcon,
 } from "@heroicons/react/24/outline";
 import { formatCurrency, getErrorMessage } from "@/lib/utils";
-import { exportExpensesToPDF, exportExpensesToCSV } from "@/lib/exportUtils";
 import Link from "next/link";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { logger } from "@/lib/logger";

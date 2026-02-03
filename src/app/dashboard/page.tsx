@@ -315,18 +315,22 @@ export default function DashboardPage() {
                         <div className="ml-2 flex-shrink-0 flex">
                           <span
                             className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                              trip.status === "ongoing"
+                              trip.status === "confirmed"
                                 ? "bg-green-100 text-green-800"
-                                : trip.status === "upcoming"
+                                : trip.status === "planned"
                                   ? "bg-yellow-100 text-yellow-800"
-                                  : "bg-gray-100 text-gray-800"
+                                  : trip.status === "cancelled"
+                                    ? "bg-red-100 text-red-800"
+                                    : "bg-gray-100 text-gray-800"
                             }`}
                           >
-                            {trip.status === "ongoing"
-                              ? "En curso"
-                              : trip.status === "upcoming"
-                                ? "Próximo"
-                                : "Completado"}
+                            {trip.status === "confirmed"
+                              ? "Confirmado"
+                              : trip.status === "planned"
+                                ? "Planificado"
+                                : trip.status === "cancelled"
+                                  ? "Cancelado"
+                                  : "Completado"}
                           </span>
                         </div>
                       </div>
@@ -339,7 +343,9 @@ export default function DashboardPage() {
                         </div>
                         <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
                           <Calendar className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" />
-                          <p>{new Date(trip.startDate).toLocaleDateString()}</p>
+                          <p>
+                            {new Date(trip.departure_date).toLocaleDateString()}
+                          </p>
                         </div>
                       </div>
                     </div>

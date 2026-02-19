@@ -52,6 +52,33 @@ export default function RegisterForm() {
 
   const password = watch('password')
 
+  // Calcular la fortaleza de la contraseña
+  const getPasswordStrength = (pass: string) => {
+    let score = 0;
+    if (!pass) return 0;
+    if (pass.length >= 8) score++;
+    if (/[A-Z]/.test(pass)) score++;
+    if (/[a-z]/.test(pass)) score++;
+    if (/\d/.test(pass)) score++;
+    return score;
+  };
+
+  const strengthScore = getPasswordStrength(password);
+
+  const getStrengthColor = (score: number) => {
+    if (score <= 1) return 'bg-red-500';
+    if (score === 2) return 'bg-yellow-500';
+    if (score === 3) return 'bg-yellow-400';
+    return 'bg-green-500';
+  };
+
+  const getStrengthText = (score: number) => {
+    if (score <= 1) return 'Débil';
+    if (score === 2) return 'Regular';
+    if (score === 3) return 'Buena';
+    return 'Fuerte';
+  };
+
   const onSubmit = async (data: RegisterFormData) => {
     setIsLoading(true)
     setError('')
@@ -79,45 +106,42 @@ export default function RegisterForm() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md w-full space-y-8">
-          <div className="text-center">
-            <div className="mx-auto h-12 w-12 text-green-600">
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
-              ¡Cuenta creada exitosamente!
-            </h2>
-            <p className="mt-2 text-sm text-gray-600">
-              Revisa tu email para confirmar tu cuenta. Serás redirigido al login en unos segundos.
-            </p>
+      <div className="w-full max-w-md space-y-8">
+        <div className="text-center">
+          <div className="mx-auto h-12 w-12 text-green-600">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
           </div>
+          <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
+            ¡Cuenta creada exitosamente!
+          </h2>
+          <p className="mt-2 text-sm text-gray-600">
+            Revisa tu email para confirmar tu cuenta. Serás redirigido al login en unos segundos.
+          </p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Crea tu cuenta
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            O{' '}
-            <Link
-              href="/signin"
-              className="font-medium text-blue-600 hover:text-blue-500"
-            >
-              inicia sesión si ya tienes cuenta
-            </Link>
-          </p>
-        </div>
-        
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
+    <div className="w-full max-w-md space-y-8">
+      <div>
+        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          Crea tu cuenta
+        </h2>
+        <p className="mt-2 text-center text-sm text-gray-600">
+          O{' '}
+          <Link
+            href="/signin"
+            className="font-medium text-blue-600 hover:text-blue-500"
+          >
+            inicia sesión si ya tienes cuenta
+          </Link>
+        </p>
+      </div>
+      
+      <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
           {error && (
             <div className="rounded-md bg-red-50 p-4">
               <div className="text-sm text-red-700">{error}</div>
@@ -202,12 +226,28 @@ export default function RegisterForm() {
               {/* Password strength indicator */}
               {password && (
                 <div className="mt-2 space-y-1">
-                  <div className="text-xs text-gray-600">Fortaleza de la contraseña:</div>
-                  <div className="flex space-x-1">
-                    <div className={`h-1 w-1/4 rounded ${password.length >= 8 ? 'bg-green-500' : 'bg-gray-300'}`} />
-                    <div className={`h-1 w-1/4 rounded ${/[A-Z]/.test(password) ? 'bg-green-500' : 'bg-gray-300'}`} />
-                    <div className={`h-1 w-1/4 rounded ${/[a-z]/.test(password) ? 'bg-green-500' : 'bg-gray-300'}`} />
-                    <div className={`h-1 w-1/4 rounded ${/\d/.test(password) ? 'bg-green-500' : 'bg-gray-300'}`} />
+                  <div className="flex justify-between items-center mb-1">
+                    <div className="text-xs text-gray-600">Fortaleza de la contraseña:</div>
+                    <div className={`text-xs font-medium ${
+                        strengthScore <= 1 ? 'text-red-500' : 
+                        strengthScore === 2 ? 'text-yellow-500' : 
+                        strengthScore === 3 ? 'text-yellow-600' : 'text-green-600'
+                      }`}>
+                      {getStrengthText(strengthScore)}
+                    </div>
+                  </div>
+                  <div className="flex space-x-1 h-1.5">
+                    {[1, 2, 3, 4].map((index) => (
+                      <div 
+                        key={index}
+                        className={`flex-1 rounded-full transition-all duration-300 ${
+                          index <= strengthScore ? getStrengthColor(strengthScore) : 'bg-gray-200'
+                        }`} 
+                      />
+                    ))}
+                  </div>
+                  <div className="text-xs text-gray-400 mt-1">
+                    Usa 8+ caracteres, mayúsculas, minúsculas y números.
                   </div>
                 </div>
               )}
@@ -259,7 +299,6 @@ export default function RegisterForm() {
             </button>
           </div>
         </form>
-      </div>
     </div>
   )
 }

@@ -16,7 +16,10 @@ import {
   TagIcon,
 } from "@heroicons/react/24/outline";
 import DashboardLayout from "../../components/layout/DashboardLayout";
-import { Calendar } from "../../components/calendar/Calendar";
+import {
+  Calendar,
+  type CalendarEvent,
+} from "../../components/calendar/Calendar";
 import { ItineraryPlanner } from "../../components/planning/ItineraryPlanner";
 import { BookingCard } from "../../components/planning/BookingCard";
 import Button from "../../components/ui/Button";
@@ -24,12 +27,12 @@ import Input from "../../components/ui/Input";
 import { Card } from "../../components/ui/Card";
 import Modal from "../../components/ui/Modal";
 
-
 import NewBookingForm from "../../components/planning/NewBookingForm";
 import { useAuth } from "../../contexts/AuthContext";
 import { createSupabaseClient, Booking } from "../../lib/supabase";
 import { formatDate } from "../../lib/utils";
 import { logger } from "@/lib/logger";
+import PageSkeleton from "@/components/ui/PageSkeleton";
 
 interface Trip {
   id: string;
@@ -56,20 +59,6 @@ interface ItineraryActivity {
   completed?: boolean;
 }
 
-interface CalendarEvent {
-  id: string;
-  title: string;
-  date: string;
-  type: "trip" | "activity" | "booking" | "reminder";
-  color: string;
-  time?: string;
-  description?: string;
-  tripId?: string;
-  bookingId?: string;
-  activityId?: string;
-  icon?: React.ReactNode;
-}
-
 export default function PlanningPage() {
   const { user } = useAuth();
   const router = useRouter();
@@ -87,6 +76,7 @@ export default function PlanningPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [showBookingModal, setShowBookingModal] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const supabase = createSupabaseClient();
 
@@ -95,71 +85,52 @@ export default function PlanningPage() {
     // Si es un booking, el tipo suele ser 'flight', 'hotel', etc.
     // Si es activity, tiene una category
     const typeToCheck = category || type;
-    
+
     switch (typeToCheck) {
-      case 'flight':
-      case 'transport':
+      case "flight":
+      case "transport":
         return <PaperAirplaneIcon className="h-3 w-3" />;
-      case 'hotel':
-      case 'accommodation':
+      case "hotel":
+      case "accommodation":
         return <HomeModernIcon className="h-3 w-3" />;
-      case 'car':
+      case "car":
         return <TruckIcon className="h-3 w-3" />;
-      case 'activity':
-      case 'restaurant':
+      case "activity":
+      case "restaurant":
         return <TicketIcon className="h-3 w-3" />;
       default:
         return <TagIcon className="h-3 w-3" />;
     }
   };
 
-  const loadTrips = useCallback(async () => {
-    try {
-      const { data, error } = await supabase
-        .from("trips")
-        .select("*")
-        .eq("user_id", user?.id)
-        .order("departure_date", { ascending: true });
+  const loadData = useCallback(async () => {
+    if (!user) return;
 
-      if (error) throw error;
-      setTrips(data || []);
-    } catch (error) {
-      logger.error("Error loading trips:", error);
-    }
-  }, [user, supabase]);
-
-  const loadBookings = useCallback(async () => {
     try {
       setIsLoading(true);
+      setError(null);
 
-      const { data, error } = await supabase
-        .from("bookings")
-        .select("*")
-        .eq("user_id", user?.id)
-        .order("start_date", { ascending: true });
+      const response = await fetch("/api/planning");
 
-      if (error) throw error;
-      setBookings(data || []);
-    } catch (error) {
-      logger.error("Error loading bookings:", error);
+      if (!response.ok) {
+        throw new Error("Error al cargar los datos");
+      }
+
+      const data = await response.json();
+
+      setTrips(data.trips || []);
+      setBookings(data.bookings || []);
+      setActivities(data.activities || []);
+    } catch (error: any) {
+      console.error("Error loading planning data:", error);
+      setError(
+        "Error al cargar la planificación. Por favor, inténtalo de nuevo.",
+      );
+      logger.error("Error loading planning data:", error);
     } finally {
       setIsLoading(false);
     }
-  }, [user, supabase]);
-
-  const loadActivities = useCallback(async () => {
-    try {
-      const { data, error } = await supabase
-        .from("itinerary_activities")
-        .select("*")
-        .eq("user_id", user?.id);
-
-      if (error) throw error;
-      setActivities(data || []);
-    } catch (error) {
-      logger.error("Error loading activities:", error);
-    }
-  }, [user, supabase]);
+  }, [user]);
 
   const generateCalendarEvents = useCallback(() => {
     const calendarEvents: CalendarEvent[] = [];
@@ -274,12 +245,8 @@ export default function PlanningPage() {
 
   // Cargar datos iniciales
   useEffect(() => {
-    if (user) {
-      loadTrips();
-      loadBookings();
-      loadActivities();
-    }
-  }, [user, loadTrips, loadBookings, loadActivities]);
+    loadData();
+  }, [loadData]);
 
   // Generar eventos del calendario cuando cambien los datos
   useEffect(() => {
@@ -313,12 +280,12 @@ export default function PlanningPage() {
         setShowBookingModal(true);
       }
     } else if (event.type === "activity" && event.tripId) {
-       // Ir a la vista de itinerario del viaje en esta misma página
-       const trip = trips.find((t) => t.id === event.tripId);
-       if (trip) {
-         setSelectedTrip(trip);
-         setViewMode("itinerary");
-       }
+      // Ir a la vista de itinerario del viaje en esta misma página
+      const trip = trips.find((t) => t.id === event.tripId);
+      if (trip) {
+        setSelectedTrip(trip);
+        setViewMode("itinerary");
+      }
     }
   };
 
@@ -328,49 +295,46 @@ export default function PlanningPage() {
     setShowBookingModal(true);
   };
 
-  const handleDeleteEvent = async (event: CalendarEvent) => {
+  const handleDeleteEvent = (event: CalendarEvent) => {
     if (!confirm(`¿Estás seguro de que deseas eliminar "${event.title}"?`)) {
       return;
     }
 
-    try {
-      setIsLoading(true);
-      
-      if (event.type === 'booking' && event.bookingId) {
-        const { error } = await supabase
-          .from('bookings')
-          .delete()
-          .eq('id', event.bookingId);
-          
-        if (error) throw error;
-        await loadBookings();
-      } else if (event.type === 'activity' && event.activityId) {
-        const { error } = await supabase
-          .from('itinerary_activities')
-          .delete()
-          .eq('id', event.activityId);
-          
-        if (error) throw error;
-        await loadActivities();
-      } else if (event.type === 'trip' && event.tripId) {
-         // Para viajes, quizás queramos una confirmación más fuerte o no permitirlo desde aquí
-         const { error } = await supabase
-          .from('trips')
-          .delete()
-          .eq('id', event.tripId);
-          
-        if (error) throw error;
-        await loadTrips();
+    void (async () => {
+      try {
+        setIsLoading(true);
+
+        if (event.type === "booking" && event.bookingId) {
+          const { error } = await supabase
+            .from("bookings")
+            .delete()
+            .eq("id", event.bookingId);
+
+          if (error) throw error;
+        } else if (event.type === "activity" && event.activityId) {
+          const { error } = await supabase
+            .from("itinerary_activities")
+            .delete()
+            .eq("id", event.activityId);
+
+          if (error) throw error;
+        } else if (event.type === "trip" && event.tripId) {
+          const { error } = await supabase
+            .from("trips")
+            .delete()
+            .eq("id", event.tripId);
+
+          if (error) throw error;
+        }
+
+        await loadData();
+      } catch (error) {
+        logger.error("Error deleting event:", error);
+        alert("Error al eliminar el evento");
+      } finally {
+        setIsLoading(false);
       }
-      
-      // Regenerar eventos después de eliminar
-      // Nota: generateCalendarEvents se ejecutará automáticamente por los useEffect al cambiar los datos
-    } catch (error) {
-      logger.error('Error deleting event:', error);
-      alert('Error al eliminar el evento');
-    } finally {
-      setIsLoading(false);
-    }
+    })();
   };
 
   const filteredBookings = bookings.filter((booking) => {
@@ -395,15 +359,41 @@ export default function PlanningPage() {
   const handleBookingCreated = () => {
     setShowBookingModal(false);
     setSelectedBooking(null);
-    loadBookings();
-    generateCalendarEvents();
+    loadData();
   };
 
   if (isLoading) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <PageSkeleton />
+      </DashboardLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <DashboardLayout>
+        <div className="flex flex-col items-center justify-center h-64">
+          <div className="text-red-500 mb-4">
+            <svg
+              className="h-12 w-12"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+              />
+            </svg>
+          </div>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            Error al cargar los datos
+          </h3>
+          <p className="text-gray-500 mb-4">{error}</p>
+          <Button onClick={() => loadData()}>Reintentar</Button>
         </div>
       </DashboardLayout>
     );
@@ -415,22 +405,22 @@ export default function PlanningPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
               Planificación de Viajes
             </h1>
-            <p className="text-gray-600">
+            <p className="text-gray-600 dark:text-gray-400">
               Organiza tus viajes, itinerarios y reservas en un solo lugar
             </p>
           </div>
 
           <div className="flex items-center space-x-3">
-            <div className="flex rounded-lg shadow-sm">
+            <div className="flex rounded-lg shadow-sm bg-white dark:bg-gray-800">
               <button
                 onClick={() => setViewMode("calendar")}
                 className={`px-4 py-2 text-sm font-medium rounded-l-lg border ${
                   viewMode === "calendar"
-                    ? "bg-blue-50 text-blue-700 border-blue-200"
-                    : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                    ? "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800"
+                    : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700"
                 }`}
               >
                 <CalendarIcon className="h-4 w-4 mr-2 inline" />
@@ -440,8 +430,8 @@ export default function PlanningPage() {
                 onClick={() => setViewMode("itinerary")}
                 className={`px-4 py-2 text-sm font-medium border-l-0 border ${
                   viewMode === "itinerary"
-                    ? "bg-blue-50 text-blue-700 border-blue-200"
-                    : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                    ? "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800"
+                    : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700"
                 }`}
               >
                 <MapIcon className="h-4 w-4 mr-2 inline" />
@@ -451,8 +441,8 @@ export default function PlanningPage() {
                 onClick={() => setViewMode("bookings")}
                 className={`px-4 py-2 text-sm font-medium rounded-r-lg border-l-0 border ${
                   viewMode === "bookings"
-                    ? "bg-blue-50 text-blue-700 border-blue-200"
-                    : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                    ? "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800"
+                    : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700"
                 }`}
               >
                 <ClockIcon className="h-4 w-4 mr-2 inline" />
@@ -467,13 +457,13 @@ export default function PlanningPage() {
           <Card className="p-4">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <CalendarIcon className="h-8 w-8 text-blue-600" />
+                <CalendarIcon className="h-8 w-8 text-blue-600 dark:text-blue-400" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
                   Viajes Activos
                 </p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">
                   {
                     trips.filter(
                       (t) =>
@@ -488,13 +478,13 @@ export default function PlanningPage() {
           <Card className="p-4">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <ClockIcon className="h-8 w-8 text-green-600" />
+                <ClockIcon className="h-8 w-8 text-green-600 dark:text-green-400" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
                   Reservas Confirmadas
                 </p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">
                   {bookings.filter((b) => b.status === "confirmed").length}
                 </p>
               </div>
@@ -504,13 +494,13 @@ export default function PlanningPage() {
           <Card className="p-4">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <MapIcon className="h-8 w-8 text-purple-600" />
+                <MapIcon className="h-8 w-8 text-purple-600 dark:text-purple-400" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
                   Próximas Reservas
                 </p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">
                   {upcomingBookings.length}
                 </p>
               </div>
@@ -520,13 +510,13 @@ export default function PlanningPage() {
           <Card className="p-4">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <PlusIcon className="h-8 w-8 text-orange-600" />
+                <PlusIcon className="h-8 w-8 text-orange-600 dark:text-orange-400" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
                   Eventos Este Mes
                 </p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">
                   {
                     events.filter((e) => {
                       const eventDate = new Date(e.date);
@@ -559,26 +549,26 @@ export default function PlanningPage() {
 
             <div className="space-y-4">
               <Card className="p-4">
-                <h3 className="font-semibold text-gray-900 mb-3">
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-3">
                   Próximas Reservas
                 </h3>
                 <div className="space-y-3">
                   {upcomingBookings.map((booking) => (
                     <div
                       key={booking.id}
-                      className="border-l-4 border-blue-500 pl-3"
+                      className="border-l-4 border-blue-500 pl-3 dark:border-blue-400"
                     >
-                      <p className="font-medium text-sm text-gray-900">
+                      <p className="font-medium text-sm text-gray-900 dark:text-white">
                         {booking.title}
                       </p>
-                      <p className="text-xs text-gray-600">
+                      <p className="text-xs text-gray-600 dark:text-gray-400">
                         {formatDate(new Date(booking.start_date))}
                         {booking.start_time && ` - ${booking.start_time}`}
                       </p>
                     </div>
                   ))}
                   {upcomingBookings.length === 0 && (
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
                       No hay reservas próximas
                     </p>
                   )}

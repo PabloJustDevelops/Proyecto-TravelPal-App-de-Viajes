@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import { AuthProvider } from '@/contexts/AuthContext'
+import { ThemeProvider } from '@/contexts/ThemeContext'
 import ErrorBoundary from '@/components/common/ErrorBoundary'
 import { ToastProvider } from '@/components/ui/Toast'
 
@@ -35,9 +36,11 @@ export default function RootLayout({
       <body className={inter.className} suppressHydrationWarning>
         <ErrorBoundary>
           <ToastProvider>
-            <AuthProvider>
-              {children}
-            </AuthProvider>
+            <ThemeProvider>
+              <AuthProvider>
+                {children}
+              </AuthProvider>
+            </ThemeProvider>
           </ToastProvider>
         </ErrorBoundary>
       </body>

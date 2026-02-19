@@ -10,7 +10,7 @@ import { Card } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Modal from "@/components/ui/Modal";
-import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import PageSkeleton from "@/components/ui/PageSkeleton";
 import { logger } from "@/lib/logger";
 import {
   PlusIcon,
@@ -85,6 +85,7 @@ export default function BudgetPage() {
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const categories = [
     { value: "travel", label: "Viaje General" },
@@ -111,54 +112,34 @@ export default function BudgetPage() {
     async (signal?: AbortSignal) => {
       try {
         setLoading(true);
-        const supabase = createSupabaseClient();
+        setError(null);
 
-        // Load budgets
-        const budgetsQuery = supabase
-          .from("budgets")
-          .select("*")
-          .eq("user_id", user?.id)
-          .order("created_at", { ascending: false });
+        // Timeout promise
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(
+            () => reject(new Error("Budget data fetch timed out")),
+            15000,
+          ),
+        );
 
-        const { data: budgetsData, error: budgetsError } = await (signal
-          ? budgetsQuery.abortSignal(signal)
-          : budgetsQuery);
+        const fetchPromise = fetch("/api/budget");
 
-        if (budgetsError) throw budgetsError;
+        const res = (await Promise.race([
+          fetchPromise,
+          timeoutPromise,
+        ])) as Response;
 
-        // Load trips
-        const tripsQuery = supabase
-          .from("trips")
-          .select(
-            "id, title, user_id, origin, destination, departure_date, return_date, status, created_at, updated_at",
-          )
-          .eq("user_id", user?.id)
-          .order("title");
+        if (!res.ok) throw new Error(`API Error: ${res.status}`);
+        const data = await res.json();
 
-        const { data: tripsData, error: tripsError } = await (signal
-          ? tripsQuery.abortSignal(signal)
-          : tripsQuery);
-
-        if (tripsError) throw tripsError;
-
-        // Load expenses for calculations
-        const expensesQuery = supabase
-          .from("expenses")
-          .select(
-            "id, user_id, title, amount, currency, category, date, trip_id, description, receipt_url, created_at, updated_at",
-          )
-          .eq("user_id", user?.id);
-
-        const { data: expensesData, error: expensesError } = await (signal
-          ? expensesQuery.abortSignal(signal)
-          : expensesQuery);
-
-        if (expensesError) throw expensesError;
+        const budgetsData = data.budgets || [];
+        const tripsData = data.trips || [];
+        const expensesData = data.expenses || [];
 
         // Create a map of trip IDs to titles
         const tripsMap = (tripsData || []).reduce((acc: any, trip: any) => {
-            acc[trip.id] = trip.title;
-            return acc;
+          acc[trip.id] = trip.title;
+          return acc;
         }, {});
 
         // Calculate spent amounts for each budget
@@ -202,6 +183,7 @@ export default function BudgetPage() {
         setTrips(tripsData || []);
         setExpenses(expensesData || []);
       } catch (error: any) {
+        console.error("Error loading budget data:", error);
         if (
           (error instanceof Error && error.name === "AbortError") ||
           error?.code === 20 ||
@@ -209,13 +191,21 @@ export default function BudgetPage() {
         ) {
           return;
         }
-        const msg = getErrorMessage(error, "Error al cargar los datos");
-        logger.error("BudgetPage: Error loading data", {
-          error: msg,
-          raw: error,
-        });
+
+        if (error.message === "Budget data fetch timed out") {
+          setError(
+            "La carga de datos ha tardado demasiado. Por favor, inténtalo de nuevo.",
+          );
+        } else {
+          setError(
+            "Error al cargar los presupuestos. Por favor, inténtalo de nuevo.",
+          );
+          logger.error("BudgetPage: Error loading data", { error });
+        }
       } finally {
-        setLoading(false);
+        if (!signal?.aborted) {
+          setLoading(false);
+        }
       }
     },
     [user],
@@ -223,9 +213,7 @@ export default function BudgetPage() {
 
   useEffect(() => {
     if (user) {
-      const controller = new AbortController();
-      loadData(controller.signal);
-      return () => controller.abort();
+      loadData();
     } else {
       // Evitar spinner infinito cuando no hay usuario
       setLoading(false);
@@ -235,8 +223,35 @@ export default function BudgetPage() {
   if (loading) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center py-12">
-          <LoadingSpinner />
+        <PageSkeleton />
+      </DashboardLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <DashboardLayout>
+        <div className="flex flex-col items-center justify-center h-64">
+          <div className="text-red-500 mb-4">
+            <svg
+              className="h-12 w-12"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+              />
+            </svg>
+          </div>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            Error al cargar los datos
+          </h3>
+          <p className="text-gray-500 mb-4">{error}</p>
+          <Button onClick={() => loadData()}>Reintentar</Button>
         </div>
       </DashboardLayout>
     );
@@ -436,6 +451,10 @@ export default function BudgetPage() {
     return percentage >= 80 && budget.spent_amount <= budget.total_amount;
   }).length;
 
+  // Determine the main currency to display
+  // We use the currency of the most recent budget, or default to USD
+  const displayCurrency = budgets.length > 0 ? budgets[0].currency : "USD";
+
   if (loading) {
     return (
       <DashboardLayout>
@@ -452,10 +471,10 @@ export default function BudgetPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
               Gestión de Presupuestos
             </h1>
-            <p className="text-gray-600">
+            <p className="text-gray-600 dark:text-gray-400">
               Controla tus gastos y mantén tus finanzas organizadas
             </p>
           </div>
@@ -476,10 +495,10 @@ export default function BudgetPage() {
                 <ChartBarIcon className="h-8 w-8 text-blue-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
                   Total Presupuestos
                 </p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">
                   {totalBudgets}
                 </p>
               </div>
@@ -492,11 +511,11 @@ export default function BudgetPage() {
                 <CurrencyDollarIcon className="h-8 w-8 text-green-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
                   Presupuesto Total
                 </p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {formatCurrency(totalBudgetAmount, "USD")}
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {formatCurrency(totalBudgetAmount, displayCurrency)}
                 </p>
               </div>
             </div>
@@ -508,11 +527,11 @@ export default function BudgetPage() {
                 <ArrowTrendingUpIcon className="h-8 w-8 text-yellow-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
                   Total Gastado
                 </p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {formatCurrency(totalSpentAmount, "USD")}
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {formatCurrency(totalSpentAmount, displayCurrency)}
                 </p>
               </div>
             </div>
@@ -524,8 +543,8 @@ export default function BudgetPage() {
                 <ExclamationTriangleIcon className="h-8 w-8 text-red-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Alertas</p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Alertas</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">
                   {overBudgetCount + nearLimitCount}
                 </p>
               </div>
@@ -540,11 +559,13 @@ export default function BudgetPage() {
               expenses={expenses}
               type="category"
               title="Gastos por Categoría"
+              currency={displayCurrency}
             />
             <ExpenseChart
               expenses={expenses}
               type="timeline"
               title="Tendencia de Gastos"
+              currency={displayCurrency}
             />
           </div>
         )}
@@ -566,7 +587,7 @@ export default function BudgetPage() {
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm text-gray-900"
+              className="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-700"
             >
               <option value="">Todas las categorías</option>
               {categories.map((category) => (
@@ -579,7 +600,7 @@ export default function BudgetPage() {
             <select
               value={selectedTrip}
               onChange={(e) => setSelectedTrip(e.target.value)}
-              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm text-gray-900"
+              className="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-700"
             >
               <option value="">Todos los viajes</option>
               {trips.map((trip) => (
@@ -589,7 +610,7 @@ export default function BudgetPage() {
               ))}
             </select>
 
-            <div className="text-sm text-gray-500 flex items-center">
+            <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center">
               {filteredBudgets.length} de {budgets.length} presupuestos
             </div>
           </div>
@@ -599,12 +620,12 @@ export default function BudgetPage() {
         {filteredBudgets.length === 0 ? (
           <Card className="p-12 text-center">
             <ChartBarIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
               {budgets.length === 0
                 ? "No tienes presupuestos"
                 : "No se encontraron presupuestos"}
             </h3>
-            <p className="text-gray-500 mb-6">
+            <p className="text-gray-500 dark:text-gray-400 mb-6">
               {budgets.length === 0
                 ? "Crea tu primer presupuesto para comenzar a controlar tus gastos"
                 : "Intenta ajustar los filtros para encontrar lo que buscas"}
@@ -634,12 +655,12 @@ export default function BudgetPage() {
         >
           <form onSubmit={handleSubmit} className="space-y-6">
             {submitError && (
-              <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md text-sm">
+              <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 px-4 py-3 rounded-md text-sm">
                 {submitError}
               </div>
             )}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Nombre del Presupuesto *
               </label>
               <Input
@@ -655,7 +676,7 @@ export default function BudgetPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Monto Total *
                 </label>
                 <Input
@@ -672,7 +693,7 @@ export default function BudgetPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Moneda *
                 </label>
                 <select
@@ -680,7 +701,7 @@ export default function BudgetPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, currency: e.target.value })
                   }
-                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm text-gray-900"
+                  className="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-700"
                 >
                   {currencies.map((currency) => (
                     <option key={currency.value} value={currency.value}>
@@ -693,7 +714,7 @@ export default function BudgetPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Categoría *
                 </label>
                 <select
@@ -701,7 +722,7 @@ export default function BudgetPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, category: e.target.value })
                   }
-                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm text-gray-900"
+                  className="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-700"
                 >
                   <option value="">Seleccionar categoría</option>
                   {categories.map((category) => (
@@ -711,14 +732,14 @@ export default function BudgetPage() {
                   ))}
                 </select>
                 {formErrors.category && (
-                  <p className="mt-1 text-sm text-red-600">
+                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">
                     {formErrors.category}
                   </p>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Viaje Asociado
                 </label>
                 <select
@@ -726,7 +747,7 @@ export default function BudgetPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, trip_id: e.target.value })
                   }
-                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm text-gray-900"
+                  className="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-700"
                 >
                   <option value="">Sin viaje específico</option>
                   {trips.map((trip) => (
@@ -740,7 +761,7 @@ export default function BudgetPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Fecha de Inicio *
                 </label>
                 <Input
@@ -754,7 +775,7 @@ export default function BudgetPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Fecha de Fin *
                 </label>
                 <Input
@@ -770,7 +791,7 @@ export default function BudgetPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Descripción
               </label>
               <textarea
@@ -780,7 +801,7 @@ export default function BudgetPage() {
                   setFormData({ ...formData, description: e.target.value })
                 }
                 rows={3}
-                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm text-gray-900 placeholder:text-gray-400"
+                className="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-700 placeholder:text-gray-400"
                 placeholder="Descripción opcional del presupuesto..."
               />
             </div>

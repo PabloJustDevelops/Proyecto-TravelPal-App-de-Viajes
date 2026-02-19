@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { createSupabaseClient, Expense, Trip } from "@/lib/supabase";
+import { Expense, Trip } from "@/lib/supabase";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import ExpenseCard from "@/components/expenses/ExpenseCard";
 import Button from "@/components/ui/Button";
@@ -17,7 +17,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { formatCurrency, getErrorMessage } from "@/lib/utils";
 import Link from "next/link";
-import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import PageSkeleton from "@/components/ui/PageSkeleton";
 import { logger } from "@/lib/logger";
 
 export default function ExpensesPage() {
@@ -31,88 +31,44 @@ export default function ExpensesPage() {
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [tripFilter, setTripFilter] = useState<string>("all");
   const [trips, setTrips] = useState<Trip[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
-  const loadExpenses = useCallback(
-    async (signal?: AbortSignal) => {
-      const supabase = createSupabaseClient();
+  const loadData = useCallback(async () => {
+    if (!user) return;
+    setLoading(true);
+    setError(null);
 
-      try {
-        const query = supabase
-          .from("expenses")
-          .select(
-            `
-          *,
-          trip:trips(*)
-        `,
-          )
-          .eq("user_id", user!.id)
-          .order("date", { ascending: false });
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("Timeout")), 15000),
+    );
 
-        const { data, error } = await (signal
-          ? query.abortSignal(signal)
-          : query);
+    try {
+      const fetchPromise = fetch("/api/expenses");
+      const res = (await Promise.race([
+        fetchPromise,
+        timeoutPromise,
+      ])) as Response;
 
-        if (error) throw error;
+      if (!res.ok) throw new Error(`API Error: ${res.status}`);
 
-        setExpenses(data || []);
-      } catch (error: any) {
-        if (
-          (error instanceof Error && error.name === "AbortError") ||
-          error?.code === 20 ||
-          error?.message?.includes("AbortError")
-        ) {
-          return;
-        }
-        // Unificar errores con logger
-        const msg = getErrorMessage(error, "Error loading expenses");
-        logger.error("ExpensesPage: Error loading expenses", {
-          error: msg,
-          raw: error,
-        });
-      } finally {
-        setLoading(false);
+      const data = await res.json();
+
+      setExpenses(data.expenses || []);
+      setTrips(data.trips || []);
+    } catch (error: any) {
+      console.error("Error loading expenses data:", error);
+      if (error.message === "Timeout") {
+        setError(
+          "La carga de datos ha tardado demasiado. Por favor, inténtalo de nuevo.",
+        );
+      } else {
+        setError("Error al cargar los gastos. Por favor, inténtalo de nuevo.");
+        logger.error("ExpensesPage: Error loading data", { error });
       }
-    },
-    [user],
-  );
-
-  const loadTrips = useCallback(
-    async (signal?: AbortSignal) => {
-      const supabase = createSupabaseClient();
-
-      try {
-        const query = supabase
-          .from("trips")
-          .select(
-            "id, title, user_id, origin, destination, departure_date, return_date, status, created_at, updated_at",
-          )
-          .eq("user_id", user!.id)
-          .order("departure_date", { ascending: false });
-
-        const { data, error } = await (signal
-          ? query.abortSignal(signal)
-          : query);
-
-        if (error) throw error;
-
-        setTrips(data || []);
-      } catch (error: any) {
-        if (
-          (error instanceof Error && error.name === "AbortError") ||
-          error?.code === 20 ||
-          error?.message?.includes("AbortError")
-        ) {
-          return;
-        }
-        const msg = getErrorMessage(error, "Error loading trips");
-        logger.error("ExpensesPage: Error loading trips", {
-          error: msg,
-          raw: error,
-        });
-      }
-    },
-    [user],
-  );
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
 
   const filterExpenses = useCallback(() => {
     let filtered = expenses;
@@ -144,16 +100,8 @@ export default function ExpensesPage() {
   }, [expenses, searchTerm, categoryFilter, tripFilter]);
 
   useEffect(() => {
-    if (user) {
-      const controller = new AbortController();
-      loadExpenses(controller.signal);
-      loadTrips(controller.signal);
-      return () => controller.abort();
-    } else {
-      // Evitar spinner infinito cuando no hay usuario
-      setLoading(false);
-    }
-  }, [user, loadExpenses, loadTrips]);
+    loadData();
+  }, [loadData]);
 
   useEffect(() => {
     filterExpenses();
@@ -209,8 +157,35 @@ export default function ExpensesPage() {
   if (loading) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center py-12">
-          <LoadingSpinner size="lg" />
+        <PageSkeleton />
+      </DashboardLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <DashboardLayout>
+        <div className="flex flex-col items-center justify-center h-64">
+          <div className="text-red-500 mb-4">
+            <svg
+              className="h-12 w-12"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+              />
+            </svg>
+          </div>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            Error al cargar los datos
+          </h3>
+          <p className="text-gray-500 mb-4">{error}</p>
+          <Button onClick={() => loadData()}>Reintentar</Button>
         </div>
       </DashboardLayout>
     );
@@ -240,8 +215,10 @@ export default function ExpensesPage() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Mis Gastos</h1>
-            <p className="mt-1 text-sm text-gray-500">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+              Mis Gastos
+            </h1>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
               Controla y analiza todos tus gastos de viaje
             </p>
           </div>
@@ -262,10 +239,10 @@ export default function ExpensesPage() {
                   <CurrencyDollarIcon className="h-8 w-8 text-green-600" />
                 </div>
                 <div className="ml-4">
-                  <div className="text-sm font-medium text-gray-500">
+                  <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
                     Total Gastado
                   </div>
-                  <div className="text-2xl font-bold text-gray-900">
+                  <div className="text-2xl font-bold text-gray-900 dark:text-white">
                     {formatCurrency(stats.total, "EUR")}
                   </div>
                 </div>
@@ -280,10 +257,10 @@ export default function ExpensesPage() {
                   <ChartBarIcon className="h-8 w-8 text-blue-600" />
                 </div>
                 <div className="ml-4">
-                  <div className="text-sm font-medium text-gray-500">
+                  <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
                     Total Gastos
                   </div>
-                  <div className="text-2xl font-bold text-gray-900">
+                  <div className="text-2xl font-bold text-gray-900 dark:text-white">
                     {stats.count}
                   </div>
                 </div>
@@ -298,10 +275,10 @@ export default function ExpensesPage() {
                   <CalendarIcon className="h-8 w-8 text-purple-600" />
                 </div>
                 <div className="ml-4">
-                  <div className="text-sm font-medium text-gray-500">
+                  <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
                     Promedio por Gasto
                   </div>
-                  <div className="text-2xl font-bold text-gray-900">
+                  <div className="text-2xl font-bold text-gray-900 dark:text-white">
                     {formatCurrency(stats.avgPerExpense, "EUR")}
                   </div>
                 </div>
@@ -316,10 +293,10 @@ export default function ExpensesPage() {
                   <div className="h-8 w-8 text-2xl">🏆</div>
                 </div>
                 <div className="ml-4">
-                  <div className="text-sm font-medium text-gray-500">
+                  <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
                     Categoría Principal
                   </div>
-                  <div className="text-lg font-bold text-gray-900">
+                  <div className="text-lg font-bold text-gray-900 dark:text-white">
                     {stats.topCategory
                       ? getCategoryName(stats.topCategory)
                       : "N/A"}
@@ -331,7 +308,7 @@ export default function ExpensesPage() {
         </div>
 
         {/* Filters */}
-        <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
           <div className="flex flex-col lg:flex-row gap-4">
             {/* Search */}
             <div className="flex-1">
@@ -352,7 +329,7 @@ export default function ExpensesPage() {
               <select
                 value={categoryFilter}
                 onChange={(e) => setCategoryFilter(e.target.value)}
-                className="w-full h-10 px-3 py-2 text-sm border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full h-10 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="all">Todas las categorías</option>
                 <option value="accommodation">Alojamiento</option>
@@ -371,7 +348,7 @@ export default function ExpensesPage() {
               <select
                 value={tripFilter}
                 onChange={(e) => setTripFilter(e.target.value)}
-                className="w-full h-10 px-3 py-2 text-sm border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full h-10 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="all">Todos los viajes</option>
                 {trips.map((trip) => (
@@ -396,12 +373,12 @@ export default function ExpensesPage() {
             <div className="mx-auto h-12 w-12 text-gray-400">
               <CurrencyDollarIcon className="h-12 w-12" />
             </div>
-            <h3 className="mt-2 text-sm font-medium text-gray-900">
+            <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">
               {searchTerm || categoryFilter !== "all" || tripFilter !== "all"
                 ? "No se encontraron gastos"
                 : "No tienes gastos registrados"}
             </h3>
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
               {searchTerm || categoryFilter !== "all" || tripFilter !== "all"
                 ? "Intenta ajustar los filtros de búsqueda"
                 : "Comienza registrando tu primer gasto"}

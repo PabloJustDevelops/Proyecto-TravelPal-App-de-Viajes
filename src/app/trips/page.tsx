@@ -5,14 +5,14 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import { useAuth } from "@/contexts/AuthContext";
-import { createSupabaseClient, Trip } from "@/lib/supabase";
+import { Trip } from "@/lib/supabase";
 import {
   PlusIcon,
   MagnifyingGlassIcon,
   PlayIcon,
 } from "@heroicons/react/24/outline";
 import Link from "next/link";
-import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import PageSkeleton from "@/components/ui/PageSkeleton";
 import { logger } from "@/lib/logger";
 
 export default function TripsPage() {
@@ -20,62 +20,48 @@ export default function TripsPage() {
   const [trips, setTrips] = useState<Trip[]>([]);
   const [filteredTrips, setFilteredTrips] = useState<Trip[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
-  const loadTrips = useCallback(
-    async (signal?: AbortSignal) => {
-      try {
-        if (!user?.id) {
-          return;
-        }
-        // No setear loading(true) aquí si ya estamos cargando, para evitar parpadeos o bucles
-        // Pero como es una función llamada por efecto, sí debemos indicar que estamos buscando datos
-        setLoading(true);
+  const loadTrips = useCallback(async () => {
+    if (!user?.id) {
+      setLoading(false);
+      return;
+    }
 
-        logger.debug("TripsPage: Loading trips for user", user.id);
-        const supabase = createSupabaseClient();
+    try {
+      setLoading(true);
+      setError(null);
 
-        const query = supabase
-          .from("trips")
-          .select("*")
-          .eq("user_id", user.id)
-          .order("departure_date", { ascending: false });
+      logger.debug("TripsPage: Loading trips via API");
+      
+      // Add timeout
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout')), 15000)
+      );
 
-        const { data, error } = await (signal
-          ? query.abortSignal(signal)
-          : query);
+      const fetchPromise = fetch("/api/trips");
+      const res = await Promise.race([fetchPromise, timeoutPromise]) as Response;
 
-        if (error) throw error;
-
-        logger.debug("TripsPage: Trips loaded", data?.length);
-        setTrips(data || []);
-      } catch (error: unknown) {
-        // Check for various forms of AbortError
-        const isAbortError =
-          (error instanceof Error && error.name === "AbortError") ||
-          (typeof error === "object" &&
-            error !== null &&
-            "code" in error &&
-            (error as { code: number }).code === 20) ||
-          (error instanceof Error && error.message?.includes("AbortError")) ||
-          (typeof error === "object" &&
-            error !== null &&
-            "message" in error &&
-            (error as { message: string }).message.includes("AbortError"));
-
-        if (isAbortError) {
-          return;
-        }
-        logger.error("Error loading trips:", error);
-      } finally {
-        if (!signal?.aborted) {
-          setLoading(false);
-        }
+      if (!res.ok) {
+        throw new Error(`API Error: ${res.status}`);
       }
-    },
-    [user?.id],
-  );
+
+      const data = await res.json();
+      logger.debug("TripsPage: Trips loaded", data?.length);
+      setTrips(data || []);
+    } catch (error: any) {
+      const errorMessage = error.message === "Timeout" 
+        ? "La carga de viajes ha tardado demasiado. Por favor, reintenta."
+        : "Error al cargar los viajes. Por favor, intenta recargar.";
+      
+      logger.error("Error loading trips:", error);
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  }, [user?.id]);
 
   const filterTrips = useCallback(() => {
     let filtered = trips;
@@ -115,9 +101,7 @@ export default function TripsPage() {
     }
 
     if (user?.id) {
-      const controller = new AbortController();
-      loadTrips(controller.signal);
-      return () => controller.abort();
+      loadTrips();
     } else {
       // Si no hay usuario y auth terminó, paramos spinner local
       setLoading(false);
@@ -131,9 +115,7 @@ export default function TripsPage() {
   if (loading) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center py-12">
-          <LoadingSpinner size="lg" />
-        </div>
+        <PageSkeleton />
       </DashboardLayout>
     );
   }
@@ -142,10 +124,10 @@ export default function TripsPage() {
     return (
       <DashboardLayout>
         <div className="text-center py-12">
-          <h3 className="text-lg font-semibold text-gray-900">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
             Inicia sesión para ver tus viajes
           </h3>
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             La sección de viajes requiere autenticación.
           </p>
           <Link href="/signin">
@@ -162,8 +144,8 @@ export default function TripsPage() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Mis Viajes</h1>
-            <p className="mt-1 text-sm text-gray-500">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Mis Viajes</h1>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
               Gestiona tus itinerarios y reservas
             </p>
           </div>
@@ -176,7 +158,7 @@ export default function TripsPage() {
         </div>
 
         {/* Filters */}
-        <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
           <div className="flex flex-col lg:flex-row gap-4">
             {/* Search */}
             <div className="flex-1">
@@ -197,7 +179,7 @@ export default function TripsPage() {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full h-10 px-3 py-2 text-sm border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full h-10 px-3 py-2 text-sm border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white"
               >
                 <option value="all">Todos los estados</option>
                 <option value="planned">Planificado</option>
@@ -210,28 +192,47 @@ export default function TripsPage() {
           </div>
         </div>
 
-        {/* Trips Grid */}
-        {filteredTrips.length > 0 ? (
+        {/* Error State */}
+        {error ? (
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 flex flex-col items-center justify-center text-red-700 dark:text-red-400 mb-6">
+            <p className="font-medium mb-2">Hubo un problema al cargar tus viajes</p>
+            <p className="text-sm mb-4">{error}</p>
+            <Button 
+              onClick={() => {
+                loadTrips();
+              }}
+              variant="outline"
+              className="bg-white hover:bg-gray-50 text-red-700 border-red-200 dark:bg-transparent dark:border-red-700 dark:text-red-400 dark:hover:bg-red-900/30"
+            >
+              Reintentar
+            </Button>
+          </div>
+        ) : filteredTrips.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredTrips.map((trip) => (
               <div
                 key={trip.id}
-                className="bg-white rounded-lg shadow-sm border border-gray-200 p-4"
+                className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4"
               >
                 <div className="flex items-start justify-between">
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                       {trip.title}
                     </h3>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
                       {trip.origin} → {trip.destination}
                     </p>
                   </div>
-                  <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-700 capitalize">
+                  <span className={`text-xs px-2 py-1 rounded-full capitalize ${
+                    trip.status === 'confirmed' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' :
+                    trip.status === 'cancelled' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' :
+                    trip.status === 'completed' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' :
+                    'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
+                  }`}>
                     {trip.status}
                   </span>
                 </div>
-                <div className="mt-4 text-sm text-gray-600">
+                <div className="mt-4 text-sm text-gray-600 dark:text-gray-300">
                   <div>
                     Salida: {new Date(trip.departure_date).toLocaleDateString()}
                   </div>
@@ -244,11 +245,11 @@ export default function TripsPage() {
                 <div className="mt-4 flex items-center justify-between">
                   <Link
                     href={`/trips/${trip.id}`}
-                    className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                    className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium"
                   >
                     Ver detalles
                   </Link>
-                  <div className="flex items-center text-gray-500">
+                  <div className="flex items-center text-gray-500 dark:text-gray-400">
                     <PlayIcon className="h-5 w-5 mr-1" />
                     {trip.airline || "Sin aerolínea"}
                   </div>
@@ -275,10 +276,10 @@ export default function TripsPage() {
                 />
               </svg>
             </div>
-            <h3 className="mt-2 text-sm font-medium text-gray-900">
+            <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">
               No tienes viajes registrados
             </h3>
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
               Crea tu primer viaje para empezar a planificar.
             </p>
             <div className="mt-6">

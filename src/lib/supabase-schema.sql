@@ -112,6 +112,19 @@ CREATE TABLE IF NOT EXISTS profiles (
   CONSTRAINT username_length CHECK (char_length(username) >= 3)
 );
 
+-- Tabla para Tareas (Tasks)
+CREATE TABLE IF NOT EXISTS tasks (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  title VARCHAR(255) NOT NULL,
+  description TEXT,
+  status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'in_progress', 'completed')),
+  priority VARCHAR(20) DEFAULT 'medium' CHECK (priority IN ('low', 'medium', 'high')),
+  due_date TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- Índices para mejorar el rendimiento
 CREATE INDEX IF NOT EXISTS idx_bookings_user_id ON bookings(user_id);
 CREATE INDEX IF NOT EXISTS idx_bookings_trip_id ON bookings(trip_id);
@@ -129,6 +142,11 @@ CREATE INDEX IF NOT EXISTS idx_reminders_status ON reminders(status);
 CREATE INDEX IF NOT EXISTS idx_calendar_events_user_id ON calendar_events(user_id);
 CREATE INDEX IF NOT EXISTS idx_calendar_events_event_date ON calendar_events(event_date);
 CREATE INDEX IF NOT EXISTS idx_calendar_events_type ON calendar_events(type);
+
+-- Índices para tasks
+CREATE INDEX IF NOT EXISTS idx_tasks_user_id ON tasks(user_id);
+CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status);
+CREATE INDEX IF NOT EXISTS idx_tasks_due_date ON tasks(due_date);
 
 -- Triggers para actualizar updated_at automáticamente
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -151,11 +169,15 @@ CREATE TRIGGER update_reminders_updated_at BEFORE UPDATE ON reminders
 CREATE TRIGGER update_calendar_events_updated_at BEFORE UPDATE ON calendar_events
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+CREATE TRIGGER update_tasks_updated_at BEFORE UPDATE ON tasks
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
 -- Políticas de seguridad RLS (Row Level Security)
 ALTER TABLE bookings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE itinerary_activities ENABLE ROW LEVEL SECURITY;
 ALTER TABLE reminders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE calendar_events ENABLE ROW LEVEL SECURITY;
+ALTER TABLE tasks ENABLE ROW LEVEL SECURITY;
 
 -- Políticas para bookings
 DROP POLICY IF EXISTS "Users can view their own bookings" ON bookings;
@@ -211,6 +233,23 @@ CREATE POLICY "Users can update their own events" ON calendar_events
     FOR UPDATE USING (auth.uid() = user_id);
 
 CREATE POLICY "Users can delete their own events" ON calendar_events
+    FOR DELETE USING (auth.uid() = user_id);
+
+-- Políticas para tasks
+DROP POLICY IF EXISTS "Users can view their own tasks" ON tasks;
+CREATE POLICY "Users can view their own tasks" ON tasks
+    FOR SELECT USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can insert their own tasks" ON tasks;
+CREATE POLICY "Users can insert their own tasks" ON tasks
+    FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can update their own tasks" ON tasks;
+CREATE POLICY "Users can update their own tasks" ON tasks
+    FOR UPDATE USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can delete their own tasks" ON tasks;
+CREATE POLICY "Users can delete their own tasks" ON tasks
     FOR DELETE USING (auth.uid() = user_id);
 
 -- Políticas para profiles

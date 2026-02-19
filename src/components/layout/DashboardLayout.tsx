@@ -1,10 +1,15 @@
-import React from 'react'
+"use client";
+
+import React, { useState } from 'react'
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
 import Navbar from './Navbar'
-import { HomeIcon, MapPinIcon, CurrencyDollarIcon, DocumentTextIcon, BellIcon, ChartBarIcon, ChartPieIcon, CalendarIcon } from '@heroicons/react/24/outline'
+import ChatbotButton from '@/components/chatbot/ChatbotButton'
+import ChatbotWindow from '@/components/chatbot/ChatbotWindow'
+import { HomeIcon, MapPinIcon, CurrencyDollarIcon, DocumentTextIcon, BellIcon, ChartBarIcon, ChartPieIcon, CalendarIcon, ClipboardDocumentListIcon } from '@heroicons/react/24/outline'
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
+  { name: 'Tareas', href: '/tasks', icon: ClipboardDocumentListIcon },
   { name: 'Viajes', href: '/trips', icon: MapPinIcon },
   { name: 'Planificación', href: '/planning', icon: CalendarIcon },
   { name: 'Gastos', href: '/expenses', icon: CurrencyDollarIcon },
@@ -18,13 +23,24 @@ interface DashboardLayoutProps {
 }
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
+  const [isChatbotOpen, setIsChatbotOpen] = useState(false);
+
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50 dark:bg-black">
         <Navbar navigation={navigation} />
         <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
           {children}
         </main>
+        
+        {isChatbotOpen && (
+          <ChatbotWindow onClose={() => setIsChatbotOpen(false)} />
+        )}
+        
+        <ChatbotButton
+          onClick={() => setIsChatbotOpen(!isChatbotOpen)}
+          isOpen={isChatbotOpen}
+        />
       </div>
     </ProtectedRoute>
   )

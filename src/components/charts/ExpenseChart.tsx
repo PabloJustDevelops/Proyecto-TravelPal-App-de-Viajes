@@ -9,6 +9,7 @@ export interface ExpenseChartProps {
   type?: 'category' | 'timeline' | 'comparison'
   title?: string
   height?: number
+  currency?: string
 }
 
 interface ChartData {
@@ -18,7 +19,13 @@ interface ChartData {
   percentage: number
 }
 
-export default function ExpenseChart({ expenses, type = 'category', title = 'Gastos por categoría', height = 320 }: ExpenseChartProps) {
+export default function ExpenseChart({ 
+  expenses, 
+  type = 'category', 
+  title = 'Gastos por categoría', 
+  height = 320,
+  currency = 'USD'
+}: ExpenseChartProps) {
   const [chartData, setChartData] = useState<ChartData[]>([])
 
   useEffect(() => {
@@ -192,11 +199,11 @@ export default function ExpenseChart({ expenses, type = 'category', title = 'Gas
     <div className="space-y-3">
       {chartData.map((item, index) => (
         <div key={index} className="flex items-center">
-          <div className="w-20 text-sm text-gray-600 truncate">
+          <div className="w-20 text-sm text-gray-600 dark:text-gray-300 truncate">
             {item.label}
           </div>
           <div className="flex-1 mx-3">
-            <div className="bg-gray-200 rounded-full h-4 relative overflow-hidden">
+            <div className="bg-gray-200 dark:bg-gray-700 rounded-full h-4 relative overflow-hidden">
               <div
                 className="h-full rounded-full transition-all duration-500 ease-out"
                 style={{
@@ -206,10 +213,10 @@ export default function ExpenseChart({ expenses, type = 'category', title = 'Gas
               />
             </div>
           </div>
-          <div className="w-24 text-sm text-gray-900 text-right">
-            {formatCurrency(item.value)}
+          <div className="w-24 text-sm text-gray-900 dark:text-white text-right">
+            {formatCurrency(item.value, currency)}
           </div>
-          <div className="w-12 text-xs text-gray-500 text-right">
+          <div className="w-12 text-xs text-gray-500 dark:text-gray-400 text-right">
             {item.percentage.toFixed(1)}%
           </div>
         </div>
@@ -261,10 +268,10 @@ export default function ExpenseChart({ expenses, type = 'category', title = 'Gas
           
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="text-center">
-              <div className="text-lg font-bold text-gray-900">
-                {formatCurrency(totalAmount)}
+              <div className="text-lg font-bold text-gray-900 dark:text-white">
+                {formatCurrency(totalAmount, currency)}
               </div>
-              <div className="text-xs text-gray-500">Total</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">Total</div>
             </div>
           </div>
         </div>
@@ -276,9 +283,9 @@ export default function ExpenseChart({ expenses, type = 'category', title = 'Gas
                 className="w-3 h-3 rounded-full mr-2"
                 style={{ backgroundColor: item.color }}
               />
-              <span className="text-gray-600">{item.label}</span>
-              <span className="ml-auto font-medium">
-                {formatCurrency(item.value)}
+              <span className="text-gray-600 dark:text-gray-300">{item.label}</span>
+              <span className="ml-auto font-medium text-gray-900 dark:text-white">
+                {formatCurrency(item.value, currency)}
               </span>
             </div>
           ))}
@@ -289,9 +296,9 @@ export default function ExpenseChart({ expenses, type = 'category', title = 'Gas
 
   if (!chartData.length) {
     return (
-      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">{title}</h3>
-        <div className="text-center py-8 text-gray-500">
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">{title}</h3>
+        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
           No hay datos suficientes para mostrar el gráfico
         </div>
       </div>
@@ -299,11 +306,11 @@ export default function ExpenseChart({ expenses, type = 'category', title = 'Gas
   }
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-medium text-gray-900">{title}</h3>
-        <div className="text-sm text-gray-500">
-          Total: {formatCurrency(totalAmount)}
+        <h3 className="text-lg font-medium text-gray-900 dark:text-white">{title}</h3>
+        <div className="text-sm text-gray-500 dark:text-gray-400">
+          Total: {formatCurrency(totalAmount, currency)}
         </div>
       </div>
       

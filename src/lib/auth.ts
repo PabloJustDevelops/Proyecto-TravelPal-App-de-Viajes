@@ -114,32 +114,46 @@ export class AuthService {
   }
 
   async getCurrentUser(): Promise<AuthUser | null> {
+    let sessionUser: User | null = null;
     try {
       logger.debug('AuthService: Getting current user...');
-      // Timeout for getUser to avoid hanging
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('getUser timed out')), 5000)
-      );
       
-      const getUserPromise = this.supabase.auth.getUser();
-      const { data: { user }, error } = await Promise.race([getUserPromise, timeoutPromise]) as any;
+      // Intentar obtener sesión primero para evitar llamada a getUser si no es necesaria
+      const { data: { session }, error: sessionError } = await this.supabase.auth.getSession();
       
-      if (error || !user) {
-        if (error) logger.debug('AuthService: Error obteniendo usuario (esperado si no hay sesión):', error.message)
-        return null
+      if (sessionError || !session?.user) {
+        if (sessionError) logger.debug('AuthService: Error obteniendo sesión:', sessionError.message);
+        return null;
       }
+
+      sessionUser = session.user;
+      const user = session.user;
 
       // Get additional user data from our profiles table
       // Usamos maybeSingle para no lanzar error si no existe perfil aun
-      const { data: userData, error: dbError } = await this.supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .maybeSingle() 
+      // Timeout específico solo para la base de datos, no para toda la auth
+      const dbTimeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('DB profile fetch timed out')), 5000)
+      );
 
-      if (dbError) {
-        logger.warn('AuthService: Error obteniendo datos extra del usuario:', dbError.message)
-        // Retornamos el usuario básico aunque falle la DB
+      let userData = null;
+      try {
+        const { data, error: dbError } = await Promise.race([
+          this.supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .maybeSingle(),
+          dbTimeoutPromise
+        ]) as any;
+
+        if (dbError) {
+           logger.warn('AuthService: Error obteniendo datos extra del usuario:', dbError.message);
+        } else {
+           userData = data;
+        }
+      } catch (dbErr) {
+        logger.warn('AuthService: Timeout o error al obtener perfil, continuando con usuario básico:', dbErr);
       }
 
       logger.debug('AuthService: User retrieved successfully', { id: user.id });
@@ -153,7 +167,11 @@ export class AuthService {
         website: userData?.website,
       }
     } catch (err) {
-      logger.error('AuthService: Excepción inesperada en getCurrentUser:', err)
+      if (sessionUser) {
+        logger.warn('AuthService: Error crítico en getCurrentUser, pero existe sesión. Retornando usuario básico.', err);
+        return sessionUser as AuthUser;
+      }
+      logger.error('AuthService: Excepción inesperada en getCurrentUser y no hay sesión recuperable:', err)
       return null
     }
   }
@@ -261,8 +279,22 @@ export class AuthService {
   onAuthStateChange(callback: (user: AuthUser | null) => void) {
     return this.supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session | null) => {
       if (session?.user) {
-        const user = await this.getCurrentUser()
-        callback(user)
+        // Optimización: Si el evento es TOKEN_REFRESHED, quizás no necesitamos recargar todo el perfil si ya lo tenemos en memoria,
+        // pero como authService es stateless, intentamos obtenerlo de forma segura.
+        try {
+            const user = await this.getCurrentUser();
+            if (user) {
+                callback(user);
+            } else {
+                // Fallback crítico: Si getCurrentUser falla (ej. error de red al ir a DB), 
+                // pero tenemos sesión válida, no desloguear al usuario.
+                logger.warn('AuthService: getCurrentUser falló pero hay sesión, usando fallback.');
+                callback(session.user as AuthUser);
+            }
+        } catch (error) {
+            logger.error('AuthService: Error crítico en onAuthStateChange, usando fallback de sesión:', error);
+            callback(session.user as AuthUser);
+        }
       } else {
         callback(null)
       }

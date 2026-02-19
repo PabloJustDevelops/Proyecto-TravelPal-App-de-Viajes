@@ -3,12 +3,12 @@
 import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Trip, Expense } from "@/lib/supabase";
-import { createSupabaseClient } from "@/lib/supabase";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import ExpenseChart from "@/components/charts/ExpenseChart";
 import TripChart from "@/components/charts/TripChart";
 import { Card } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
+import PageSkeleton from "@/components/ui/PageSkeleton";
 import {
   ChartBarIcon,
   CurrencyDollarIcon,
@@ -49,6 +49,7 @@ export default function AnalyticsPage() {
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [dateRange, setDateRange] = useState("all");
   const [selectedCurrency, setSelectedCurrency] = useState("USD");
 
@@ -162,99 +163,50 @@ export default function AnalyticsPage() {
     [selectedCurrency],
   );
 
-  const loadData = useCallback(
-    async (signal?: AbortSignal) => {
-      if (!user) return;
+  const loadData = useCallback(async () => {
+    if (!user) return;
 
-      setLoading(true);
-      try {
-        const supabase = createSupabaseClient();
+    setLoading(true);
+    setError(null);
+    try {
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Timeout")), 15000),
+      );
 
-        // Compute start date based on dateRange
-        let startISO: string | null = null;
-        if (dateRange !== "all") {
-          const days = parseInt(dateRange, 10);
-          if (!isNaN(days)) {
-            const d = new Date();
-            d.setHours(0, 0, 0, 0);
-            d.setDate(d.getDate() - (days - 1));
-            startISO = d.toISOString();
-          }
-        }
+      const fetchPromise = fetch(`/api/analytics?range=${dateRange}`);
+      const res = (await Promise.race([
+        fetchPromise,
+        timeoutPromise,
+      ])) as Response;
 
-        // Load trips
-        let tripsQuery = supabase
-          .from("trips")
-          .select(
-            "id, user_id, title, origin, destination, departure_date, return_date, airline, flight_number, status, notes, created_at, updated_at",
-          )
-          .eq("user_id", user.id)
-          .order("created_at", { ascending: false });
+      if (!res.ok) throw new Error(`API Error: ${res.status}`);
+      const data = await res.json();
 
-        if (startISO) {
-          tripsQuery = tripsQuery.gte("departure_date", startISO);
-        }
+      setTrips(data.trips || []);
+      setExpenses(data.expenses || []);
+      setBudgets(data.budgets || []);
 
-        const { data: tripsData, error: tripsError } = await (signal
-          ? tripsQuery.abortSignal(signal)
-          : tripsQuery);
-
-        if (tripsError) throw tripsError;
-
-        // Load expenses
-        let expensesQuery = supabase
-          .from("expenses")
-          .select("*")
-          .eq("user_id", user.id)
-          .order("date", { ascending: false });
-
-        if (startISO) {
-          expensesQuery = expensesQuery.gte("date", startISO);
-        }
-
-        const { data: expensesData, error: expensesError } = await (signal
-          ? expensesQuery.abortSignal(signal)
-          : expensesQuery);
-
-        if (expensesError) throw expensesError;
-
-        // Load budgets (no date range filter)
-        const budgetsQuery = supabase
-          .from("budgets")
-          .select("*")
-          .eq("user_id", user.id)
-          .order("created_at", { ascending: false });
-
-        const { data: budgetsData, error: budgetsError } = await (signal
-          ? budgetsQuery.abortSignal(signal)
-          : budgetsQuery);
-
-        if (budgetsError) throw budgetsError;
-
-        setTrips(tripsData || []);
-        setExpenses(expensesData || []);
-        setBudgets(budgetsData || []);
-
-        // calculateAnalytics called by useEffect when data changes
-      } catch (error: any) {
-        if (
-          (error instanceof Error && error.name === "AbortError") ||
-          error?.code === 20 ||
-          error?.message?.includes("AbortError")
-        ) {
-          return;
-        }
+      // calculateAnalytics called by useEffect when data changes
+    } catch (error: any) {
+      console.error("Error loading analytics data:", error);
+      if (error.message === "Timeout") {
+        setError(
+          "La carga de datos ha tardado demasiado. Por favor, inténtalo de nuevo.",
+        );
+      } else {
+        setError(
+          "Error al cargar los datos de análisis. Por favor, inténtalo de nuevo.",
+        );
         const msg = getErrorMessage(error, "Error loading analytics data");
         logger.error("AnalyticsPage: Error loading analytics data", {
           error: msg,
           raw: error,
         });
-      } finally {
-        setLoading(false);
       }
-    },
-    [user, dateRange],
-  );
+    } finally {
+      setLoading(false);
+    }
+  }, [user, dateRange]);
 
   useEffect(() => {
     if (trips.length > 0 || expenses.length > 0 || budgets.length > 0) {
@@ -264,9 +216,7 @@ export default function AnalyticsPage() {
 
   useEffect(() => {
     if (user) {
-      const controller = new AbortController();
-      loadData(controller.signal);
-      return () => controller.abort();
+      loadData();
     } else {
       // Evitar spinner infinito cuando no hay usuario
       setLoading(false);
@@ -343,8 +293,35 @@ export default function AnalyticsPage() {
   if (loading) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <PageSkeleton />
+      </DashboardLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <DashboardLayout>
+        <div className="flex flex-col items-center justify-center h-64">
+          <div className="text-red-500 mb-4">
+            <svg
+              className="h-12 w-12"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+              />
+            </svg>
+          </div>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            Error al cargar los datos
+          </h3>
+          <p className="text-gray-500 mb-4">{error}</p>
+          <Button onClick={() => loadData()}>Reintentar</Button>
         </div>
       </DashboardLayout>
     );
@@ -356,10 +333,10 @@ export default function AnalyticsPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
               Análisis y Reportes
             </h1>
-            <p className="text-gray-600">
+            <p className="text-gray-600 dark:text-gray-400">
               Insights detallados sobre tus viajes y gastos
             </p>
           </div>
@@ -376,15 +353,17 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Filters */}
-        <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
           <div className="flex flex-wrap gap-4 items-center">
             <div className="flex items-center space-x-2">
-              <FunnelIcon className="h-5 w-5 text-gray-500" />
-              <span className="text-sm text-gray-700">Moneda:</span>
+              <FunnelIcon className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+              <span className="text-sm text-gray-700 dark:text-gray-300">
+                Moneda:
+              </span>
               <select
                 value={selectedCurrency}
                 onChange={(e) => setSelectedCurrency(e.target.value)}
-                className="text-sm border rounded p-1"
+                className="text-sm border rounded p-1 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
               >
                 {currencies.map((c) => (
                   <option key={c} value={c}>
@@ -394,11 +373,13 @@ export default function AnalyticsPage() {
               </select>
             </div>
             <div className="flex items-center space-x-2">
-              <span className="text-sm text-gray-700">Rango de fechas:</span>
+              <span className="text-sm text-gray-700 dark:text-gray-300">
+                Rango de fechas:
+              </span>
               <select
                 value={dateRange}
                 onChange={(e) => setDateRange(e.target.value)}
-                className="text-sm border rounded p-1"
+                className="text-sm border rounded p-1 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
               >
                 {dateRanges.map((r) => (
                   <option key={r.value} value={r.value}>
@@ -419,10 +400,10 @@ export default function AnalyticsPage() {
                   <CurrencyDollarIcon className="h-8 w-8 text-green-600" />
                 </div>
                 <div className="ml-4">
-                  <div className="text-sm font-medium text-gray-500">
+                  <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
                     Total Gastado
                   </div>
-                  <div className="text-2xl font-bold text-gray-900">
+                  <div className="text-2xl font-bold text-gray-900 dark:text-white">
                     {formatCurrency(
                       analytics?.totalExpenses || 0,
                       selectedCurrency,
@@ -439,10 +420,10 @@ export default function AnalyticsPage() {
                   <ChartBarIcon className="h-8 w-8 text-blue-600" />
                 </div>
                 <div className="ml-4">
-                  <div className="text-sm font-medium text-gray-500">
+                  <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
                     Total Viajes
                   </div>
-                  <div className="text-2xl font-bold text-gray-900">
+                  <div className="text-2xl font-bold text-gray-900 dark:text-white">
                     {analytics?.totalTrips || 0}
                   </div>
                 </div>
@@ -456,10 +437,10 @@ export default function AnalyticsPage() {
                   <MapPinIcon className="h-8 w-8 text-purple-600" />
                 </div>
                 <div className="ml-4">
-                  <div className="text-sm font-medium text-gray-500">
+                  <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
                     Destino más visitado
                   </div>
-                  <div className="text-lg font-bold text-gray-900">
+                  <div className="text-lg font-bold text-gray-900 dark:text-white">
                     {analytics?.mostVisitedDestination || "N/A"}
                   </div>
                 </div>
@@ -475,14 +456,14 @@ export default function AnalyticsPage() {
                   ) : analytics?.monthlyTrend === "down" ? (
                     <ArrowTrendingDownIcon className="h-8 w-8 text-red-600" />
                   ) : (
-                    <CalendarIcon className="h-8 w-8 text-gray-600" />
+                    <CalendarIcon className="h-8 w-8 text-gray-600 dark:text-gray-400" />
                   )}
                 </div>
                 <div className="ml-4">
-                  <div className="text-sm font-medium text-gray-500">
+                  <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
                     Tendencia mensual
                   </div>
-                  <div className="text-lg font-bold text-gray-900">
+                  <div className="text-lg font-bold text-gray-900 dark:text-white">
                     {analytics?.monthlyTrend || "stable"}
                   </div>
                 </div>
@@ -495,7 +476,7 @@ export default function AnalyticsPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card>
             <div className="p-6">
-              <h3 className="text-lg font-semibold mb-4">
+              <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
                 Gastos por Categoría
               </h3>
               <ExpenseChart
@@ -507,7 +488,9 @@ export default function AnalyticsPage() {
           </Card>
           <Card>
             <div className="p-6">
-              <h3 className="text-lg font-semibold mb-4">Viajes por Destino</h3>
+              <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
+                Viajes por Destino
+              </h3>
               <TripChart trips={trips} />
             </div>
           </Card>

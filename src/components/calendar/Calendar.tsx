@@ -24,11 +24,11 @@ import {
 } from 'date-fns';
 import { es } from 'date-fns/locale';
 
-interface CalendarEvent {
+export interface CalendarEvent {
   id: string;
   title: string;
   date: string; // YYYY-MM-DD
-  type: 'trip' | 'activity' | 'booking' | 'reminder';
+  type: 'trip' | 'activity' | 'booking' | 'reminder' | 'task';
   color: string;
   time?: string;
   description?: string;
@@ -320,6 +320,7 @@ export const Calendar: React.FC<CalendarProps> = ({
           { label: 'Reservas', color: 'bg-green-500' },
           { label: 'Pendiente', color: 'bg-yellow-500' },
           { label: 'Actividades', color: 'bg-purple-500' },
+          { label: 'Tareas', color: 'bg-emerald-500' },
         ].map((item) => (
           <div key={item.label} className="flex items-center gap-2">
             <span className={`w-3 h-3 rounded-full ${item.color} ring-2 ring-white shadow-sm`} />

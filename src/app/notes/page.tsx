@@ -1,124 +1,70 @@
-'use client'
+"use client";
 
-import { useEffect, useState, useCallback } from 'react'
-import DashboardLayout from '@/components/layout/DashboardLayout'
-import NoteCard from '@/components/notes/NoteCard'
-import NoteEditor from '@/components/notes/NoteEditor'
-import Button from '@/components/ui/Button'
-import Input from '@/components/ui/Input'
-import Modal from '@/components/ui/Modal'
-import { useAuth } from '@/contexts/AuthContext'
-import { createSupabaseClient, Note, Trip } from '@/lib/supabase'
-import { logger } from '@/lib/logger'
-import { getErrorMessage } from '@/lib/utils'
+import { useEffect, useState, useCallback } from "react";
+import DashboardLayout from "@/components/layout/DashboardLayout";
+import NoteCard from "@/components/notes/NoteCard";
+import NoteEditor from "@/components/notes/NoteEditor";
+import Button from "@/components/ui/Button";
+import Input from "@/components/ui/Input";
+import Modal from "@/components/ui/Modal";
+import { useAuth } from "@/contexts/AuthContext";
+import { createSupabaseClient, Note, Trip } from "@/lib/supabase";
+import { logger } from "@/lib/logger";
+import { getErrorMessage } from "@/lib/utils";
 import {
   PlusIcon,
   MagnifyingGlassIcon,
-  DocumentTextIcon
-} from '@heroicons/react/24/outline';
-import LoadingSpinner from '@/components/ui/LoadingSpinner'
+  DocumentTextIcon,
+} from "@heroicons/react/24/outline";
+import PageSkeleton from "@/components/ui/PageSkeleton";
 
 export default function NotesPage() {
-  const { user } = useAuth()
-  const [notes, setNotes] = useState<(Note & { trip?: Trip })[]>([])
-  const [filteredNotes, setFilteredNotes] = useState<(Note & { trip?: Trip })[]>([])
-  const [trips, setTrips] = useState<Trip[]>([])
-  const [loading, setLoading] = useState(true)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [categoryFilter, setCategoryFilter] = useState<string>('all')
-  const [tripFilter, setTripFilter] = useState<string>('all')
-  
+  const { user } = useAuth();
+  const [notes, setNotes] = useState<(Note & { trip?: Trip })[]>([]);
+  const [filteredNotes, setFilteredNotes] = useState<
+    (Note & { trip?: Trip })[]
+  >([]);
+  const [trips, setTrips] = useState<Trip[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [tripFilter, setTripFilter] = useState<string>("all");
+
   // Editor state
-  const [showEditor, setShowEditor] = useState(false)
-  const [editingNote, setEditingNote] = useState<Note | null>(null)
-  const [editorLoading, setEditorLoading] = useState(false)
+  const [showEditor, setShowEditor] = useState(false);
+  const [editingNote, setEditingNote] = useState<Note | null>(null);
+  const [editorLoading, setEditorLoading] = useState(false);
 
-  const loadNotes = useCallback(async (signal?: AbortSignal) => {
+  const loadData = useCallback(async () => {
+    if (!user?.id) return;
+    
     try {
-      if (!user?.id) {
-         setLoading(false)
-         return
-      }
-      setLoading(true)
-      const supabase = createSupabaseClient()
+      setLoading(true);
+      setError(null);
 
-      const query = supabase
-        .from('notes')
-        .select(`
-          *,
-          trip:trips(*)
-        `)
-        .eq('user_id', user.id)
-        .order('updated_at', { ascending: false })
-
-      const { data, error } = await (signal ? query.abortSignal(signal) : query)
-
-      if (error) throw error
-
-      setNotes(data || [])
-    } catch (err: unknown) {
-      // Silenciar abortos de navegación
-      if (
-        (err instanceof Error && err.name === 'AbortError') ||
-        (typeof err === 'object' && err !== null && 'code' in err && (err as any).code === 20) ||
-        (err instanceof DOMException && err.name === 'AbortError')
-      ) {
-        return
-      }
+      const response = await fetch('/api/notes');
       
-      // Check for message content if it's not a standard Error object
-      const errObj = err as any;
-      if (errObj?.message?.includes('AbortError') || errObj?.details?.includes('AbortError')) {
-          return;
+      if (!response.ok) {
+        throw new Error('Error al cargar los datos');
       }
 
-      const message = getErrorMessage(err)
-      logger.error('NotesPage: Error loading notes', { error: message })
+      const data = await response.json();
+      
+      setNotes(data.notes || []);
+      setTrips(data.trips || []);
+    } catch (err: any) {
+      console.error("Error loading notes data:", err);
+      setError("Error al cargar las notas. Por favor, inténtalo de nuevo.");
+      const message = getErrorMessage(err);
+      logger.error("NotesPage: Error loading data", { error: message });
     } finally {
-      if (!signal?.aborted) {
-        setLoading(false)
-      }
+      setLoading(false);
     }
-  }, [user?.id])
-
-  const loadTrips = useCallback(async (signal?: AbortSignal) => {
-    try {
-      if (!user?.id) return
-      const supabase = createSupabaseClient()
-
-      const query = supabase
-        .from('trips')
-        .select('id, title, user_id, origin, destination, departure_date, return_date, status, created_at, updated_at')
-        .eq('user_id', user.id)
-        .order('departure_date', { ascending: false })
-
-      const { data, error } = await (signal ? query.abortSignal(signal) : query)
-
-      if (error) throw error
-
-      setTrips(data || [])
-    } catch (err: unknown) {
-      if (
-        (err instanceof Error && err.name === 'AbortError') ||
-        (typeof err === 'object' && err !== null && 'code' in err && (err as any).code === 20) ||
-        (err instanceof DOMException && err.name === 'AbortError')
-      ) {
-        return
-      }
-      
-       // Check for message content if it's not a standard Error object
-       const errObj = err as any;
-       if (errObj?.message?.includes('AbortError') || errObj?.details?.includes('AbortError')) {
-           return;
-       }
-
-      const message = getErrorMessage(err)
-      logger.error('NotesPage: Error loading trips', { error: message })
-    }
-  }, [user?.id])
+  }, [user?.id]);
 
   const filterNotes = useCallback(() => {
-    let filtered = notes
+    let filtered = notes;
 
     // Filter by search term
     if (searchTerm) {
@@ -126,48 +72,40 @@ export default function NotesPage() {
         (note) =>
           note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
           note.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          note.trip?.title.toLowerCase().includes(searchTerm.toLowerCase())
-      )
+          note.trip?.title.toLowerCase().includes(searchTerm.toLowerCase()),
+      );
     }
 
     // Filter by category
-    if (categoryFilter !== 'all') {
-      filtered = filtered.filter((note) => note.category === categoryFilter)
+    if (categoryFilter !== "all") {
+      filtered = filtered.filter((note) => note.category === categoryFilter);
     }
 
     // Filter by trip
-    if (tripFilter !== 'all') {
-      filtered = filtered.filter((note) => note.trip_id === tripFilter)
+    if (tripFilter !== "all") {
+      filtered = filtered.filter((note) => note.trip_id === tripFilter);
     }
 
-    setFilteredNotes(filtered)
-  }, [notes, searchTerm, categoryFilter, tripFilter])
+    setFilteredNotes(filtered);
+  }, [notes, searchTerm, categoryFilter, tripFilter]);
 
   useEffect(() => {
-    if (user?.id) {
-      const controller = new AbortController()
-      loadNotes(controller.signal)
-      loadTrips(controller.signal)
-      return () => controller.abort()
-    } else {
-      // Evitar spinner infinito cuando no hay usuario
-      setLoading(false)
-    }
-  }, [user?.id, loadNotes, loadTrips])
+    loadData();
+  }, [loadData]);
 
   useEffect(() => {
-    filterNotes()
-  }, [notes, searchTerm, categoryFilter, tripFilter, filterNotes])
+    filterNotes();
+  }, [notes, searchTerm, categoryFilter, tripFilter, filterNotes]);
 
   const handleSaveNote = async (noteData: Partial<Note>) => {
-    setEditorLoading(true)
-    const supabase = createSupabaseClient()
+    setEditorLoading(true);
+    const supabase = createSupabaseClient();
 
     try {
       if (editingNote) {
         // Update existing note
         const { error } = await supabase
-          .from('notes')
+          .from("notes")
           .update({
             title: noteData.title,
             content: noteData.content,
@@ -175,77 +113,116 @@ export default function NotesPage() {
             trip_id: noteData.trip_id || null,
             updated_at: new Date().toISOString(),
           })
-          .eq('id', editingNote.id)
+          .eq("id", editingNote.id);
 
-        if (error) throw error
+        if (error) throw error;
       } else {
         // Create new note
-        const { error } = await supabase
-          .from('notes')
-          .insert([{
+        const { error } = await supabase.from("notes").insert([
+          {
             user_id: user!.id,
             title: noteData.title,
             content: noteData.content,
             category: noteData.category,
             trip_id: noteData.trip_id || null,
-          }])
+          },
+        ]);
 
-        if (error) throw error
+        if (error) throw error;
       }
 
-      await loadNotes()
-      handleCloseEditor()
+      await loadData();
+      handleCloseEditor();
     } catch (err: unknown) {
-      const message = getErrorMessage(err, 'Error al guardar la nota')
-      logger.error('NotesPage: Error saving note', { error: message })
-      throw new Error(message)
+      const message = getErrorMessage(err, "Error al guardar la nota");
+      logger.error("NotesPage: Error saving note", { error: message });
+      throw new Error(message);
     } finally {
-      setEditorLoading(false)
+      setEditorLoading(false);
     }
-  }
+  };
 
   const handleEditNote = (note: Note) => {
-    setEditingNote(note)
-    setShowEditor(true)
-  }
+    setEditingNote(note);
+    setShowEditor(true);
+  };
 
   const handleCloseEditor = () => {
-    setShowEditor(false)
-    setEditingNote(null)
-  }
+    setShowEditor(false);
+    setEditingNote(null);
+  };
 
   // Funciones auxiliares eliminadas - no se utilizan en este componente
 
   const getCategoryCounts = () => {
-    return notes.reduce((acc, note) => {
-      const category = note.category || 'general'
-      acc[category] = (acc[category] || 0) + 1
-      return acc
-    }, {} as Record<string, number>)
-  }
+    return notes.reduce(
+      (acc, note) => {
+        const category = note.category || "general";
+        acc[category] = (acc[category] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>,
+    );
+  };
 
-  const categoryCounts = getCategoryCounts()
+  const categoryCounts = getCategoryCounts();
 
   if (loading) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center py-12">
-          <LoadingSpinner size="lg" />
+        <PageSkeleton />
+      </DashboardLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <DashboardLayout>
+        <div className="flex flex-col items-center justify-center h-64">
+          <div className="text-red-500 mb-4">
+            <svg
+              className="h-12 w-12"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+              />
+            </svg>
+          </div>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            Error al cargar los datos
+          </h3>
+          <p className="text-gray-500 mb-4">{error}</p>
+          <Button onClick={() => loadData()}>Reintentar</Button>
         </div>
       </DashboardLayout>
-    )
+    );
   }
 
   if (!user) {
     return (
       <DashboardLayout>
         <div className="text-center py-12">
-          <h3 className="text-lg font-semibold text-gray-900">Inicia sesión para gestionar tus notas</h3>
-          <p className="mt-1 text-sm text-gray-500">La sección de notas requiere autenticación.</p>
-          <Button className="mt-4" onClick={() => (window.location.href = '/signin')}>Ir a Login</Button>
+          <h3 className="text-lg font-semibold text-gray-900">
+            Inicia sesión para gestionar tus notas
+          </h3>
+          <p className="mt-1 text-sm text-gray-500">
+            La sección de notas requiere autenticación.
+          </p>
+          <Button
+            className="mt-4"
+            onClick={() => (window.location.href = "/signin")}
+          >
+            Ir a Login
+          </Button>
         </div>
       </DashboardLayout>
-    )
+    );
   }
 
   return (
@@ -254,15 +231,14 @@ export default function NotesPage() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Mis Notas</h1>
-            <p className="mt-1 text-sm text-gray-500">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+              Mis Notas
+            </h1>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
               Organiza y documenta toda la información de tus viajes
             </p>
           </div>
-          <Button 
-            onClick={() => setShowEditor(true)}
-            className="mt-4 sm:mt-0"
-          >
+          <Button onClick={() => setShowEditor(true)} className="mt-4 sm:mt-0">
             <PlusIcon className="h-4 w-4 mr-2" />
             Nueva Nota
           </Button>
@@ -270,46 +246,56 @@ export default function NotesPage() {
 
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+          <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
             <div className="flex items-center">
               <DocumentTextIcon className="h-8 w-8 text-blue-600" />
               <div className="ml-3">
-                <div className="text-sm font-medium text-gray-500">Total Notas</div>
-                <div className="text-2xl font-bold text-gray-900">{notes.length}</div>
+                <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                  Total Notas
+                </div>
+                <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {notes.length}
+                </div>
               </div>
             </div>
           </div>
-          
-          <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+
+          <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
             <div className="flex items-center">
               <div className="text-2xl">📅</div>
               <div className="ml-3">
-                <div className="text-sm font-medium text-gray-500">Itinerarios</div>
-                <div className="text-2xl font-bold text-gray-900">
+                <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                  Itinerarios
+                </div>
+                <div className="text-2xl font-bold text-gray-900 dark:text-white">
                   {categoryCounts.itinerary || 0}
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+          <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
             <div className="flex items-center">
               <div className="text-2xl">🏨</div>
               <div className="ml-3">
-                <div className="text-sm font-medium text-gray-500">Alojamientos</div>
-                <div className="text-2xl font-bold text-gray-900">
+                <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                  Alojamientos
+                </div>
+                <div className="text-2xl font-bold text-gray-900 dark:text-white">
                   {categoryCounts.accommodation || 0}
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+          <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
             <div className="flex items-center">
               <div className="text-2xl">🚨</div>
               <div className="ml-3">
-                <div className="text-sm font-medium text-gray-500">Emergencias</div>
-                <div className="text-2xl font-bold text-gray-900">
+                <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                  Emergencias
+                </div>
+                <div className="text-2xl font-bold text-gray-900 dark:text-white">
                   {categoryCounts.emergency || 0}
                 </div>
               </div>
@@ -318,7 +304,7 @@ export default function NotesPage() {
         </div>
 
         {/* Filters */}
-        <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
           <div className="flex flex-col lg:flex-row gap-4">
             {/* Search */}
             <div className="flex-1">
@@ -339,7 +325,7 @@ export default function NotesPage() {
               <select
                 value={categoryFilter}
                 onChange={(e) => setCategoryFilter(e.target.value)}
-                className="w-full h-10 px-3 py-2 text-sm border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full h-10 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="all">Todas las categorías</option>
                 <option value="general">General</option>
@@ -359,7 +345,7 @@ export default function NotesPage() {
               <select
                 value={tripFilter}
                 onChange={(e) => setTripFilter(e.target.value)}
-                className="w-full h-10 px-3 py-2 text-sm border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full h-10 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="all">Todos los viajes</option>
                 {trips.map((trip) => (
@@ -376,10 +362,10 @@ export default function NotesPage() {
         {filteredNotes.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredNotes.map((note) => (
-              <NoteCard 
-                key={note.id} 
-                note={note} 
-                showTripTitle 
+              <NoteCard
+                key={note.id}
+                note={note}
+                showTripTitle
                 onEdit={handleEditNote}
               />
             ))}
@@ -389,24 +375,26 @@ export default function NotesPage() {
             <div className="mx-auto h-12 w-12 text-gray-400">
               <DocumentTextIcon className="h-12 w-12" />
             </div>
-            <h3 className="mt-2 text-sm font-medium text-gray-900">
-              {searchTerm || categoryFilter !== 'all' || tripFilter !== 'all'
-                ? 'No se encontraron notas'
-                : 'No tienes notas registradas'}
+            <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">
+              {searchTerm || categoryFilter !== "all" || tripFilter !== "all"
+                ? "No se encontraron notas"
+                : "No tienes notas registradas"}
             </h3>
-            <p className="mt-1 text-sm text-gray-500">
-              {searchTerm || categoryFilter !== 'all' || tripFilter !== 'all'
-                ? 'Intenta ajustar los filtros de búsqueda'
-                : 'Comienza creando tu primera nota'}
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              {searchTerm || categoryFilter !== "all" || tripFilter !== "all"
+                ? "Intenta ajustar los filtros de búsqueda"
+                : "Comienza creando tu primera nota"}
             </p>
-            {(!searchTerm && categoryFilter === 'all' && tripFilter === 'all') && (
-              <div className="mt-6">
-                <Button onClick={() => setShowEditor(true)}>
-                  <PlusIcon className="h-4 w-4 mr-2" />
-                  Crear Primera Nota
-                </Button>
-              </div>
-            )}
+            {!searchTerm &&
+              categoryFilter === "all" &&
+              tripFilter === "all" && (
+                <div className="mt-6">
+                  <Button onClick={() => setShowEditor(true)}>
+                    <PlusIcon className="h-4 w-4 mr-2" />
+                    Crear Primera Nota
+                  </Button>
+                </div>
+              )}
           </div>
         )}
 
@@ -414,7 +402,7 @@ export default function NotesPage() {
         <Modal
           isOpen={showEditor}
           onClose={handleCloseEditor}
-          title={editingNote ? 'Editar Nota' : 'Nueva Nota'}
+          title={editingNote ? "Editar Nota" : "Nueva Nota"}
           size="xl"
         >
           <NoteEditor
@@ -426,5 +414,5 @@ export default function NotesPage() {
         </Modal>
       </div>
     </DashboardLayout>
-  )
+  );
 }

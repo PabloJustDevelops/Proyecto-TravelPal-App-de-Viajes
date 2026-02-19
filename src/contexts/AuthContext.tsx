@@ -65,8 +65,15 @@ export function AuthProvider({ children, deps }: { children: React.ReactNode; de
       data: { subscription },
     } = authService.onAuthStateChange((user) => {
       if (mounted) {
-        logger.debug("AuthContext: Cambio de estado de auth:", user);
-        setUser(user);
+        logger.debug("AuthContext: Cambio de estado de auth:", user?.id);
+        
+        // Evitar actualizaciones redundantes si el usuario es el mismo
+        setUser((prevUser) => {
+            if (prevUser?.id === user?.id && prevUser?.email === user?.email && prevUser?.full_name === user?.full_name) {
+                return prevUser;
+            }
+            return user;
+        });
         setLoading(false);
       }
     });

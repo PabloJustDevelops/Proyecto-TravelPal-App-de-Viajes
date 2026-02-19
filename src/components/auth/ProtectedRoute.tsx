@@ -33,7 +33,9 @@ export default function ProtectedRoute({
   }
 
   if (!user) {
-    return null
+    // Si no hay usuario pero tampoco estamos cargando, significa que estamos redirigiendo.
+    // Mostrar un estado vacío o un spinner ligero para evitar el flash de "pantalla blanca" total.
+    return null;
   }
 
   return <>{children}</>

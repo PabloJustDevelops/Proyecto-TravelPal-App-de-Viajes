@@ -113,28 +113,28 @@ export default function BudgetCard({
   const daysRemaining = getDaysRemaining()
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow">
       <div className="p-6">
         {/* Header */}
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-start space-x-3">
             <div className="flex-shrink-0">
-              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center text-blue-600 dark:text-blue-400">
                 {getCategoryIcon(budget.category)}
               </div>
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="text-lg font-medium text-gray-900 truncate">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white truncate">
                 {budget.name}
               </h3>
               <div className="flex items-center space-x-2 mt-1">
-                <span className="text-sm text-gray-500">
+                <span className="text-sm text-gray-500 dark:text-gray-400">
                   {getCategoryName(budget.category)}
                 </span>
                 {budget.trip_title && (
                   <>
-                    <span className="text-gray-300">•</span>
-                    <span className="text-sm text-blue-600 truncate">
+                    <span className="text-gray-300 dark:text-gray-600">•</span>
+                    <span className="text-sm text-blue-600 dark:text-blue-400 truncate">
                       {budget.trip_title}
                     </span>
                   </>
@@ -150,7 +150,7 @@ export default function BudgetCard({
                 {onEdit && (
                   <button
                     onClick={() => onEdit(budget)}
-                    className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                    className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
                   >
                     <PencilIcon className="h-4 w-4" />
                   </button>
@@ -158,7 +158,7 @@ export default function BudgetCard({
                 {onDelete && (
                   <button
                     onClick={() => onDelete(budget.id)}
-                    className="p-1 text-gray-400 hover:text-red-600 transition-colors"
+                    className="p-1 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
                   >
                     <TrashIcon className="h-4 w-4" />
                   </button>
@@ -171,15 +171,15 @@ export default function BudgetCard({
         {/* Budget Progress */}
         <div className="mb-4">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-700">
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
               Gastado: {formatCurrency(budget.spent_amount, budget.currency)}
             </span>
-            <span className="text-sm text-gray-500">
+            <span className="text-sm text-gray-500 dark:text-gray-400">
               {spentPercentage.toFixed(1)}%
             </span>
           </div>
           
-          <div className="w-full bg-gray-200 rounded-full h-2">
+          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
             <div
               className={`h-2 rounded-full transition-all duration-300 ${getProgressBarColor()}`}
               style={{ width: `${Math.min(spentPercentage, 100)}%` }}
@@ -187,7 +187,7 @@ export default function BudgetCard({
           </div>
           
           <div className="flex items-center justify-between mt-2">
-            <span className="text-sm text-gray-500">
+            <span className="text-sm text-gray-500 dark:text-gray-400">
               Presupuesto: {formatCurrency(budget.total_amount, budget.currency)}
             </span>
             <span className={`text-sm font-medium ${getStatusColor()}`}>
@@ -198,11 +198,11 @@ export default function BudgetCard({
         </div>
 
         {/* Period and Status */}
-        <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
+        <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 mb-4">
           <span>
             {formatDate(budget.start_date)} - {formatDate(budget.end_date)}
           </span>
-          <span className={daysRemaining > 0 ? 'text-gray-600' : 'text-red-600'}>
+          <span className={daysRemaining > 0 ? 'text-gray-600 dark:text-gray-300' : 'text-red-600 dark:text-red-400'}>
             {daysRemaining > 0 
               ? `${daysRemaining} días restantes`
               : daysRemaining === 0 
@@ -214,15 +214,15 @@ export default function BudgetCard({
 
         {/* Expandable Description */}
         {budget.description && (
-          <div className="border-t border-gray-100 pt-4">
+          <div className="border-t border-gray-100 dark:border-gray-700 pt-4">
             <button
               onClick={() => setIsExpanded(!isExpanded)}
-              className="text-sm text-blue-600 hover:text-blue-800 transition-colors"
+              className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors"
             >
               {isExpanded ? 'Ocultar descripción' : 'Ver descripción'}
             </button>
             {isExpanded && (
-              <p className="mt-2 text-sm text-gray-600 leading-relaxed">
+              <p className="mt-2 text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
                 {budget.description}
               </p>
             )}
@@ -233,17 +233,17 @@ export default function BudgetCard({
         {(isOverBudget || isNearLimit) && (
           <div className={`mt-4 p-3 rounded-lg ${
             isOverBudget 
-              ? 'bg-red-50 border border-red-200' 
-              : 'bg-yellow-50 border border-yellow-200'
+              ? 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800' 
+              : 'bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800'
           }`}>
             <div className="flex items-center">
               {isOverBudget ? (
-                <ExclamationTriangleIcon className="h-5 w-5 text-red-500 mr-2" />
+                <ExclamationTriangleIcon className="h-5 w-5 text-red-500 dark:text-red-400 mr-2" />
               ) : (
-                <ArrowTrendingUpIcon className="h-5 w-5 text-yellow-500 mr-2" />
+                <ArrowTrendingUpIcon className="h-5 w-5 text-yellow-500 dark:text-yellow-400 mr-2" />
               )}
               <span className={`text-sm font-medium ${
-                isOverBudget ? 'text-red-800' : 'text-yellow-800'
+                isOverBudget ? 'text-red-800 dark:text-red-300' : 'text-yellow-800 dark:text-yellow-300'
               }`}>
                 {isOverBudget 
                   ? '¡Presupuesto excedido!'
@@ -252,7 +252,7 @@ export default function BudgetCard({
               </span>
             </div>
             <p className={`text-sm mt-1 ${
-              isOverBudget ? 'text-red-700' : 'text-yellow-700'
+              isOverBudget ? 'text-red-700 dark:text-red-400' : 'text-yellow-700 dark:text-yellow-400'
             }`}>
               {isOverBudget 
                 ? `Has gastado ${formatCurrency(budget.spent_amount - budget.total_amount, budget.currency)} más de lo presupuestado.`

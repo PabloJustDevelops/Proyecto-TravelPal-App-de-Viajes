@@ -33,7 +33,7 @@ export default function NoteDetailPage() {
     const supabase = createSupabaseClient()
 
     try {
-      const { data, error } = await supabase
+      const query = supabase
         .from('notes')
         .select(`
           *,
@@ -42,6 +42,15 @@ export default function NoteDetailPage() {
         .eq('id', noteId)
         .eq('user_id', user!.id)
         .single()
+
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Timeout")), 10000)
+      );
+
+      const { data, error } = await Promise.race([
+        query,
+        timeoutPromise
+      ]) as any;
 
       if (error) {
         if (error.code === 'PGRST116') {
@@ -53,8 +62,12 @@ export default function NoteDetailPage() {
 
       setNote(data)
     } catch (err: unknown) {
-      const message = getErrorMessage(err, 'Error desconocido')
-      logger.error('NoteDetailPage: Error loading note', { error: message })
+      if ((err as Error).message === "Timeout") {
+        logger.warn("NoteDetailPage: Note fetch timed out");
+      } else {
+        const message = getErrorMessage(err, 'Error desconocido')
+        logger.error('NoteDetailPage: Error loading note', { error: message })
+      }
     } finally {
       setLoading(false)
     }

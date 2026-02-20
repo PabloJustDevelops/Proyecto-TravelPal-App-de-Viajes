@@ -34,6 +34,8 @@ import { formatDate } from "../../lib/utils";
 import { logger } from "@/lib/logger";
 import PageSkeleton from "@/components/ui/PageSkeleton";
 
+import { format } from 'date-fns';
+
 interface Trip {
   id: string;
   title: string;
@@ -103,11 +105,11 @@ export default function PlanningPage() {
     }
   };
 
-  const loadData = useCallback(async () => {
+  const loadData = useCallback(async (showLoading = true) => {
     if (!user) return;
 
     try {
-      setIsLoading(true);
+      if (showLoading) setIsLoading(true);
       setError(null);
 
       const response = await fetch("/api/planning");
@@ -128,7 +130,7 @@ export default function PlanningPage() {
       );
       logger.error("Error loading planning data:", error);
     } finally {
-      setIsLoading(false);
+      if (showLoading) setIsLoading(false);
     }
   }, [user]);
 
@@ -362,7 +364,9 @@ export default function PlanningPage() {
 
   const handleEventDrop = async (event: CalendarEvent, newDate: Date) => {
     try {
-      const formattedDate = newDate.toISOString().split('T')[0];
+      // Use date-fns format to get the date string in 'YYYY-MM-DD' format using local time
+      // This avoids timezone issues that occur with toISOString()
+      const formattedDate = format(newDate, 'yyyy-MM-dd');
       
       // Update local state optimistically
       setEvents(prev => prev.map(e => 
@@ -391,12 +395,12 @@ export default function PlanningPage() {
         if (error) throw error;
       }
 
-      // Reload data to ensure consistency
-      await loadData();
+      // Reload data to ensure consistency, but silently (without loading spinner)
+      await loadData(false);
     } catch (error) {
       console.error('Error updating event date:', error);
       alert('Error al mover el evento');
-      await loadData(); // Revert on error
+      await loadData(false); // Revert on error
     }
   };
 

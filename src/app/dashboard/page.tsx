@@ -6,9 +6,10 @@ import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { Trip, Expense } from "@/lib/supabase";
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { Plane, DollarSign, Calendar, MapPin, CreditCard } from "lucide-react";
+import { Plane, DollarSign, Calendar, MapPin, CreditCard, ShoppingBag, Utensils, Ticket, Heart } from "lucide-react";
 import { logger } from "@/lib/logger";
-import { getErrorMessage } from "@/lib/utils";
+import { getErrorMessage, formatCurrency } from "@/lib/utils";
+import { motion } from "framer-motion";
 
 // Skeleton Component
 const DashboardSkeleton = () => (
@@ -47,6 +48,44 @@ interface ExpenseWithTrip extends Expense {
   };
 }
 
+const getCategoryIcon = (category: string) => {
+  switch (category?.toLowerCase()) {
+    case 'food':
+    case 'comida':
+      return <Utensils className="h-5 w-5 text-orange-500" />;
+    case 'transport':
+    case 'transporte':
+      return <Plane className="h-5 w-5 text-blue-500" />;
+    case 'accommodation':
+    case 'alojamiento':
+      return <MapPin className="h-5 w-5 text-purple-500" />;
+    case 'shopping':
+    case 'compras':
+      return <ShoppingBag className="h-5 w-5 text-pink-500" />;
+    case 'entertainment':
+    case 'entretenimiento':
+      return <Ticket className="h-5 w-5 text-yellow-500" />;
+    case 'health':
+    case 'salud':
+      return <Heart className="h-5 w-5 text-red-500" />;
+    default:
+      return <CreditCard className="h-5 w-5 text-gray-500" />;
+  }
+};
+
+const getCategoryName = (category: string) => {
+  const categories: Record<string, string> = {
+    food: 'Comida',
+    transport: 'Transporte',
+    accommodation: 'Alojamiento',
+    shopping: 'Compras',
+    entertainment: 'Entretenimiento',
+    health: 'Salud',
+    other: 'Otros'
+  };
+  return categories[category?.toLowerCase()] || category || 'Gasto';
+};
+
 export default function DashboardPage() {
   const { user } = useAuth();
   const router = useRouter();
@@ -66,13 +105,11 @@ export default function DashboardPage() {
     try {
       setLoading(true);
       setError(null);
-      logger.debug("Dashboard: Starting data load via API");
-
+      
       const timeoutPromise = new Promise((_, reject) =>
         setTimeout(() => reject(new Error("Timeout")), 15000),
       );
 
-      // Use API route instead of direct client-side fetch
       const fetchPromise = fetch("/api/dashboard");
 
       const res = (await Promise.race([
@@ -116,7 +153,6 @@ export default function DashboardPage() {
       );
       setTotalBudget(calculatedBudget);
 
-      logger.debug("Dashboard: Data load completed");
     } catch (error: any) {
       const msg = getErrorMessage(error);
       logger.error("Dashboard: Error loading data", { error: msg });
@@ -153,6 +189,21 @@ export default function DashboardPage() {
       trips.filter((trip) => new Date(trip.departure_date) > new Date()).length,
     [trips],
   );
+
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const item = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0 }
+  };
 
   if (loading) {
     return (
@@ -198,11 +249,16 @@ export default function DashboardPage() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <motion.div 
+        className="space-y-6"
+        variants={container}
+        initial="hidden"
+        animate="show"
+      >
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Bienvenido, {user?.full_name?.split(" ")[0] || "Viajero"}
+              Bienvenido, {user?.full_name?.split(" ")[0] || "Viajero"} 👋
             </h1>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
               Aquí tienes un resumen de tus viajes y actividades recientes.
@@ -213,10 +269,10 @@ export default function DashboardPage() {
         {/* Stats Overview */}
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
           {/* Card 1: Presupuesto Total */}
-          <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg transition-colors duration-200">
+          <motion.div variants={item} className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-xl transition-all duration-300 hover:shadow-lg hover:scale-[1.02] border border-gray-100 dark:border-gray-700">
             <div className="p-5">
               <div className="flex items-center">
-                <div className="flex-shrink-0 bg-blue-100 dark:bg-blue-900/30 rounded-md p-3">
+                <div className="flex-shrink-0 bg-blue-100 dark:bg-blue-900/30 rounded-lg p-3">
                   <DollarSign className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div className="ml-5 w-0 flex-1">
@@ -224,20 +280,20 @@ export default function DashboardPage() {
                     <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
                       Presupuesto Total
                     </dt>
-                    <dd className="text-lg font-semibold text-gray-900 dark:text-white">
-                      ${totalBudget.toLocaleString()}
+                    <dd className="text-lg font-bold text-gray-900 dark:text-white mt-1">
+                      {formatCurrency(totalBudget, 'USD')}
                     </dd>
                   </dl>
                 </div>
               </div>
             </div>
-          </div>
+          </motion.div>
 
           {/* Card 2: Gastado */}
-          <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg transition-colors duration-200">
+          <motion.div variants={item} className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-xl transition-all duration-300 hover:shadow-lg hover:scale-[1.02] border border-gray-100 dark:border-gray-700">
             <div className="p-5">
               <div className="flex items-center">
-                <div className="flex-shrink-0 bg-red-100 dark:bg-red-900/30 rounded-md p-3">
+                <div className="flex-shrink-0 bg-red-100 dark:bg-red-900/30 rounded-lg p-3">
                   <CreditCard className="h-6 w-6 text-red-600 dark:text-red-400" />
                 </div>
                 <div className="ml-5 w-0 flex-1">
@@ -245,20 +301,20 @@ export default function DashboardPage() {
                     <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
                       Gastado
                     </dt>
-                    <dd className="text-lg font-semibold text-gray-900 dark:text-white">
-                      ${totalSpent.toLocaleString()}
+                    <dd className="text-lg font-bold text-gray-900 dark:text-white mt-1">
+                      {formatCurrency(totalSpent, 'USD')}
                     </dd>
                   </dl>
                 </div>
               </div>
             </div>
-          </div>
+          </motion.div>
 
           {/* Card 3: Viajes Activos */}
-          <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg transition-colors duration-200">
+          <motion.div variants={item} className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-xl transition-all duration-300 hover:shadow-lg hover:scale-[1.02] border border-gray-100 dark:border-gray-700">
             <div className="p-5">
               <div className="flex items-center">
-                <div className="flex-shrink-0 bg-green-100 dark:bg-green-900/30 rounded-md p-3">
+                <div className="flex-shrink-0 bg-green-100 dark:bg-green-900/30 rounded-lg p-3">
                   <Plane className="h-6 w-6 text-green-600 dark:text-green-400" />
                 </div>
                 <div className="ml-5 w-0 flex-1">
@@ -266,20 +322,20 @@ export default function DashboardPage() {
                     <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
                       Viajes Activos
                     </dt>
-                    <dd className="text-lg font-semibold text-gray-900 dark:text-white">
+                    <dd className="text-lg font-bold text-gray-900 dark:text-white mt-1">
                       {activeTrips}
                     </dd>
                   </dl>
                 </div>
               </div>
             </div>
-          </div>
+          </motion.div>
 
           {/* Card 4: Próximos Viajes */}
-          <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg transition-colors duration-200">
+          <motion.div variants={item} className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-xl transition-all duration-300 hover:shadow-lg hover:scale-[1.02] border border-gray-100 dark:border-gray-700">
             <div className="p-5">
               <div className="flex items-center">
-                <div className="flex-shrink-0 bg-yellow-100 dark:bg-yellow-900/30 rounded-md p-3">
+                <div className="flex-shrink-0 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg p-3">
                   <Calendar className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
                 </div>
                 <div className="ml-5 w-0 flex-1">
@@ -287,26 +343,27 @@ export default function DashboardPage() {
                     <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
                       Próximos Viajes
                     </dt>
-                    <dd className="text-lg font-semibold text-gray-900 dark:text-white">
+                    <dd className="text-lg font-bold text-gray-900 dark:text-white mt-1">
                       {upcomingTrips}
                     </dd>
                   </dl>
                 </div>
               </div>
             </div>
-          </div>
+          </motion.div>
         </div>
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           {/* Recent Trips Section */}
-          <div className="bg-white dark:bg-gray-800 shadow rounded-lg transition-colors duration-200">
-            <div className="px-4 py-5 sm:px-6 flex justify-between items-center border-b border-gray-200 dark:border-gray-700">
-              <h2 className="text-lg font-medium leading-6 text-gray-900 dark:text-white">
+          <motion.div variants={item} className="bg-white dark:bg-gray-800 shadow rounded-xl transition-all duration-200 border border-gray-100 dark:border-gray-700">
+            <div className="px-6 py-5 flex justify-between items-center border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-lg font-semibold leading-6 text-gray-900 dark:text-white flex items-center gap-2">
+                <MapPin className="h-5 w-5 text-blue-500" />
                 Viajes Recientes
               </h2>
               <Link
                 href="/trips"
-                className="text-sm font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300"
+                className="text-sm font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 transition-colors hover:underline"
               >
                 Ver todos
               </Link>
@@ -319,16 +376,16 @@ export default function DashboardPage() {
                 <li key={trip.id}>
                   <Link
                     href={`/trips/${trip.id}`}
-                    className="block hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                    className="block hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors group"
                   >
-                    <div className="px-4 py-4 sm:px-6">
+                    <div className="px-6 py-4">
                       <div className="flex items-center justify-between">
-                        <p className="text-sm font-medium text-blue-600 dark:text-blue-400 truncate">
+                        <p className="text-sm font-medium text-blue-600 dark:text-blue-400 truncate group-hover:text-blue-700 dark:group-hover:text-blue-300">
                           {trip.title}
                         </p>
                         <div className="ml-2 flex-shrink-0 flex">
                           <span
-                            className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                            className={`px-2.5 py-0.5 inline-flex text-xs font-medium rounded-full ${
                               trip.status === "confirmed"
                                 ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
                                 : trip.status === "planned"
@@ -367,22 +424,24 @@ export default function DashboardPage() {
                 </li>
               ))}
               {trips.length === 0 && (
-                <li className="px-4 py-8 text-center text-gray-500 dark:text-gray-400 text-sm">
+                <li className="px-6 py-12 text-center text-gray-500 dark:text-gray-400 text-sm flex flex-col items-center">
+                  <Plane className="h-10 w-10 text-gray-300 mb-2" />
                   No tienes viajes recientes
                 </li>
               )}
             </ul>
-          </div>
+          </motion.div>
 
           {/* Recent Expenses Section */}
-          <div className="bg-white dark:bg-gray-800 shadow rounded-lg transition-colors duration-200">
-            <div className="px-4 py-5 sm:px-6 flex justify-between items-center border-b border-gray-200 dark:border-gray-700">
-              <h2 className="text-lg font-medium leading-6 text-gray-900 dark:text-white">
+          <motion.div variants={item} className="bg-white dark:bg-gray-800 shadow rounded-xl transition-all duration-200 border border-gray-100 dark:border-gray-700">
+            <div className="px-6 py-5 flex justify-between items-center border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-lg font-semibold leading-6 text-gray-900 dark:text-white flex items-center gap-2">
+                <CreditCard className="h-5 w-5 text-purple-500" />
                 Gastos Recientes
               </h2>
               <Link
                 href="/expenses"
-                className="text-sm font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300"
+                className="text-sm font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 transition-colors hover:underline"
               >
                 Ver todos
               </Link>
@@ -394,20 +453,30 @@ export default function DashboardPage() {
               {recentExpenses.slice(0, 5).map((expense) => (
                 <li
                   key={expense.id}
-                  className="px-4 py-4 sm:px-6 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                  className="px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors group"
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex flex-col">
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">
-                        {expense.description}
+                  <div className="flex items-center space-x-4">
+                    <div className="flex-shrink-0 p-2 bg-gray-100 dark:bg-gray-700 rounded-lg group-hover:bg-white dark:group-hover:bg-gray-600 transition-colors">
+                      {getCategoryIcon(expense.category)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                        {expense.description || getCategoryName(expense.category)}
                       </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {expense.trips?.title}
+                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate flex items-center gap-1">
+                        {expense.trips ? (
+                          <>
+                            <span className="w-1.5 h-1.5 bg-blue-400 rounded-full inline-block" />
+                            {expense.trips.title}
+                          </>
+                        ) : (
+                          getCategoryName(expense.category)
+                        )}
                       </p>
                     </div>
-                    <div className="text-right">
-                      <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                        {expense.currency} {expense.amount.toLocaleString()}
+                    <div className="text-right flex-shrink-0">
+                      <p className="text-sm font-bold text-gray-900 dark:text-white">
+                        {formatCurrency(expense.amount, expense.currency)}
                       </p>
                       <p className="text-xs text-gray-500 dark:text-gray-400">
                         {new Date(expense.date).toLocaleDateString()}
@@ -417,14 +486,15 @@ export default function DashboardPage() {
                 </li>
               ))}
               {recentExpenses.length === 0 && (
-                <li className="px-4 py-8 text-center text-gray-500 dark:text-gray-400 text-sm">
+                <li className="px-6 py-12 text-center text-gray-500 dark:text-gray-400 text-sm flex flex-col items-center">
+                  <CreditCard className="h-10 w-10 text-gray-300 mb-2" />
                   No tienes gastos recientes
                 </li>
               )}
             </ul>
-          </div>
+          </motion.div>
         </div>
-      </div>
+      </motion.div>
     </DashboardLayout>
   );
 }

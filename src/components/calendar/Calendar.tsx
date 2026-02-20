@@ -28,7 +28,9 @@ import {
   DragEndEvent,
   useSensor,
   useSensors,
-  PointerSensor
+  PointerSensor,
+  DragOverlay,
+  DragStartEvent
 } from '@dnd-kit/core';
 
 export interface CalendarEvent {
@@ -56,22 +58,15 @@ interface CalendarProps {
   className?: string;
 }
 
-const DraggableEvent = ({ event, onClick, onContextMenu }: { event: CalendarEvent; onClick: (e: any) => void; onContextMenu: (e: any) => void }) => {
-  const { attributes, listeners, setNodeRef, transform } = useDraggable({
+const DraggableEvent = ({ event, onClick, onContextMenu, isDragging = false }: { event: CalendarEvent; onClick?: (e: any) => void; onContextMenu?: (e: any) => void; isDragging?: boolean }) => {
+  const { attributes, listeners, setNodeRef } = useDraggable({
     id: event.id,
     data: event
   });
 
-  const style = transform ? {
-    transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
-    zIndex: 1000,
-    position: 'relative' as const,
-  } : undefined;
-
   return (
     <div
       ref={setNodeRef}
-      style={style}
       {...listeners}
       {...attributes}
       onClick={onClick}
@@ -80,8 +75,36 @@ const DraggableEvent = ({ event, onClick, onContextMenu }: { event: CalendarEven
         group flex items-center gap-1 p-1 rounded cursor-grab active:cursor-grabbing
         hover:opacity-90 transition-all shadow-sm mb-1
         ${event.color} border-l-2 border-white/20 relative
+        ${isDragging ? 'opacity-30' : ''}
       `}
       title={`${event.title}${event.time ? ` - ${event.time}` : ''}\n${event.description || ''}`}
+    >
+      {event.icon && (
+        <span className="text-white/90 flex-shrink-0 w-3 h-3">
+          {event.icon}
+        </span>
+      )}
+      {event.time && (
+        <span className="text-[10px] font-medium opacity-90 whitespace-nowrap bg-black/10 px-1 rounded">
+          {event.time.substring(0, 5)}
+        </span>
+      )}
+      <span className="text-xs font-medium truncate flex-1 text-white">
+        {event.title}
+      </span>
+    </div>
+  );
+};
+
+// Componente para el Overlay (visualización mientras se arrastra)
+const EventOverlay = ({ event }: { event: CalendarEvent }) => {
+  return (
+    <div
+      className={`
+        flex items-center gap-1 p-1 rounded shadow-lg
+        ${event.color} border-l-2 border-white/20
+        w-[150px] opacity-90 pointer-events-none cursor-grabbing
+      `}
     >
       {event.icon && (
         <span className="text-white/90 flex-shrink-0 w-3 h-3">
@@ -143,6 +166,7 @@ export const Calendar: React.FC<CalendarProps> = ({
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<'month' | 'week'>('month');
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number, event: CalendarEvent } | null>(null);
+  const [activeEvent, setActiveEvent] = useState<CalendarEvent | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -168,6 +192,11 @@ export const Calendar: React.FC<CalendarProps> = ({
     });
   };
 
+  const handleDragStart = (event: DragStartEvent) => {
+    const { active } = event;
+    setActiveEvent(active.data.current as CalendarEvent);
+  };
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
 
@@ -183,6 +212,7 @@ export const Calendar: React.FC<CalendarProps> = ({
         onEventDrop?.(draggedEvent, newDate);
       }
     }
+    setActiveEvent(null);
   };
 
   // Navegación
@@ -272,6 +302,7 @@ export const Calendar: React.FC<CalendarProps> = ({
                 <DraggableEvent
                   key={event.id}
                   event={event}
+                  isDragging={activeEvent?.id === event.id}
                   onClick={(e) => {
                     e.stopPropagation();
                     onEventClick?.(event);
@@ -325,6 +356,7 @@ export const Calendar: React.FC<CalendarProps> = ({
                    <DraggableEvent
                      key={event.id}
                      event={event}
+                     isDragging={activeEvent?.id === event.id}
                      onClick={(e) => {
                        e.stopPropagation();
                        onEventClick?.(event);
@@ -342,6 +374,7 @@ export const Calendar: React.FC<CalendarProps> = ({
   return (
     <DndContext 
       sensors={sensors}
+      onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
       <div className={`bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden ${className}`}>
@@ -449,6 +482,11 @@ export const Calendar: React.FC<CalendarProps> = ({
             </button>
           </div>
         )}
+
+        {/* Drag Overlay */}
+        <DragOverlay>
+          {activeEvent ? <EventOverlay event={activeEvent} /> : null}
+        </DragOverlay>
       </div>
     </DndContext>
   );

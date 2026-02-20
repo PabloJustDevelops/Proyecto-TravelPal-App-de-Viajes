@@ -360,6 +360,46 @@ export default function PlanningPage() {
     loadData();
   };
 
+  const handleEventDrop = async (event: CalendarEvent, newDate: Date) => {
+    try {
+      const formattedDate = newDate.toISOString().split('T')[0];
+      
+      // Update local state optimistically
+      setEvents(prev => prev.map(e => 
+        e.id === event.id ? { ...e, date: formattedDate } : e
+      ));
+
+      // Update in DB based on event type
+      if (event.type === 'booking' && event.bookingId) {
+        const { error } = await supabase
+          .from('bookings')
+          .update({ start_date: formattedDate })
+          .eq('id', event.bookingId);
+        if (error) throw error;
+      } else if (event.type === 'activity' && event.activityId) {
+        const { error } = await supabase
+          .from('itinerary_activities')
+          .update({ date: formattedDate })
+          .eq('id', event.activityId);
+        if (error) throw error;
+      } else if (event.type === 'trip' && event.tripId) {
+        // For trips, we might need to handle end date logic, but for simple move:
+        const { error } = await supabase
+          .from('trips')
+          .update({ departure_date: formattedDate })
+          .eq('id', event.tripId);
+        if (error) throw error;
+      }
+
+      // Reload data to ensure consistency
+      await loadData();
+    } catch (error) {
+      console.error('Error updating event date:', error);
+      alert('Error al mover el evento');
+      await loadData(); // Revert on error
+    }
+  };
+
   if (isLoading) {
     return (
       <DashboardLayout>
@@ -542,6 +582,7 @@ export default function PlanningPage() {
                 onEventClick={handleEventClick}
                 onAddEvent={handleAddEvent}
                 onDeleteEvent={handleDeleteEvent}
+                onEventDrop={handleEventDrop}
               />
             </div>
 

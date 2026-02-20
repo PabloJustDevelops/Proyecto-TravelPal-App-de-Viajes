@@ -118,6 +118,8 @@ export async function POST(request: Request) {
     await ensureUserExists(supabase, session.user);
 
     const body = await request.json();
+    console.log('Recibida petición POST en /api/expenses con body:', body);
+    
     const { 
       description, 
       amount, 
@@ -135,15 +137,25 @@ export async function POST(request: Request) {
       );
     }
 
+    // Verify payload against schema
+    // Table 'expenses' columns: 
+    // id, user_id, trip_id, title (NOT description), amount, currency, category, date, description (optional), receipt_url
+    
+    // Mapping frontend 'description' to 'title' as 'title' is NOT NULL in schema
+    // and 'description' is optional text
+    
     const newExpense = {
       user_id: session.user.id,
-      description,
+      title: description, // Mapped from frontend description
       amount,
       currency: currency || 'EUR',
       category: category || 'other',
       date,
-      trip_id: trip_id || null
+      trip_id: trip_id || null,
+      description: notes || null // Mapping frontend 'notes' to 'description'
     };
+
+    logger.debug("Creating expense with payload:", newExpense);
 
     const { data, error } = await supabase
       .from("expenses")
@@ -152,15 +164,17 @@ export async function POST(request: Request) {
       .single();
 
     if (error) {
+      console.error("Error creating expense (DB):", error);
       logger.error("Error creating expense:", error);
       return NextResponse.json(
-        { error: "Error al crear el gasto" },
+        { error: `Error al crear el gasto: ${error.message}` },
         { status: 500 },
       );
     }
 
     return NextResponse.json(data);
   } catch (error) {
+    console.error("Error in expenses POST route (Catch):", error);
     logger.error("Error in expenses POST route:", error);
     return NextResponse.json(
       { error: "Error interno del servidor" },

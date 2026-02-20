@@ -7,7 +7,10 @@ import {
   CalendarIcon,
   TagIcon,
   DocumentTextIcon,
+  PencilSquareIcon,
 } from '@heroicons/react/24/outline'
+import Link from 'next/link'
+import Button from '@/components/ui/Button'
 
 interface ExpenseWithTrip extends Expense {
   trip: {
@@ -89,12 +92,12 @@ export default function ExpenseCard({ expense, showTripTitle = false }: ExpenseC
   }
 
   return (
-    <Card className="hover:shadow-md transition-shadow">
+    <Card className="hover:shadow-md transition-shadow relative group">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <CardTitle className="text-lg flex items-center space-x-2">
             <span className="text-xl">{getCategoryIcon(expense.category)}</span>
-            <span>{expense.description}</span>
+            <span>{expense.title || expense.description}</span>
           </CardTitle>
           <div className="text-right">
             <div className="text-lg font-bold text-gray-900">
@@ -121,6 +124,11 @@ export default function ExpenseCard({ expense, showTripTitle = false }: ExpenseC
               {getCategoryName(expense.category)}
             </span>
           </div>
+          <Link href={`/expenses/${expense.id}/edit`}>
+            <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity">
+              <PencilSquareIcon className="h-4 w-4" />
+            </Button>
+          </Link>
         </div>
 
         {/* Date */}

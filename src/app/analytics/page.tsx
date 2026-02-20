@@ -25,7 +25,7 @@ import { formatCurrency, getErrorMessage } from "@/lib/utils";
 import { logger } from "@/lib/logger";
 import { Menu, Transition } from "@headlessui/react";
 import { Fragment } from "react";
-import html2canvas from "html2canvas";
+import { toPng } from "html-to-image";
 import jsPDF from "jspdf";
 
 interface Budget {
@@ -269,24 +269,24 @@ export default function AnalyticsPage() {
     setIsExporting(true);
     try {
       const element = reportRef.current;
-      const canvas = await html2canvas(element, {
-        scale: 2, // Higher resolution
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#ffffff'
+      // Use html-to-image to generate the image, which handles modern CSS (like lab colors) better
+      const dataUrl = await toPng(element, {
+        backgroundColor: '#ffffff',
+        pixelRatio: 2, // Higher resolution
+        cacheBust: true,
       });
 
-      const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
         format: 'a4'
       });
 
-      const imgWidth = 210; // A4 width in mm
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      const imgProps = pdf.getImageProperties(dataUrl);
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
       
-      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+      pdf.addImage(dataUrl, 'PNG', 0, 0, pdfWidth, pdfHeight);
       pdf.save(`travel-report-${new Date().toISOString().split("T")[0]}.pdf`);
     } catch (error) {
       console.error('Error generating PDF:', error);

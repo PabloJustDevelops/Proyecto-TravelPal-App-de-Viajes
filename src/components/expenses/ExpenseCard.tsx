@@ -99,7 +99,12 @@ export default function ExpenseCard({ expense, showTripTitle = false }: ExpenseC
             <span className="text-xl">{getCategoryIcon(expense.category)}</span>
             <span>{expense.title || expense.description}</span>
           </CardTitle>
-          <div className="text-right">
+          <div className="text-right flex flex-col items-end">
+             <Link href={`/expenses/${expense.id}/edit`}>
+               <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity mb-1">
+                 <PencilSquareIcon className="h-4 w-4" />
+               </Button>
+             </Link>
             <div className="text-lg font-bold text-gray-900">
               {formatCurrency(expense.amount, expense.currency)}
             </div>
@@ -124,11 +129,6 @@ export default function ExpenseCard({ expense, showTripTitle = false }: ExpenseC
               {getCategoryName(expense.category)}
             </span>
           </div>
-          <Link href={`/expenses/${expense.id}/edit`}>
-            <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity">
-              <PencilSquareIcon className="h-4 w-4" />
-            </Button>
-          </Link>
         </div>
 
         {/* Date */}

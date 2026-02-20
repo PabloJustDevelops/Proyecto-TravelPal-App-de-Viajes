@@ -6,8 +6,9 @@ import { formatDate } from '@/lib/utils'
 import {
   CalendarIcon,
   TagIcon,
-  PencilIcon,
+  PencilSquareIcon,
 } from '@heroicons/react/24/outline'
+import Button from '@/components/ui/Button'
 
 interface NoteWithTrip extends Note {
   trip?: {
@@ -97,7 +98,7 @@ export default function NoteCard({ note, showTripTitle = false, onEdit }: NoteCa
   }
 
   return (
-    <Card className="hover:shadow-md transition-shadow">
+    <Card className="hover:shadow-md transition-shadow relative group">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <CardTitle className="text-lg flex items-center space-x-2">
@@ -105,12 +106,14 @@ export default function NoteCard({ note, showTripTitle = false, onEdit }: NoteCa
             <span className="line-clamp-1">{note.title}</span>
           </CardTitle>
           {onEdit && (
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => onEdit(note)}
-              className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+              className="opacity-0 group-hover:opacity-100 transition-opacity"
             >
-              <PencilIcon className="h-4 w-4" />
-            </button>
+              <PencilSquareIcon className="h-4 w-4" />
+            </Button>
           )}
         </div>
         {showTripTitle && (note as NoteWithTrip).trip && (

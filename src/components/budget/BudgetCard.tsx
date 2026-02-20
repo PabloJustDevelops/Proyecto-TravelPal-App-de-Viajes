@@ -6,10 +6,11 @@ import {
   ArrowTrendingUpIcon,
   ExclamationTriangleIcon,
   CheckCircleIcon,
-  PencilIcon,
+  PencilSquareIcon,
   TrashIcon
 } from '@heroicons/react/24/outline'
 import { formatCurrency } from '@/lib/utils'
+import Button from '@/components/ui/Button'
 
 interface Budget {
   id: string
@@ -113,7 +114,7 @@ export default function BudgetCard({
   const daysRemaining = getDaysRemaining()
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow relative group">
       <div className="p-6">
         {/* Header */}
         <div className="flex items-start justify-between mb-4">
@@ -148,20 +149,24 @@ export default function BudgetCard({
             {showActions && (
               <div className="flex items-center space-x-1">
                 {onEdit && (
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={() => onEdit(budget)}
-                    className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                    className="opacity-0 group-hover:opacity-100 transition-opacity"
                   >
-                    <PencilIcon className="h-4 w-4" />
-                  </button>
+                    <PencilSquareIcon className="h-4 w-4" />
+                  </Button>
                 )}
                 {onDelete && (
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={() => onDelete(budget.id)}
-                    className="p-1 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                    className="opacity-0 group-hover:opacity-100 transition-opacity text-red-600 hover:text-red-700 hover:bg-red-50"
                   >
                     <TrashIcon className="h-4 w-4" />
-                  </button>
+                  </Button>
                 )}
               </div>
             )}

@@ -68,15 +68,29 @@ export const ItineraryPlanner: React.FC<ItineraryPlannerProps> = ({
 
   // Generar días del viaje
   const generateTripDays = () => {
-    const days: string[] = [];
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    
-    for (let date = new Date(start); date <= end; date.setDate(date.getDate() + 1)) {
-      days.push(formatDate(date));
+    try {
+      if (!startDate || !endDate) return [];
+      const days: string[] = [];
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      
+      if (isNaN(start.getTime()) || isNaN(end.getTime())) return [];
+
+      // Limit range to prevent infinite loops or huge arrays
+      const diffTime = Math.abs(end.getTime() - start.getTime());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+      
+      if (diffDays > 365) return []; // Limit to 1 year
+
+      for (let date = new Date(start); date <= end; date.setDate(date.getDate() + 1)) {
+        days.push(formatDate(date));
+      }
+      
+      return days;
+    } catch (e) {
+      console.error("Error generating trip days", e);
+      return [];
     }
-    
-    return days;
   };
 
   const tripDays = generateTripDays();

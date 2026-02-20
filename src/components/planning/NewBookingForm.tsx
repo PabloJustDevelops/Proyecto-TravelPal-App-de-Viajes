@@ -9,12 +9,14 @@ interface NewBookingFormProps {
   onSuccess: () => void;
   onCancel: () => void;
   initialData?: Booking | null;
+  defaultDate?: Date;
 }
 
 export default function NewBookingForm({
   onSuccess,
   onCancel,
   initialData,
+  defaultDate,
 }: NewBookingFormProps) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -47,7 +49,9 @@ export default function NewBookingForm({
   const [formData, setFormData] = useState({
     title: "",
     type: "other",
-    start_date: new Date().toISOString().split("T")[0],
+    start_date: defaultDate 
+      ? defaultDate.toISOString().split("T")[0] 
+      : new Date().toISOString().split("T")[0],
     start_time: "12:00",
     number_of_people: 1,
     description: "",

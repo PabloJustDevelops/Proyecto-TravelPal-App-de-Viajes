@@ -83,7 +83,7 @@ export default function NewExpensePage() {
         category: formData.category,
         date: formData.date,
         trip_id: formData.trip_id || null,
-        notes: formData.notes || null,
+        // notes removed as it's not in schema
       }
 
       const res = await fetch('/api/expenses', {

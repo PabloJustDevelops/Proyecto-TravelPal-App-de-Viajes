@@ -257,6 +257,7 @@ export default function PlanningPage() {
     setSelectedDate(date);
     // Buscar si hay un viaje activo en esa fecha
     const activeTrip = trips.find((trip) => {
+      if (!trip.departure_date) return false;
       const startDate = new Date(trip.departure_date);
       const endDate = trip.return_date ? new Date(trip.return_date) : startDate;
       return date >= startDate && date <= endDate;
@@ -264,7 +265,8 @@ export default function PlanningPage() {
 
     if (activeTrip) {
       setSelectedTrip(activeTrip);
-      setViewMode("itinerary");
+      // Mantener en vista calendario o permitir cambiar, pero no forzar itinerario si falla
+      // setViewMode("itinerary"); // Comentado para evitar cambio brusco si falla
     }
   };
 
@@ -280,12 +282,8 @@ export default function PlanningPage() {
         setShowBookingModal(true);
       }
     } else if (event.type === "activity" && event.tripId) {
-      // Ir a la vista de itinerario del viaje en esta misma página
-      const trip = trips.find((t) => t.id === event.tripId);
-      if (trip) {
-        setSelectedTrip(trip);
-        setViewMode("itinerary");
-      }
+      // Ir a la vista de itinerario del viaje
+      router.push(`/trips/${event.tripId}`);
     }
   };
 
@@ -589,10 +587,7 @@ export default function PlanningPage() {
                       <div
                         key={trip.id}
                         className="border-l-4 border-green-500 pl-3 cursor-pointer hover:bg-gray-50 p-2 rounded"
-                        onClick={() => {
-                          setSelectedTrip(trip);
-                          setViewMode("itinerary");
-                        }}
+                        onClick={() => router.push(`/trips/${trip.id}`)}
                       >
                         <p className="font-medium text-sm text-gray-900">
                           {trip.title}
@@ -790,6 +785,7 @@ export default function PlanningPage() {
                   setSelectedBooking(null);
                 }}
                 initialData={selectedBooking}
+                defaultDate={selectedDate}
               />
             </div>
           </Modal>

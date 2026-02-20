@@ -89,7 +89,6 @@ export default function NewTripPage() {
         : `Viajeros: ${formData.travelers}`;
 
       const tripData = {
-        user_id: user.id,
         title: formData.title,
         origin: formData.origin,
         destination: formData.destination,
@@ -102,7 +101,7 @@ export default function NewTripPage() {
         status: formData.status,
       };
 
-      logger.debug("Enviando datos a Supabase:", tripData);
+      logger.debug("Enviando datos a API:", tripData);
 
       // Timeout de seguridad para evitar carga infinita (15 segundos)
       const timeoutPromise = new Promise((_, reject) =>
@@ -117,46 +116,54 @@ export default function NewTripPage() {
         ),
       );
 
-      const dbPromise = supabase
-        .from("trips")
-        .insert([tripData])
-        .select()
-        .single();
+      const fetchPromise = fetch("/api/trips", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(tripData),
+      });
 
       // Usamos Promise.race para competir entre la DB y el timeout
-      const { data, error } = (await Promise.race([
-        dbPromise,
+      const res = (await Promise.race([
+        fetchPromise,
         timeoutPromise,
-      ])) as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+      ])) as Response;
 
-      if (error) {
-        logger.error("Error devuelto por Supabase:", error);
-        throw error;
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Error al crear el viaje");
       }
+
+      const data = await res.json();
 
       logger.info("Viaje creado exitosamente:", data.id);
 
       // Create budget if provided
       if (formData.budget > 0) {
         logger.info("Creando presupuesto inicial para el viaje");
-        const { error: budgetError } = await supabase.from("budgets").insert([
-          {
-            user_id: user.id,
-            trip_id: data.id,
-            name: "Presupuesto General",
-            total_amount: formData.budget,
-            category: "General",
-            start_date: formData.departure_date.split("T")[0],
-            end_date: formData.return_date
-              ? formData.return_date.split("T")[0]
-              : formData.departure_date.split("T")[0],
-            currency: "EUR", // Defaulting to EUR as per region context, or could be dynamic
-          },
-        ]);
-
-        if (budgetError) {
-          logger.warn("Error al crear presupuesto inicial:", budgetError);
-          // Non-blocking error, just warn
+        // Nota: Idealmente esto también debería ir a una API, pero por ahora lo dejamos o lo migramos después
+        // Para mantener consistencia, deberíamos migrarlo, pero el usuario pidió arreglar la creación del viaje primero.
+        // Si falla el presupuesto, el viaje ya está creado.
+        
+        try {
+            await fetch("/api/budget", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    trip_id: data.id,
+                    name: "Presupuesto General",
+                    total_amount: formData.budget,
+                    category: "General",
+                    start_date: formData.departure_date.split("T")[0],
+                    end_date: formData.return_date
+                      ? formData.return_date.split("T")[0]
+                      : formData.departure_date.split("T")[0],
+                    currency: "EUR",
+                })
+            });
+        } catch (budgetError) {
+             logger.warn("Error al crear presupuesto inicial:", budgetError);
         }
       }
 

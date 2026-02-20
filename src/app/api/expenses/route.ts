@@ -76,3 +76,92 @@ export async function GET(request: Request) {
     );
   }
 }
+
+export async function POST(request: Request) {
+  try {
+    const cookieStore = await cookies();
+
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll();
+          },
+          setAll(cookiesToSet) {
+            try {
+              cookiesToSet.forEach(({ name, value, options }) =>
+                cookieStore.set(name, value, options),
+              );
+            } catch {
+              // Server Component setAll ignore
+            }
+          },
+        },
+      },
+    );
+
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!session) {
+      return NextResponse.json(
+        { error: "No autorizado. Por favor inicia sesión." },
+        { status: 401 },
+      );
+    }
+
+    const body = await request.json();
+    const { 
+      description, 
+      amount, 
+      currency, 
+      category, 
+      date, 
+      trip_id, 
+      notes 
+    } = body;
+
+    if (!description || !amount || !date) {
+      return NextResponse.json(
+        { error: "Faltan campos obligatorios" },
+        { status: 400 },
+      );
+    }
+
+    const newExpense = {
+      user_id: session.user.id,
+      description,
+      amount,
+      currency: currency || 'EUR',
+      category: category || 'other',
+      date,
+      trip_id: trip_id || null,
+      notes: notes || null
+    };
+
+    const { data, error } = await supabase
+      .from("expenses")
+      .insert([newExpense])
+      .select()
+      .single();
+
+    if (error) {
+      logger.error("Error creating expense:", error);
+      return NextResponse.json(
+        { error: "Error al crear el gasto" },
+        { status: 500 },
+      );
+    }
+
+    return NextResponse.json(data);
+  } catch (error) {
+    logger.error("Error in expenses POST route:", error);
+    return NextResponse.json(
+      { error: "Error interno del servidor" },
+      { status: 500 },
+    );
+  }
+}

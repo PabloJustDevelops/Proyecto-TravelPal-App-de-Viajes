@@ -76,3 +76,88 @@ export async function GET(request: Request) {
     );
   }
 }
+
+export async function POST(request: Request) {
+  try {
+    const cookieStore = await cookies();
+
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll();
+          },
+          setAll(cookiesToSet) {
+            try {
+              cookiesToSet.forEach(({ name, value, options }) =>
+                cookieStore.set(name, value, options),
+              );
+            } catch {
+              // Server Component setAll ignore
+            }
+          },
+        },
+      },
+    );
+
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!session) {
+      return NextResponse.json(
+        { error: "No autorizado. Por favor inicia sesión." },
+        { status: 401 },
+      );
+    }
+
+    const body = await request.json();
+    const { 
+      title, 
+      content, 
+      category, 
+      trip_id 
+    } = body;
+
+    if (!title || !content) {
+      return NextResponse.json(
+        { error: "Faltan campos obligatorios" },
+        { status: 400 },
+      );
+    }
+
+    const newNote = {
+      user_id: session.user.id,
+      title,
+      content,
+      category: category || 'general',
+      trip_id: trip_id || null,
+      is_pinned: false,
+      is_archived: false
+    };
+
+    const { data, error } = await supabase
+      .from("notes")
+      .insert([newNote])
+      .select()
+      .single();
+
+    if (error) {
+      logger.error("Error creating note:", error);
+      return NextResponse.json(
+        { error: "Error al crear la nota" },
+        { status: 500 },
+      );
+    }
+
+    return NextResponse.json(data);
+  } catch (error) {
+    logger.error("Error in notes POST route:", error);
+    return NextResponse.json(
+      { error: "Error interno del servidor" },
+      { status: 500 },
+    );
+  }
+}

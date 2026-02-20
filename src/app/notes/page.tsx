@@ -99,11 +99,12 @@ export default function NotesPage() {
 
   const handleSaveNote = async (noteData: Partial<Note>) => {
     setEditorLoading(true);
-    const supabase = createSupabaseClient();
 
     try {
       if (editingNote) {
         // Update existing note
+        // TODO: Implement PUT API
+        const supabase = createSupabaseClient();
         const { error } = await supabase
           .from("notes")
           .update({
@@ -117,18 +118,22 @@ export default function NotesPage() {
 
         if (error) throw error;
       } else {
-        // Create new note
-        const { error } = await supabase.from("notes").insert([
-          {
-            user_id: user!.id,
-            title: noteData.title,
-            content: noteData.content,
-            category: noteData.category,
-            trip_id: noteData.trip_id || null,
-          },
-        ]);
+        // Create new note using API
+        const res = await fetch('/api/notes', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                title: noteData.title,
+                content: noteData.content,
+                category: noteData.category,
+                trip_id: noteData.trip_id || null
+            })
+        });
 
-        if (error) throw error;
+        if (!res.ok) {
+            const errData = await res.json();
+            throw new Error(errData.error || 'Error al guardar la nota');
+        }
       }
 
       await loadData();
@@ -136,7 +141,8 @@ export default function NotesPage() {
     } catch (err: unknown) {
       const message = getErrorMessage(err, "Error al guardar la nota");
       logger.error("NotesPage: Error saving note", { error: message });
-      throw new Error(message);
+      // Show error to user?
+      alert(message); // Simple alert for now or use a toast if available
     } finally {
       setEditorLoading(false);
     }
@@ -407,6 +413,7 @@ export default function NotesPage() {
         >
           <NoteEditor
             note={editingNote || undefined}
+            trips={trips}
             onSave={handleSaveNote}
             onCancel={handleCloseEditor}
             loading={editorLoading}

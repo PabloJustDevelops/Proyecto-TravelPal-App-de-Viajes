@@ -14,12 +14,13 @@ import {
 interface NoteEditorProps {
   note?: Note
   tripId?: string
+  trips?: {id: string, title: string}[]
   onSave: (noteData: Partial<Note>) => Promise<void>
   onCancel: () => void
   loading?: boolean
 }
 
-export default function NoteEditor({ note, tripId, onSave, onCancel, loading = false }: NoteEditorProps) {
+export default function NoteEditor({ note, tripId, trips = [], onSave, onCancel, loading = false }: NoteEditorProps) {
   const [formData, setFormData] = useState({
     title: note?.title || '',
     content: note?.content || '',
@@ -168,6 +169,26 @@ export default function NoteEditor({ note, tripId, onSave, onCancel, loading = f
                   ))}
                 </div>
               </div>
+
+              {/* Trip Selector (Optional) */}
+              {trips.length > 0 && (
+                  <div className="space-y-2">
+                      <label className="block text-sm font-medium text-gray-700">
+                          Asociar a Viaje (Opcional)
+                      </label>
+                      <select
+                          name="trip_id"
+                          value={formData.trip_id}
+                          onChange={handleInputChange}
+                          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                          <option value="">Sin viaje asociado</option>
+                          {trips.map(trip => (
+                              <option key={trip.id} value={trip.id}>{trip.title}</option>
+                          ))}
+                      </select>
+                  </div>
+              )}
 
               {/* Content */}
               <div className="space-y-2">

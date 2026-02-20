@@ -29,22 +29,22 @@ export default function NewExpensePage() {
   })
 
   const loadTrips = useCallback(async () => {
-    const supabase = createSupabaseClient()
-
     try {
-      const { data, error } = await supabase
-        .from('trips')
-        .select('id, title, user_id, origin, destination, departure_date, return_date, budget, status, created_at, updated_at')
-        .eq('user_id', user!.id)
-        .order('departure_date', { ascending: false })
-
-      if (error) throw error
-
-      setTrips(data || [])
+      // Usar la API de viajes en lugar de supabase directo para consistencia
+      // Aunque aquí usamos solo lectura, es mejor centralizar
+      // Pero como ya existe la API /api/expenses que devuelve { expenses, trips }
+      // podríamos usar esa o simplemente /api/trips
+      // Usaremos /api/trips para ser más específicos
+      
+      const res = await fetch('/api/trips');
+      if (!res.ok) throw new Error('Error al cargar viajes');
+      const data = await res.json();
+      setTrips(data || []);
     } catch (error) {
-      console.error('Error loading trips:', error)
+      console.error('Error loading trips:', error);
+      // No bloqueamos la UI si fallan los viajes, solo no aparecen en el selector
     }
-  }, [user])
+  }, []);
 
   useEffect(() => {
     if (user) {
@@ -66,8 +66,6 @@ export default function NewExpensePage() {
     setError('')
 
     try {
-      const supabase = createSupabaseClient()
-
       // Validate required fields
       if (!formData.description || !formData.amount || !formData.date) {
         throw new Error('Por favor completa todos los campos requeridos')
@@ -79,7 +77,6 @@ export default function NewExpensePage() {
       }
 
       const expenseData = {
-        user_id: user!.id,
         description: formData.description,
         amount: amount,
         currency: formData.currency,
@@ -89,11 +86,16 @@ export default function NewExpensePage() {
         notes: formData.notes || null,
       }
 
-      const { error } = await supabase
-        .from('expenses')
-        .insert([expenseData])
+      const res = await fetch('/api/expenses', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(expenseData)
+      });
 
-      if (error) throw error
+      if (!res.ok) {
+          const errData = await res.json();
+          throw new Error(errData.error || 'Error al registrar el gasto');
+      }
 
       router.push('/expenses')
     } catch (error: unknown) {

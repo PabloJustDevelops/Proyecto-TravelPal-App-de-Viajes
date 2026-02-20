@@ -76,7 +76,7 @@ export default function NewBookingForm({
         start_time: initialData.start_time || "12:00",
         number_of_people: people,
         description: desc,
-        trip_id: initialData.trip_id,
+        trip_id: initialData.trip_id || "",
       });
     }
   }, [initialData]);
@@ -190,7 +190,7 @@ export default function NewBookingForm({
       const body = {
           ...bookingData,
           // trip_id debe venir del estado del formulario (que añadiremos)
-          trip_id: (formData as any).trip_id || initialData?.trip_id
+          trip_id: formData.trip_id
       };
 
       const fetchPromise = fetch('/api/planning', {

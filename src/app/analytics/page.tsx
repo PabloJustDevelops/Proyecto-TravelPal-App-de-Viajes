@@ -269,11 +269,20 @@ export default function AnalyticsPage() {
     setIsExporting(true);
     try {
       const element = reportRef.current;
-      // Use html-to-image to generate the image, which handles modern CSS (like lab colors) better
+      // Use html-to-image to generate the image
+      // Added filter and font options to avoid "trim" error
       const dataUrl = await toPng(element, {
         backgroundColor: '#ffffff',
-        pixelRatio: 2, // Higher resolution
+        pixelRatio: 2,
         cacheBust: true,
+        filter: (node) => {
+          // Exclude elements that might cause issues
+          if (node.tagName === 'LINK' || node.tagName === 'STYLE' || node.tagName === 'SCRIPT') {
+            return false;
+          }
+          return true;
+        },
+        skipAutoScale: true,
       });
 
       const pdf = new jsPDF({

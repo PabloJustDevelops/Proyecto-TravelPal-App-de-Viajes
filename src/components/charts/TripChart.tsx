@@ -27,6 +27,7 @@ interface ChartData {
   name: string
   value: number
   color: string
+  [key: string]: any
 }
 
 const STATUS_COLORS: Record<string, string> = {

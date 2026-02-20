@@ -30,6 +30,7 @@ interface ChartData {
   value: number
   color: string
   percentage?: number
+  [key: string]: any
 }
 
 const CATEGORY_COLORS: Record<string, string> = {

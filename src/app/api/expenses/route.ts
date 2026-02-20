@@ -142,8 +142,7 @@ export async function POST(request: Request) {
       currency: currency || 'EUR',
       category: category || 'other',
       date,
-      trip_id: trip_id || null,
-      notes: notes || null
+      trip_id: trip_id || null
     };
 
     const { data, error } = await supabase

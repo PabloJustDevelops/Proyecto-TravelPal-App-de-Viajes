@@ -155,25 +155,11 @@ export default function NewBookingForm({
       // y seleccionar el primero si no hay uno, o mostrar error.
       // Pero mejor aún, vamos a enviar la petición a la API.
 
-      let url = '/api/planning'; // Usamos el mismo endpoint base o uno específico si existiera
-      // Realmente deberíamos tener /api/bookings, pero por ahora usaremos /api/planning con POST
-      
-      // Como definimos POST en /api/planning para crear bookings:
-      
-      const method = 'POST'; // Siempre POST para crear en este endpoint unificado
-      
-      // Si estamos editando, la API debería soportar PUT o usamos otra ruta.
-      // La API actual de planning solo tiene POST para crear.
-      // Para editar, necesitaríamos implementar PUT.
-      // Si initialData existe, estamos editando.
+      let url = '/api/planning'; 
+      let method = 'POST';
       
       if (initialData) {
-          // TODO: Implementar PUT en API para editar
-          // Por ahora lanzamos error si es edición porque no hemos hecho esa parte de la API
-          // O usamos supabase directo para edición como fallback temporal?
-          // No, el objetivo es quitar supabase directo.
-          // Asumiremos que solo estamos arreglando CREACIÓN por ahora como pidió el usuario.
-          throw new Error("La edición aún no está migrada a la nueva API.");
+          method = 'PUT';
       }
 
       // Necesitamos un trip_id obligatorio.
@@ -189,12 +175,13 @@ export default function NewBookingForm({
       // Construimos el body final
       const body = {
           ...bookingData,
+          id: initialData?.id, // Necesario para PUT
           // trip_id debe venir del estado del formulario (que añadiremos)
           trip_id: formData.trip_id
       };
 
-      const fetchPromise = fetch('/api/planning', {
-          method: 'POST',
+      const fetchPromise = fetch(url, {
+          method: method,
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body)
       });

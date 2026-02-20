@@ -188,3 +188,113 @@ export async function POST(request: Request) {
     );
   }
 }
+
+export async function PUT(request: Request) {
+  try {
+    const cookieStore = await cookies();
+
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll();
+          },
+          setAll(cookiesToSet) {
+            try {
+              cookiesToSet.forEach(({ name, value, options }) =>
+                cookieStore.set(name, value, options),
+              );
+            } catch {
+              // Server Component setAll ignore
+            }
+          },
+        },
+      },
+    );
+
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!session) {
+      return NextResponse.json(
+        { error: "No autorizado. Por favor inicia sesión." },
+        { status: 401 },
+      );
+    }
+
+    const body = await request.json();
+    const { 
+      id,
+      trip_id,
+      type,
+      title,
+      description,
+      start_date,
+      start_time,
+      end_date,
+      end_time,
+      location,
+      confirmation_number,
+      cost,
+      currency,
+      status,
+      notes
+    } = body;
+
+    if (!id) {
+      return NextResponse.json(
+        { error: "ID de reserva requerido para actualizar" },
+        { status: 400 },
+      );
+    }
+
+    const updatedBooking = {
+      type,
+      title,
+      description: description || null,
+      start_date,
+      start_time: start_time || null,
+      end_date: end_date || null,
+      end_time: end_time || null,
+      location: location || null,
+      confirmation_number: confirmation_number || null,
+      cost: cost || 0,
+      currency: currency || 'EUR',
+      status: status || 'pending',
+      notes: notes || null,
+      updated_at: new Date().toISOString()
+    };
+
+    // Remove undefined keys
+    Object.keys(updatedBooking).forEach(key => 
+      (updatedBooking as any)[key] === undefined && delete (updatedBooking as any)[key]
+    );
+
+    const { data, error } = await supabase
+      .from("bookings")
+      .update(updatedBooking)
+      .eq('id', id)
+      .eq('user_id', session.user.id) // Ensure user owns the booking
+      .select()
+      .single();
+
+    if (error) {
+      logger.error("Error updating booking:", error);
+      return NextResponse.json(
+        { error: "Error al actualizar la reserva" },
+        { status: 500 },
+      );
+    }
+
+    return NextResponse.json(data);
+  } catch (error) {
+    logger.error("Error in planning PUT route:", error);
+    return NextResponse.json(
+      { error: "Error interno del servidor" },
+      { status: 500 },
+    );
+  }
+}

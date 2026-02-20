@@ -138,8 +138,7 @@ export async function POST(request: Request) {
       content,
       category: category || 'general',
       trip_id: trip_id || null,
-      is_pinned: false,
-      is_archived: false
+      is_favorite: false
     };
 
     const { data, error } = await supabase

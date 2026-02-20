@@ -61,6 +61,8 @@ export default function TripChart({ trips, type = 'status', title = 'Estado de V
       completed: '#10B981',
       cancelled: '#EF4444',
       in_progress: '#F59E0B',
+      planned: '#6366F1', // Indigo for planned
+      confirmed: '#3B82F6', // Blue for confirmed (same as upcoming)
     };
 
     const statusNames: Record<string, string> = {
@@ -68,6 +70,8 @@ export default function TripChart({ trips, type = 'status', title = 'Estado de V
       completed: 'Completados',
       cancelled: 'Cancelados',
       in_progress: 'En progreso',
+      planned: 'Planificados',
+      confirmed: 'Confirmados',
     };
 
     return Object.entries(statusCounts).map(([status, count]) => ({

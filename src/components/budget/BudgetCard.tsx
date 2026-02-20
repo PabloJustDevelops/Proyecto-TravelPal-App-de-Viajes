@@ -153,7 +153,6 @@ export default function BudgetCard({
                     variant="ghost"
                     size="sm"
                     onClick={() => onEdit(budget)}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity"
                   >
                     <PencilSquareIcon className="h-4 w-4" />
                   </Button>
@@ -163,7 +162,7 @@ export default function BudgetCard({
                     variant="ghost"
                     size="sm"
                     onClick={() => onDelete(budget.id)}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity text-red-600 hover:text-red-700 hover:bg-red-50"
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
                   >
                     <TrashIcon className="h-4 w-4" />
                   </Button>

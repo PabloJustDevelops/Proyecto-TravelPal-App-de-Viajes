@@ -2,8 +2,21 @@
 
 import { useEffect, useState } from 'react'
 import { Trip } from '@/lib/supabase'
+import { 
+  PieChart, 
+  Pie, 
+  Cell, 
+  ResponsiveContainer, 
+  Tooltip, 
+  Legend, 
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid 
+} from 'recharts'
 
-interface TripChartProps {
+export interface TripChartProps {
   trips: Trip[]
   type?: 'status' | 'timeline' | 'destinations'
   title?: string
@@ -11,265 +24,158 @@ interface TripChartProps {
 }
 
 interface ChartData {
-  label: string
+  name: string
   value: number
   color: string
-  percentage: number
 }
 
+const STATUS_COLORS: Record<string, string> = {
+  upcoming: '#3B82F6',   // Blue-500
+  completed: '#10B981',  // Emerald-500
+  cancelled: '#EF4444',  // Red-500
+  in_progress: '#F59E0B', // Amber-500
+  planned: '#6366F1',    // Indigo-500
+  confirmed: '#0EA5E9',  // Sky-500
+}
+
+const STATUS_NAMES: Record<string, string> = {
+  upcoming: 'Próximos',
+  completed: 'Completados',
+  cancelled: 'Cancelados',
+  in_progress: 'En curso',
+  planned: 'Planificados',
+  confirmed: 'Confirmados',
+}
+
+const CustomTooltip = ({ active, payload }: any) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div className="bg-white dark:bg-gray-800 p-3 border border-gray-100 dark:border-gray-700 shadow-lg rounded-lg">
+        <p className="text-sm font-semibold text-gray-900 dark:text-white mb-1">
+          {data.name}
+        </p>
+        <p className="text-sm text-gray-600 dark:text-gray-300">
+          {data.value} {data.value === 1 ? 'viaje' : 'viajes'}
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
+
 export default function TripChart({ trips, type = 'status', title = 'Estado de Viajes', height = 320 }: TripChartProps) {
-  const [chartData, setChartData] = useState<ChartData[]>([])
+  const [data, setData] = useState<ChartData[]>([])
 
   useEffect(() => {
-    const processData = () => {
-      if (!trips || trips.length === 0) {
-        setChartData([]);
-        return;
-      }
+    if (!trips || trips.length === 0) {
+      setData([])
+      return
+    }
 
-      // Procesar datos según el tipo de gráfico
-      let data: ChartData[] = [];
+    if (type === 'status') {
+      const statusCounts = trips.reduce((acc, trip) => {
+        const status = trip.status || 'planned'
+        acc[status] = (acc[status] || 0) + 1
+        return acc
+      }, {} as Record<string, number>)
 
-      switch (type) {
-        case 'status':
-          data = processStatusData();
-          break;
-        case 'timeline':
-          data = processTimelineData();
-          break;
-        case 'destinations':
-          data = processDestinationData();
-          break;
-        default:
-          data = processStatusData();
-      }
-
-      setChartData(data);
-    };
-
-    processData();
-  }, [trips, type]);
-
-  const processStatusData = (): ChartData[] => {
-    const statusCounts = trips.reduce((acc, trip) => {
-      acc[trip.status] = (acc[trip.status] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-
-    const statusColors: Record<string, string> = {
-      upcoming: '#3B82F6',
-      completed: '#10B981',
-      cancelled: '#EF4444',
-      in_progress: '#F59E0B',
-      planned: '#6366F1', // Indigo for planned
-      confirmed: '#3B82F6', // Blue for confirmed (same as upcoming)
-    };
-
-    const statusNames: Record<string, string> = {
-      upcoming: 'Próximos',
-      completed: 'Completados',
-      cancelled: 'Cancelados',
-      in_progress: 'En progreso',
-      planned: 'Planificados',
-      confirmed: 'Confirmados',
-    };
-
-    return Object.entries(statusCounts).map(([status, count]) => ({
-      label: statusNames[status] || status,
-      value: count,
-      color: statusColors[status] || '#6B7280',
-      percentage: (count / trips.length) * 100,
-    }));
-  };
-
-  const processTimelineData = (): ChartData[] => {
-    const monthlyData = trips.reduce((acc, trip) => {
-      const month = new Date(trip.departure_date).toLocaleDateString('es-ES', {
-        year: 'numeric',
-        month: 'short'
-      });
-      acc[month] = (acc[month] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-
-    return Object.entries(monthlyData).map(([month, count]) => ({
-      label: month,
-      value: count,
-      color: '#3B82F6',
-      percentage: (count / trips.length) * 100,
-    }));
-  };
-
-  const processDestinationData = (): ChartData[] => {
-    const destinationCounts = trips.reduce((acc, trip) => {
-      acc[trip.destination] = (acc[trip.destination] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-
-    const colors = ['#3B82F6', '#8B5CF6', '#F59E0B', '#EF4444', '#10B981', '#F97316'];
-
-    return Object.entries(destinationCounts)
-      .map(([destination, count], index) => ({
-        label: destination,
-        value: count,
-        color: colors[index % colors.length],
-        percentage: (count / trips.length) * 100,
+      const processedData = Object.entries(statusCounts).map(([key, value]) => ({
+        name: STATUS_NAMES[key] || key,
+        value: value,
+        color: STATUS_COLORS[key] || '#6B7280'
       }))
-      .sort((a, b) => b.value - a.value);
-  };
 
-  const totalCount = trips.length
+      setData(processedData)
+    } else if (type === 'destinations') {
+      const destCounts = trips.reduce((acc, trip) => {
+        const dest = trip.destination || 'Desconocido'
+        acc[dest] = (acc[dest] || 0) + 1
+        return acc
+      }, {} as Record<string, number>)
 
-  const renderTimelineChart = () => (
-    <div className="space-y-3">
-      {chartData.map((item, index) => (
-        <div key={index} className="flex items-center">
-          <div className="w-16 text-sm text-gray-600 truncate">
-            {item.label}
-          </div>
-          <div className="flex-1 mx-3">
-            <div className="bg-gray-200 rounded-full h-3 relative overflow-hidden">
-              <div
-                className="h-full rounded-full transition-all duration-500 ease-out"
-                style={{
-                  width: `${item.percentage}%`,
-                  backgroundColor: item.color,
-                }}
-              />
-            </div>
-          </div>
-          <div className="w-8 text-sm text-gray-900 text-right">
-            {item.value}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
+      // Get top 5 destinations
+      const processedData = Object.entries(destCounts)
+        .map(([key, value], index) => ({
+          name: key,
+          value: value,
+          color: Object.values(STATUS_COLORS)[index % Object.values(STATUS_COLORS).length]
+        }))
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 5)
 
-  const renderBarChart = () => (
-    <div className="space-y-3">
-      {chartData.map((item, index) => (
-        <div key={index} className="flex items-center">
-          <div className="w-24 text-sm text-gray-600 truncate">
-            {item.label}
-          </div>
-          <div className="flex-1 mx-3">
-            <div className="bg-gray-200 rounded-full h-4 relative overflow-hidden">
-              <div
-                className="h-full rounded-full transition-all duration-500 ease-out"
-                style={{
-                  width: `${item.percentage}%`,
-                  backgroundColor: item.color,
-                }}
-              />
-            </div>
-          </div>
-          <div className="w-12 text-sm text-gray-900 text-right">
-            {item.value}
-          </div>
-          <div className="w-12 text-xs text-gray-500 text-right">
-            {item.percentage.toFixed(1)}%
-          </div>
-        </div>
-      ))}
-    </div>
-  )
+      setData(processedData)
+    }
+  }, [trips, type])
 
-  const renderPieChart = () => {
-    const radius = 80
-    const centerX = 100
-    const centerY = 100
-    let currentAngle = 0
-
+  if (data.length === 0) {
     return (
-      <div className="flex items-center justify-center">
-        <div className="relative">
-          <svg width="200" height="200" className="transform -rotate-90">
-            {chartData.map((item, index) => {
-              const angle = (item.percentage / 100) * 360
-              const startAngle = currentAngle
-              const endAngle = currentAngle + angle
-              
-              const x1 = centerX + radius * Math.cos((startAngle * Math.PI) / 180)
-              const y1 = centerY + radius * Math.sin((startAngle * Math.PI) / 180)
-              const x2 = centerX + radius * Math.cos((endAngle * Math.PI) / 180)
-              const y2 = centerY + radius * Math.sin((endAngle * Math.PI) / 180)
-              
-              const largeArcFlag = angle > 180 ? 1 : 0
-              
-              const pathData = [
-                `M ${centerX} ${centerY}`,
-                `L ${x1} ${y1}`,
-                `A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2}`,
-                'Z'
-              ].join(' ')
-              
-              currentAngle += angle
-              
-              return (
-                <path
-                  key={index}
-                  d={pathData}
-                  fill={item.color}
-                  className="hover:opacity-80 transition-opacity"
-                />
-              )
-            })}
-          </svg>
-          
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-center">
-              <div className="text-lg font-bold text-gray-900">
-                {totalCount}
-              </div>
-              <div className="text-xs text-gray-500">Viajes</div>
-            </div>
-          </div>
-        </div>
-        
-        <div className="ml-6 space-y-2">
-          {chartData.map((item, index) => (
-            <div key={index} className="flex items-center text-sm">
-              <div
-                className="w-3 h-3 rounded-full mr-2"
-                style={{ backgroundColor: item.color }}
-              />
-              <span className="text-gray-600">{item.label}</span>
-              <span className="ml-auto font-medium">
-                {item.value} viaje{item.value !== 1 ? 's' : ''}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
-    )
-  }
-
-  if (!chartData.length) {
-    return (
-      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">{title}</h3>
-        <div className="text-center py-8 text-gray-500">
-          No hay datos suficientes para mostrar el gráfico
-        </div>
+      <div className="h-[320px] flex items-center justify-center bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-dashed border-gray-200 dark:border-gray-700">
+        <p className="text-gray-400 text-sm">No hay datos suficientes</p>
       </div>
     )
   }
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-medium text-gray-900">{title}</h3>
-        <div className="text-sm text-gray-500">
-          Total: {totalCount} viaje{totalCount !== 1 ? 's' : ''}
-        </div>
-      </div>
-      
-      <div style={{ height: `${height}px` }} className="overflow-hidden">
-        {type === 'timeline' ? renderTimelineChart() : 
-         type === 'status' ? renderPieChart() : 
-         renderBarChart()}
-      </div>
+    <div className="w-full h-full min-h-[320px]">
+      <ResponsiveContainer width="100%" height={height}>
+        {type === 'status' ? (
+          <PieChart>
+            <Pie
+              data={data}
+              cx="50%"
+              cy="50%"
+              innerRadius={60}
+              outerRadius={80}
+              paddingAngle={5}
+              dataKey="value"
+            >
+              {data.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={entry.color} strokeWidth={0} />
+              ))}
+            </Pie>
+            <Tooltip content={<CustomTooltip />} />
+            <Legend 
+              verticalAlign="middle" 
+              align="right"
+              layout="vertical"
+              iconType="circle"
+              formatter={(value, entry: any) => (
+                <span className="text-sm text-gray-600 dark:text-gray-300 ml-2">
+                  {value}
+                </span>
+              )}
+            />
+          </PieChart>
+        ) : (
+          <BarChart data={data} layout="vertical" margin={{ left: 20 }}>
+            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#E5E7EB" />
+            <XAxis type="number" hide />
+            <YAxis 
+              dataKey="name" 
+              type="category" 
+              axisLine={false} 
+              tickLine={false}
+              tick={{ fill: '#6B7280', fontSize: 12 }}
+              width={100}
+            />
+            <Tooltip 
+              cursor={{ fill: 'transparent' }}
+              content={<CustomTooltip />}
+            />
+            <Bar 
+              dataKey="value" 
+              radius={[0, 4, 4, 0]}
+              barSize={20}
+              animationDuration={1500}
+            >
+              {data.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={entry.color} />
+              ))}
+            </Bar>
+          </BarChart>
+        )}
+      </ResponsiveContainer>
     </div>
   )
 }

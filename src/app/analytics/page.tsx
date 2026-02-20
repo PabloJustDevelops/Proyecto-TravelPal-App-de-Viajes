@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Trip, Expense } from "@/lib/supabase";
 import DashboardLayout from "@/components/layout/DashboardLayout";
@@ -18,9 +18,15 @@ import {
   ArrowTrendingDownIcon,
   ArrowDownTrayIcon,
   FunnelIcon,
+  DocumentTextIcon,
+  TableCellsIcon,
 } from "@heroicons/react/24/outline";
 import { formatCurrency, getErrorMessage } from "@/lib/utils";
 import { logger } from "@/lib/logger";
+import { Menu, Transition } from "@headlessui/react";
+import { Fragment } from "react";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 
 interface Budget {
   id: string;
@@ -52,6 +58,8 @@ export default function AnalyticsPage() {
   const [error, setError] = useState<string | null>(null);
   const [dateRange, setDateRange] = useState("all");
   const [selectedCurrency, setSelectedCurrency] = useState("USD");
+  const reportRef = useRef<HTMLDivElement>(null);
+  const [isExporting, setIsExporting] = useState(false);
 
   const dateRanges = [
     { value: "all", label: "Todo el tiempo" },
@@ -218,12 +226,11 @@ export default function AnalyticsPage() {
     if (user) {
       loadData();
     } else {
-      // Evitar spinner infinito cuando no hay usuario
       setLoading(false);
     }
   }, [user, loadData]);
 
-  const exportData = async () => {
+  const exportToJSON = () => {
     try {
       const data = {
         trips,
@@ -252,20 +259,42 @@ export default function AnalyticsPage() {
       URL.revokeObjectURL(url);
     } catch (error) {
       const msg = error instanceof Error ? error.message : "Error desconocido";
-      logger.error("AnalyticsPage: Error exporting data", { error: msg });
+      logger.error("AnalyticsPage: Error exporting JSON", { error: msg });
     }
   };
 
-  const getCategoryName = (category: string) => {
-    const names: Record<string, string> = {
-      accommodation: "Alojamiento",
-      food: "Comida",
-      transport: "Transporte",
-      entertainment: "Entretenimiento",
-      shopping: "Compras",
-      other: "Otros",
-    };
-    return names[category] || category;
+  const exportToPDF = async () => {
+    if (!reportRef.current) return;
+    
+    setIsExporting(true);
+    try {
+      const element = reportRef.current;
+      const canvas = await html2canvas(element, {
+        scale: 2, // Higher resolution
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff'
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+
+      const imgWidth = 210; // A4 width in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      
+      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+      pdf.save(`travel-report-${new Date().toISOString().split("T")[0]}.pdf`);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      const msg = error instanceof Error ? error.message : "Error desconocido";
+      logger.error("AnalyticsPage: Error exporting PDF", { error: msg });
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   // Mostrar mensaje de autenticación cuando no hay usuario
@@ -329,7 +358,7 @@ export default function AnalyticsPage() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="space-y-6" ref={reportRef}>
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -340,16 +369,61 @@ export default function AnalyticsPage() {
               Insights detallados sobre tus viajes y gastos
             </p>
           </div>
-          <div className="flex items-center space-x-3">
-            <Button
-              variant="outline"
-              onClick={exportData}
-              className="flex items-center space-x-2"
+          
+          <Menu as="div" className="relative inline-block text-left z-50">
+            <div>
+              <Menu.Button as={Fragment}>
+                <Button
+                  variant="outline"
+                  className="flex items-center space-x-2"
+                  disabled={isExporting}
+                >
+                  <ArrowDownTrayIcon className="h-5 w-5" />
+                  <span>{isExporting ? 'Exportando...' : 'Exportar'}</span>
+                </Button>
+              </Menu.Button>
+            </div>
+            <Transition
+              as={Fragment}
+              enter="transition ease-out duration-100"
+              enterFrom="transform opacity-0 scale-95"
+              enterTo="transform opacity-100 scale-100"
+              leave="transition ease-in duration-75"
+              leaveFrom="transform opacity-100 scale-100"
+              leaveTo="transform opacity-0 scale-95"
             >
-              <ArrowDownTrayIcon className="h-5 w-5" />
-              <span>Exportar</span>
-            </Button>
-          </div>
+              <Menu.Items className="absolute right-0 mt-2 w-48 origin-top-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                <div className="px-1 py-1">
+                  <Menu.Item>
+                    {({ active }) => (
+                      <button
+                        onClick={exportToJSON}
+                        className={`${
+                          active ? 'bg-blue-500 text-white' : 'text-gray-900'
+                        } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
+                      >
+                        <TableCellsIcon className="mr-2 h-5 w-5" aria-hidden="true" />
+                        Exportar JSON
+                      </button>
+                    )}
+                  </Menu.Item>
+                  <Menu.Item>
+                    {({ active }) => (
+                      <button
+                        onClick={exportToPDF}
+                        className={`${
+                          active ? 'bg-blue-500 text-white' : 'text-gray-900'
+                        } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
+                      >
+                        <DocumentTextIcon className="mr-2 h-5 w-5" aria-hidden="true" />
+                        Exportar PDF
+                      </button>
+                    )}
+                  </Menu.Item>
+                </div>
+              </Menu.Items>
+            </Transition>
+          </Menu>
         </div>
 
         {/* Filters */}
@@ -363,7 +437,7 @@ export default function AnalyticsPage() {
               <select
                 value={selectedCurrency}
                 onChange={(e) => setSelectedCurrency(e.target.value)}
-                className="text-sm border rounded p-1 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
+                className="text-sm border rounded p-1 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
               >
                 {currencies.map((c) => (
                   <option key={c} value={c}>
@@ -379,7 +453,7 @@ export default function AnalyticsPage() {
               <select
                 value={dateRange}
                 onChange={(e) => setDateRange(e.target.value)}
-                className="text-sm border rounded p-1 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
+                className="text-sm border rounded p-1 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
               >
                 {dateRanges.map((r) => (
                   <option key={r.value} value={r.value}>
@@ -393,17 +467,17 @@ export default function AnalyticsPage() {
 
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card>
+          <Card className="hover:shadow-md transition-shadow">
             <div className="p-6">
               <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <CurrencyDollarIcon className="h-8 w-8 text-green-600" />
+                <div className="flex-shrink-0 p-3 bg-green-100 rounded-full dark:bg-green-900/30">
+                  <CurrencyDollarIcon className="h-6 w-6 text-green-600 dark:text-green-400" />
                 </div>
                 <div className="ml-4">
                   <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
                     Total Gastado
                   </div>
-                  <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                  <div className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
                     {formatCurrency(
                       analytics?.totalExpenses || 0,
                       selectedCurrency,
@@ -413,58 +487,59 @@ export default function AnalyticsPage() {
               </div>
             </div>
           </Card>
-          <Card>
+          <Card className="hover:shadow-md transition-shadow">
             <div className="p-6">
               <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <ChartBarIcon className="h-8 w-8 text-blue-600" />
+                <div className="flex-shrink-0 p-3 bg-blue-100 rounded-full dark:bg-blue-900/30">
+                  <ChartBarIcon className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div className="ml-4">
                   <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
                     Total Viajes
                   </div>
-                  <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                  <div className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
                     {analytics?.totalTrips || 0}
                   </div>
                 </div>
               </div>
             </div>
           </Card>
-          <Card>
+          <Card className="hover:shadow-md transition-shadow">
             <div className="p-6">
               <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <MapPinIcon className="h-8 w-8 text-purple-600" />
+                <div className="flex-shrink-0 p-3 bg-purple-100 rounded-full dark:bg-purple-900/30">
+                  <MapPinIcon className="h-6 w-6 text-purple-600 dark:text-purple-400" />
                 </div>
                 <div className="ml-4">
                   <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
                     Destino más visitado
                   </div>
-                  <div className="text-lg font-bold text-gray-900 dark:text-white">
+                  <div className="text-lg font-bold text-gray-900 dark:text-white mt-1 truncate max-w-[150px]" title={analytics?.mostVisitedDestination || "N/A"}>
                     {analytics?.mostVisitedDestination || "N/A"}
                   </div>
                 </div>
               </div>
             </div>
           </Card>
-          <Card>
+          <Card className="hover:shadow-md transition-shadow">
             <div className="p-6">
               <div className="flex items-center">
-                <div className="flex-shrink-0">
+                <div className="flex-shrink-0 p-3 bg-gray-100 rounded-full dark:bg-gray-800">
                   {analytics?.monthlyTrend === "up" ? (
-                    <ArrowTrendingUpIcon className="h-8 w-8 text-green-600" />
+                    <ArrowTrendingUpIcon className="h-6 w-6 text-red-600" />
                   ) : analytics?.monthlyTrend === "down" ? (
-                    <ArrowTrendingDownIcon className="h-8 w-8 text-red-600" />
+                    <ArrowTrendingDownIcon className="h-6 w-6 text-green-600" />
                   ) : (
-                    <CalendarIcon className="h-8 w-8 text-gray-600 dark:text-gray-400" />
+                    <CalendarIcon className="h-6 w-6 text-gray-600 dark:text-gray-400" />
                   )}
                 </div>
                 <div className="ml-4">
                   <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                    Tendencia mensual
+                    Tendencia de Gastos
                   </div>
-                  <div className="text-lg font-bold text-gray-900 dark:text-white">
-                    {analytics?.monthlyTrend || "stable"}
+                  <div className="text-lg font-bold text-gray-900 dark:text-white mt-1">
+                    {analytics?.monthlyTrend === "up" ? "Aumentando" : 
+                     analytics?.monthlyTrend === "down" ? "Disminuyendo" : "Estable"}
                   </div>
                 </div>
               </div>
@@ -474,24 +549,38 @@ export default function AnalyticsPage() {
 
         {/* Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card>
+          <Card className="overflow-hidden">
             <div className="p-6">
-              <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
+              <h3 className="text-lg font-semibold mb-6 text-gray-900 dark:text-white flex items-center">
+                <span className="w-1 h-6 bg-blue-500 rounded-full mr-3"></span>
                 Gastos por Categoría
               </h3>
               <ExpenseChart
                 expenses={expenses.filter(
                   (e) => e.currency === selectedCurrency,
                 )}
+                currency={selectedCurrency}
+                height={350}
               />
             </div>
           </Card>
-          <Card>
+          <Card className="overflow-hidden">
             <div className="p-6">
-              <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
-                Viajes por Destino
+              <h3 className="text-lg font-semibold mb-6 text-gray-900 dark:text-white flex items-center">
+                <span className="w-1 h-6 bg-purple-500 rounded-full mr-3"></span>
+                Estado de Viajes
               </h3>
-              <TripChart trips={trips} />
+              <TripChart trips={trips} height={350} />
+            </div>
+          </Card>
+          
+          <Card className="overflow-hidden lg:col-span-2">
+             <div className="p-6">
+              <h3 className="text-lg font-semibold mb-6 text-gray-900 dark:text-white flex items-center">
+                <span className="w-1 h-6 bg-green-500 rounded-full mr-3"></span>
+                Destinos más Populares
+              </h3>
+              <TripChart trips={trips} type="destinations" height={300} />
             </div>
           </Card>
         </div>

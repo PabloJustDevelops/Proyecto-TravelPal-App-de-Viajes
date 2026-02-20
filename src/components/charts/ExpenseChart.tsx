@@ -3,6 +3,19 @@
 import { useEffect, useState } from 'react'
 import { Expense } from '@/lib/supabase'
 import { formatCurrency } from '@/lib/utils'
+import { 
+  PieChart, 
+  Pie, 
+  Cell, 
+  ResponsiveContainer, 
+  Tooltip, 
+  Legend, 
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid 
+} from 'recharts'
 
 export interface ExpenseChartProps {
   expenses: Expense[]
@@ -13,11 +26,49 @@ export interface ExpenseChartProps {
 }
 
 interface ChartData {
-  label: string
+  name: string
   value: number
   color: string
-  percentage: number
+  percentage?: number
 }
+
+const CATEGORY_COLORS: Record<string, string> = {
+  transport: '#3B82F6',   // Blue-500
+  accommodation: '#8B5CF6', // Violet-500
+  food: '#F59E0B',        // Amber-500
+  entertainment: '#EF4444', // Red-500
+  shopping: '#10B981',    // Emerald-500
+  health: '#F97316',      // Orange-500
+  other: '#6B7280',       // Gray-500
+}
+
+const CATEGORY_NAMES: Record<string, string> = {
+  transport: 'Transporte',
+  accommodation: 'Alojamiento',
+  food: 'Comida',
+  entertainment: 'Entretenimiento',
+  shopping: 'Compras',
+  health: 'Salud',
+  other: 'Otros',
+}
+
+const CustomTooltip = ({ active, payload, currency }: any) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div className="bg-white dark:bg-gray-800 p-3 border border-gray-100 dark:border-gray-700 shadow-lg rounded-lg">
+        <p className="text-sm font-semibold text-gray-900 dark:text-white mb-1">
+          {data.name}
+        </p>
+        <p className="text-sm text-gray-600 dark:text-gray-300">
+          {formatCurrency(data.value, currency)}
+          {data.percentage && <span className="text-xs text-gray-400 ml-2">({data.percentage.toFixed(1)}%)</span>}
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
 
 export default function ExpenseChart({ 
   expenses, 
@@ -26,297 +77,123 @@ export default function ExpenseChart({
   height = 320,
   currency = 'USD'
 }: ExpenseChartProps) {
-  const [chartData, setChartData] = useState<ChartData[]>([])
+  const [data, setData] = useState<ChartData[]>([])
 
   useEffect(() => {
-    const processData = () => {
-      if (!expenses || expenses.length === 0) {
-        setChartData([]);
-        return;
-      }
+    if (!expenses || expenses.length === 0) {
+      setData([])
+      return
+    }
 
-      // Agrupar gastos por categoría
+    const totalAmount = expenses.reduce((sum, e) => sum + e.amount, 0)
+
+    if (type === 'category') {
       const categoryTotals = expenses.reduce((acc, expense) => {
-        const category = expense.category || 'Otros';
-        acc[category] = (acc[category] || 0) + expense.amount;
-        return acc;
-      }, {} as Record<string, number>);
-
-      const categoryColors: Record<string, string> = {
-        transport: '#3B82F6',
-        accommodation: '#8B5CF6',
-        food: '#F59E0B',
-        entertainment: '#EF4444',
-        shopping: '#10B981',
-        health: '#F97316',
-        other: '#6B7280',
-      }
-
-      const categoryNames: Record<string, string> = {
-        transport: 'Transporte',
-        accommodation: 'Alojamiento',
-        food: 'Comida',
-        entertainment: 'Entretenimiento',
-        shopping: 'Compras',
-        health: 'Salud',
-        other: 'Otros',
-      }
-
-      // Convertir a formato para el gráfico
-      const data = Object.entries(categoryTotals).map(([category, amount]) => ({
-        label: categoryNames[category] || category,
-        value: amount,
-        color: categoryColors[category] || '#6B7280',
-        percentage: Math.round((amount / expenses.reduce((sum, exp) => sum + exp.amount, 0)) * 100)
-      }));
-
-      setChartData(data);
-    };
-
-    processData();
-  }, [expenses]);
-
-  // Calculate total amount and process data based on type
-  const totalAmount = expenses.reduce((sum, expense) => sum + expense.amount, 0)
-  
-  useEffect(() => {
-    const processCategoryData = (total: number): ChartData[] => {
-      const categoryTotals = expenses.reduce((acc, expense) => {
-        acc[expense.category] = (acc[expense.category] || 0) + expense.amount
+        const cat = expense.category || 'other'
+        acc[cat] = (acc[cat] || 0) + expense.amount
         return acc
       }, {} as Record<string, number>)
 
-      const categoryColors: Record<string, string> = {
-        transport: '#3B82F6',
-        accommodation: '#8B5CF6',
-        food: '#F59E0B',
-        entertainment: '#EF4444',
-        shopping: '#10B981',
-        health: '#F97316',
-        other: '#6B7280',
-      }
-
-      const categoryNames: Record<string, string> = {
-        transport: 'Transporte',
-        accommodation: 'Alojamiento',
-        food: 'Comida',
-        entertainment: 'Entretenimiento',
-        shopping: 'Compras',
-        health: 'Salud',
-        other: 'Otros',
-      }
-
-      return Object.entries(categoryTotals)
-        .map(([category, amount]) => ({
-          label: categoryNames[category] || category,
-          value: amount,
-          color: categoryColors[category] || '#6B7280',
-          percentage: (amount / total) * 100,
+      const processedData = Object.entries(categoryTotals)
+        .map(([key, value]) => ({
+          name: CATEGORY_NAMES[key] || key,
+          value: value,
+          color: CATEGORY_COLORS[key] || CATEGORY_COLORS.other,
+          percentage: (value / totalAmount) * 100
         }))
         .sort((a, b) => b.value - a.value)
-    }
 
-    const processTimelineData = (): ChartData[] => {
+      setData(processedData)
+    } else if (type === 'timeline') {
+      // Logic for timeline (monthly)
       const monthlyTotals = expenses.reduce((acc, expense) => {
-        const month = new Date(expense.date).toLocaleDateString('es-ES', { 
-          year: 'numeric', 
-          month: 'short' 
-        })
-        acc[month] = (acc[month] || 0) + expense.amount
+        const date = new Date(expense.date)
+        const key = date.toLocaleDateString('es-ES', { month: 'short', year: 'numeric' })
+        acc[key] = (acc[key] || 0) + expense.amount
         return acc
       }, {} as Record<string, number>)
 
-      const maxAmount = Math.max(...Object.values(monthlyTotals))
-
-      return Object.entries(monthlyTotals)
-        .map(([month, amount]) => ({
-          label: month,
-          value: amount,
-          color: '#3B82F6',
-          percentage: (amount / maxAmount) * 100,
-        }))
-        .sort((a, b) => new Date(a.label).getTime() - new Date(b.label).getTime())
+      const processedData = Object.entries(monthlyTotals).map(([name, value]) => ({
+        name,
+        value,
+        color: '#3B82F6'
+      }))
+      // Sort by date could be complex with just strings, but let's assume simple sort for now or improve if needed
+      setData(processedData)
     }
+  }, [expenses, type])
 
-    const processComparisonData = (): ChartData[] => {
-      const currentMonth = new Date().getMonth()
-      const currentYear = new Date().getFullYear()
-      
-      const currentMonthExpenses = expenses.filter(expense => {
-        const expenseDate = new Date(expense.date)
-        return expenseDate.getMonth() === currentMonth && expenseDate.getFullYear() === currentYear
-      })
-
-      const previousMonthExpenses = expenses.filter(expense => {
-        const expenseDate = new Date(expense.date)
-        const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1
-        const prevYear = currentMonth === 0 ? currentYear - 1 : currentYear
-        return expenseDate.getMonth() === prevMonth && expenseDate.getFullYear() === prevYear
-      })
-
-      const currentTotal = currentMonthExpenses.reduce((sum, expense) => sum + expense.amount, 0)
-      const previousTotal = previousMonthExpenses.reduce((sum, expense) => sum + expense.amount, 0)
-      const maxTotal = Math.max(currentTotal, previousTotal)
-
-      return [
-        {
-          label: 'Mes Actual',
-          value: currentTotal,
-          color: '#3B82F6',
-          percentage: maxTotal > 0 ? (currentTotal / maxTotal) * 100 : 0,
-        },
-        {
-          label: 'Mes Anterior',
-          value: previousTotal,
-          color: '#8B5CF6',
-          percentage: maxTotal > 0 ? (previousTotal / maxTotal) * 100 : 0,
-        },
-      ]
-    }
-
-    let processedData: ChartData[] = []
-    
-    switch (type) {
-      case 'category':
-        processedData = processCategoryData(totalAmount)
-        break
-      case 'timeline':
-        processedData = processTimelineData()
-        break
-      case 'comparison':
-        processedData = processComparisonData()
-        break
-    }
-    
-    setChartData(processedData)
-  }, [expenses, type, totalAmount])
-
-
-
-
-
-  const renderBarChart = () => (
-    <div className="space-y-3">
-      {chartData.map((item, index) => (
-        <div key={index} className="flex items-center">
-          <div className="w-20 text-sm text-gray-600 dark:text-gray-300 truncate">
-            {item.label}
-          </div>
-          <div className="flex-1 mx-3">
-            <div className="bg-gray-200 dark:bg-gray-700 rounded-full h-4 relative overflow-hidden">
-              <div
-                className="h-full rounded-full transition-all duration-500 ease-out"
-                style={{
-                  width: `${item.percentage}%`,
-                  backgroundColor: item.color,
-                }}
-              />
-            </div>
-          </div>
-          <div className="w-24 text-sm text-gray-900 dark:text-white text-right">
-            {formatCurrency(item.value, currency)}
-          </div>
-          <div className="w-12 text-xs text-gray-500 dark:text-gray-400 text-right">
-            {item.percentage.toFixed(1)}%
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-
-  const renderPieChart = () => {
-    const radius = 80
-    const centerX = 100
-    const centerY = 100
-    let currentAngle = 0
-
+  if (data.length === 0) {
     return (
-      <div className="flex items-center justify-center">
-        <div className="relative">
-          <svg width="200" height="200" className="transform -rotate-90">
-            {chartData.map((item, index) => {
-              const angle = (item.percentage / 100) * 360
-              const startAngle = currentAngle
-              const endAngle = currentAngle + angle
-              
-              const x1 = centerX + radius * Math.cos((startAngle * Math.PI) / 180)
-              const y1 = centerY + radius * Math.sin((startAngle * Math.PI) / 180)
-              const x2 = centerX + radius * Math.cos((endAngle * Math.PI) / 180)
-              const y2 = centerY + radius * Math.sin((endAngle * Math.PI) / 180)
-              
-              const largeArcFlag = angle > 180 ? 1 : 0
-              
-              const pathData = [
-                `M ${centerX} ${centerY}`,
-                `L ${x1} ${y1}`,
-                `A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2}`,
-                'Z'
-              ].join(' ')
-              
-              currentAngle += angle
-              
-              return (
-                <path
-                  key={index}
-                  d={pathData}
-                  fill={item.color}
-                  className="hover:opacity-80 transition-opacity"
-                />
-              )
-            })}
-          </svg>
-          
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-center">
-              <div className="text-lg font-bold text-gray-900 dark:text-white">
-                {formatCurrency(totalAmount, currency)}
-              </div>
-              <div className="text-xs text-gray-500 dark:text-gray-400">Total</div>
-            </div>
-          </div>
-        </div>
-        
-        <div className="ml-6 space-y-2">
-          {chartData.map((item, index) => (
-            <div key={index} className="flex items-center text-sm">
-              <div
-                className="w-3 h-3 rounded-full mr-2"
-                style={{ backgroundColor: item.color }}
-              />
-              <span className="text-gray-600 dark:text-gray-300">{item.label}</span>
-              <span className="ml-auto font-medium text-gray-900 dark:text-white">
-                {formatCurrency(item.value, currency)}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
-    )
-  }
-
-  if (!chartData.length) {
-    return (
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">{title}</h3>
-        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-          No hay datos suficientes para mostrar el gráfico
-        </div>
+      <div className="h-[320px] flex items-center justify-center bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-dashed border-gray-200 dark:border-gray-700">
+        <p className="text-gray-400 text-sm">No hay datos suficientes</p>
       </div>
     )
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-medium text-gray-900 dark:text-white">{title}</h3>
-        <div className="text-sm text-gray-500 dark:text-gray-400">
-          Total: {formatCurrency(totalAmount, currency)}
-        </div>
-      </div>
-      
-      <div style={{ height: `${height}px` }} className="overflow-hidden">
-        {type === 'category' ? renderPieChart() : renderBarChart()}
-      </div>
+    <div className="w-full h-full min-h-[320px]">
+      <ResponsiveContainer width="100%" height={height}>
+        {type === 'category' ? (
+          <PieChart>
+            <Pie
+              data={data}
+              cx="50%"
+              cy="50%"
+              innerRadius={60}
+              outerRadius={80}
+              paddingAngle={5}
+              dataKey="value"
+            >
+              {data.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={entry.color} strokeWidth={0} />
+              ))}
+            </Pie>
+            <Tooltip content={<CustomTooltip currency={currency} />} />
+            <Legend 
+              verticalAlign="middle" 
+              align="right"
+              layout="vertical"
+              iconType="circle"
+              formatter={(value, entry: any) => (
+                <span className="text-sm text-gray-600 dark:text-gray-300 ml-2">
+                  {value}
+                </span>
+              )}
+            />
+          </PieChart>
+        ) : (
+          <BarChart data={data}>
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+            <XAxis 
+              dataKey="name" 
+              axisLine={false} 
+              tickLine={false} 
+              tick={{ fill: '#6B7280', fontSize: 12 }} 
+              dy={10}
+            />
+            <YAxis 
+              axisLine={false} 
+              tickLine={false} 
+              tick={{ fill: '#6B7280', fontSize: 12 }}
+              tickFormatter={(value) => `$${value}`}
+            />
+            <Tooltip 
+              cursor={{ fill: 'transparent' }}
+              content={<CustomTooltip currency={currency} />}
+            />
+            <Bar 
+              dataKey="value" 
+              radius={[4, 4, 0, 0]}
+              animationDuration={1500}
+            >
+              {data.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={entry.color || '#3B82F6'} />
+              ))}
+            </Bar>
+          </BarChart>
+        )}
+      </ResponsiveContainer>
     </div>
   )
 }

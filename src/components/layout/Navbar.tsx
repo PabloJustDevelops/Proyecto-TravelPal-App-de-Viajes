@@ -33,7 +33,7 @@ export default function Navbar({ navigation }: NavbarProps) {
     router.replace("/signin");
   };
   return (
-    <nav className="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-gray-200 dark:bg-gray-900/80 dark:border-gray-800 transition-all duration-300">
+    <nav className="bg-white/80 backdrop-blur-md sticky top-0 z-[100] border-b border-gray-200 dark:bg-gray-900/80 dark:border-gray-800 transition-all duration-300">
       {" "}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {" "}

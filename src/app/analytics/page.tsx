@@ -370,7 +370,7 @@ export default function AnalyticsPage() {
             </p>
           </div>
           
-          <Menu as="div" className="relative inline-block text-left z-50">
+          <Menu as="div" className="relative inline-block text-left z-30">
             <div>
               <Menu.Button as={Fragment}>
                 <Button

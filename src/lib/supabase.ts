@@ -202,3 +202,51 @@ export interface Task {
   created_at: string;
   updated_at: string;
 }
+
+/**
+ * Helper function to ensure user exists in public.users table
+ * This fixes foreign key constraint issues when inserting into tables referencing public.users
+ */
+export async function ensureUserExists(supabase: any, user: any) {
+  if (!user || !user.id) return;
+
+  try {
+    // Check if user exists in public.users
+    const { data, error } = await supabase
+      .from("users")
+      .select("id")
+      .eq("id", user.id)
+      .single();
+
+    if (error && error.code !== 'PGRST116') {
+      // Real error, log it but don't throw yet, try insert anyway
+      console.error("Error checking user existence:", error);
+    }
+
+    if (!data) {
+      // User doesn't exist, insert it
+      console.log("User missing in public.users, inserting...", user.id);
+      
+      const { error: insertError } = await supabase
+        .from("users")
+        .insert([{
+          id: user.id,
+          email: user.email,
+          full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
+          avatar_url: user.user_metadata?.avatar_url || null,
+          updated_at: new Date().toISOString()
+        }]);
+        
+      if (insertError) {
+        console.error("Error inserting user into public.users:", insertError);
+        // If error is duplicate key, it means race condition, so it's fine
+        if (!insertError.message.includes("duplicate key")) {
+             throw insertError;
+        }
+      }
+    }
+  } catch (err) {
+    console.error("Failed to ensure user exists:", err);
+    // Don't block the flow, hope for the best or let the main insert fail with constraint error
+  }
+}

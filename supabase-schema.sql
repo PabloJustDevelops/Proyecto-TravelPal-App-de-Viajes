@@ -112,9 +112,37 @@ CREATE TABLE public.notes (
   is_favorite boolean DEFAULT false,
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
+  category character varying DEFAULT 'general'::character varying,
   CONSTRAINT notes_pkey PRIMARY KEY (id),
   CONSTRAINT notes_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
   CONSTRAINT notes_trip_id_fkey FOREIGN KEY (trip_id) REFERENCES public.trips(id)
+);
+CREATE TABLE public.profiles (
+  id uuid NOT NULL,
+  updated_at timestamp with time zone DEFAULT now(),
+  username text UNIQUE CHECK (char_length(username) >= 3),
+  full_name text,
+  avatar_url text,
+  website text,
+  bio text,
+  phone text,
+  location text,
+  preferences jsonb DEFAULT '{}'::jsonb,
+  CONSTRAINT profiles_pkey PRIMARY KEY (id),
+  CONSTRAINT profiles_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id)
+);
+CREATE TABLE public.tasks (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid,
+  title character varying NOT NULL,
+  description text,
+  status character varying DEFAULT 'pending'::character varying CHECK (status::text = ANY (ARRAY['pending'::character varying, 'in_progress'::character varying, 'completed'::character varying]::text[])),
+  priority character varying DEFAULT 'medium'::character varying CHECK (priority::text = ANY (ARRAY['low'::character varying, 'medium'::character varying, 'high'::character varying]::text[])),
+  due_date timestamp with time zone,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT tasks_pkey PRIMARY KEY (id),
+  CONSTRAINT tasks_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
 );
 CREATE TABLE public.trips (
   id uuid NOT NULL DEFAULT gen_random_uuid(),

@@ -378,17 +378,16 @@ export default function BudgetPage() {
         user_id: user?.id,
       };
 
-      if (editingBudget) {
-        const { error } = await supabase
-          .from("budgets")
-          .update(budgetData)
-          .eq("id", editingBudget.id);
+      // Use API instead of direct supabase call
+      const res = await fetch('/api/budget', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(budgetData)
+      });
 
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from("budgets").insert([budgetData]);
-
-        if (error) throw error;
+      if (!res.ok) {
+          const errData = await res.json();
+          throw new Error(errData.error || 'Error al guardar el presupuesto');
       }
 
       setShowCreateModal(false);

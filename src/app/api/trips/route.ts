@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
+import { ensureUserExists } from "@/lib/supabase";
 
 export async function GET(request: Request) {
   try {
@@ -96,6 +97,9 @@ export async function POST(request: Request) {
         { status: 401 },
       );
     }
+
+    // Ensure user exists in public.users to avoid FK constraint errors
+    await ensureUserExists(supabase, session.user);
 
     const body = await request.json();
     const { 

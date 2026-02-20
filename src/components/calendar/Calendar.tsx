@@ -21,7 +21,15 @@ import {
   parseISO
 } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { DndContext, useDraggable, useDroppable, DragEndEvent } from '@dnd-kit/core';
+import { 
+  DndContext, 
+  useDraggable, 
+  useDroppable, 
+  DragEndEvent,
+  useSensor,
+  useSensors,
+  PointerSensor
+} from '@dnd-kit/core';
 
 export interface CalendarEvent {
   id: string;
@@ -136,6 +144,14 @@ export const Calendar: React.FC<CalendarProps> = ({
   const [viewMode, setViewMode] = useState<'month' | 'week'>('month');
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number, event: CalendarEvent } | null>(null);
 
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    })
+  );
+
   useEffect(() => {
     const handleClickOutside = () => setContextMenu(null);
     document.addEventListener('click', handleClickOutside);
@@ -159,8 +175,11 @@ export const Calendar: React.FC<CalendarProps> = ({
       const draggedEvent = active.data.current as CalendarEvent;
       const newDate = (over.data.current as { date: Date }).date;
       
-      // Only trigger if date changed
-      if (draggedEvent.date !== format(newDate, 'yyyy-MM-dd')) {
+      // Use format from date-fns to ensure correct string comparison
+      // The date string in event.date should match the format we compare against
+      const newDateStr = format(newDate, 'yyyy-MM-dd');
+
+      if (draggedEvent.date !== newDateStr) {
         onEventDrop?.(draggedEvent, newDate);
       }
     }
@@ -321,7 +340,10 @@ export const Calendar: React.FC<CalendarProps> = ({
   );
 
   return (
-    <DndContext onDragEnd={handleDragEnd}>
+    <DndContext 
+      sensors={sensors}
+      onDragEnd={handleDragEnd}
+    >
       <div className={`bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden ${className}`}>
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200">

@@ -77,7 +77,7 @@ export function useToast() {
 
 export function ToastViewport({ toasts, onClose }: { toasts: ToastItem[]; onClose: (id: string) => void }) {
   return (
-    <div className="fixed top-4 right-4 z-50 flex flex-col space-y-2 w-80">
+    <div className="fixed top-4 right-4 z-[200] flex flex-col space-y-2 w-80">
       {toasts.map((t) => (
         <div key={t.id} className={toastClass(t.type)}>
           <div className="flex-1">

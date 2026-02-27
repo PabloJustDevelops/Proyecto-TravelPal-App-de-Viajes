@@ -139,10 +139,10 @@ export default function ExpenseChart({
           <PieChart>
             <Pie
               data={data}
-              cx="40%" // Movemos el gráfico a la izquierda para dejar espacio a la leyenda
+              cx="35%" // Aún más a la izquierda
               cy="50%"
-              innerRadius={50} // Reducimos radio interno
-              outerRadius={70} // Reducimos radio externo
+              innerRadius={50}
+              outerRadius={70}
               paddingAngle={5}
               dataKey="value"
             >
@@ -156,9 +156,15 @@ export default function ExpenseChart({
               align="right"
               layout="vertical"
               iconType="circle"
-              wrapperStyle={{ display: 'flex', flexDirection: 'column', gap: '8px' }}
+              wrapperStyle={{ 
+                display: 'flex', 
+                flexDirection: 'column', 
+                gap: '8px',
+                right: 0, // Pegado a la derecha
+                width: '45%' // Ocupa el espacio restante
+              }}
               formatter={(value, entry: any) => (
-                <span className="text-sm text-gray-600 dark:text-gray-300 ml-2 flex items-center h-6">
+                <span className="text-sm text-gray-600 dark:text-gray-300 ml-2 flex items-center h-6 truncate" title={value}>
                   {value}
                 </span>
               )}

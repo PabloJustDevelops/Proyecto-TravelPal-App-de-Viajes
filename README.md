@@ -40,9 +40,7 @@ App Viajes es una aplicación web colaborativa para gestionar todo el ciclo de u
 ## 🖼️ Banner / Capturas
 
 <div align="center">
-<img width="1677" height="971" alt="{A27E7AE7-0270-41C0-827A-CE5C69B448E3}" src="https://github.com/user-attachments/assets/0f79bbe6-983a-4016-8679-1d96e89ed60e" />
-  <p><em>Banner hero del repositorio. Se puede reemplazar por capturas reales del dashboard o páginas clave.</em></p>
-  
+<img width="1677" height="971" alt="{A27E7AE7-0270-41C0-827A-CE5C69B448E3}" src="https://github.com/user-attachments/assets/0f79bbe6-983a-4016-8679-1d96e89ed60e" />  
 </div>
 
 ---

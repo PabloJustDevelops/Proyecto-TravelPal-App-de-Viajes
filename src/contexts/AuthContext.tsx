@@ -112,17 +112,8 @@ export function AuthProvider({ children, deps }: { children: React.ReactNode; de
   const signOut = async () => {
     setLoading(true)
     try {
-      // Timeout de seguridad para el logout
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Sign out timeout')), 5000)
-      );
-      
-      await Promise.race([authService.signOut(), timeoutPromise])
-    } catch (error) {
-      logger.error('AuthContext: Error en signOut', { error })
+      await authService.signOut()
     } finally {
-      // Aseguramos que el estado local se limpie independientemente del resultado
-      setUser(null)
       setLoading(false)
     }
   }

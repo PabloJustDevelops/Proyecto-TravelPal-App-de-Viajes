@@ -124,10 +124,10 @@ export default function TripChart({ trips, type = 'status', title = 'Estado de V
           <PieChart>
             <Pie
               data={data}
-              cx="35%" // Aún más a la izquierda
+              cx="50%"
               cy="50%"
-              innerRadius={50}
-              outerRadius={70}
+              innerRadius={60}
+              outerRadius={80}
               paddingAngle={5}
               dataKey="value"
             >
@@ -141,33 +141,17 @@ export default function TripChart({ trips, type = 'status', title = 'Estado de V
               align="right"
               layout="vertical"
               iconType="circle"
-              wrapperStyle={{ 
-                display: 'flex', 
-                flexDirection: 'column', 
-                justifyContent: 'center', // Centrado vertical del bloque
-                gap: '12px', // Más espacio entre items
-                right: 0, 
-                width: '45%',
-                height: '100%', // Ocupa toda la altura para centrarse
-                top: 0
-              }}
               formatter={(value, entry: any) => (
-                <div className="flex items-center ml-2">
-                  <span className="text-sm text-gray-600 dark:text-gray-300 truncate" title={value}>
-                    {value}
-                  </span>
-                </div>
+                <span className="text-sm text-gray-600 dark:text-gray-300 ml-2">
+                  {value}
+                </span>
               )}
             />
           </PieChart>
         ) : (
-          <BarChart 
-            data={data} 
-            layout="vertical" 
-            margin={{ top: 10, right: 30, left: 40, bottom: 10 }}
-          >
+          <BarChart data={data} layout="vertical" margin={{ left: 20 }}>
             <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#E5E7EB" />
-            <XAxis type="number" hide domain={[0, 'dataMax + 2']} />
+            <XAxis type="number" hide />
             <YAxis 
               dataKey="name" 
               type="category" 

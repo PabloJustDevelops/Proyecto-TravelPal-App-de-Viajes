@@ -29,8 +29,14 @@ export default function Navbar({ navigation }: NavbarProps) {
   const router = useRouter();
   const pathname = usePathname();
   const handleSignOut = async () => {
-    await signOut();
-    router.replace("/signin");
+    try {
+      await signOut();
+    } finally {
+      // Forzamos una recarga completa para limpiar cualquier estado residual
+      // y asegurar que el middleware reevalúe la sesión correctamente.
+      // Esto soluciona el problema de que a veces se requiere un segundo intento.
+      window.location.href = "/signin";
+    }
   };
   return (
     <nav className="bg-white/80 backdrop-blur-md sticky top-0 z-[100] border-b border-gray-200 dark:bg-gray-900/80 dark:border-gray-800 transition-all duration-300">

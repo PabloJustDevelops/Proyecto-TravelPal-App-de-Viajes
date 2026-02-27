@@ -300,7 +300,7 @@ export default function AnalyticsPage() {
       const pdf = new jsPDF({
         orientation: 'landscape',
         unit: 'mm',
-        format: 'a4'
+        format: 'a3' // Formato más grande para evitar cortes
       });
 
       const imgProps = pdf.getImageProperties(dataUrl);
@@ -514,11 +514,11 @@ export default function AnalyticsPage() {
                 <div className="flex-shrink-0 p-3 bg-green-100 rounded-full dark:bg-green-900/30">
                   <CurrencyDollarIcon className="h-6 w-6 text-green-600 dark:text-green-400" />
                 </div>
-                <div className="ml-4 flex flex-col justify-center">
+                <div className="ml-4 flex flex-col justify-center gap-2">
                   <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
                     Total Gastado
                   </div>
-                  <div className="text-2xl font-bold text-gray-900 dark:text-white mt-2">
+                  <div className="text-3xl font-bold text-gray-900 dark:text-white pt-1">
                     {formatCurrency(
                       analytics?.totalExpenses || 0,
                       selectedCurrency,
@@ -534,11 +534,11 @@ export default function AnalyticsPage() {
                 <div className="flex-shrink-0 p-3 bg-blue-100 rounded-full dark:bg-blue-900/30">
                   <ChartBarIcon className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                 </div>
-                <div className="ml-4 flex flex-col justify-center">
+                <div className="ml-4 flex flex-col justify-center gap-2">
                   <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
                     Total Viajes
                   </div>
-                  <div className="text-2xl font-bold text-gray-900 dark:text-white mt-2">
+                  <div className="text-3xl font-bold text-gray-900 dark:text-white pt-1">
                     {analytics?.totalTrips || 0}
                   </div>
                 </div>
@@ -551,11 +551,11 @@ export default function AnalyticsPage() {
                 <div className="flex-shrink-0 p-3 bg-purple-100 rounded-full dark:bg-purple-900/30">
                   <MapPinIcon className="h-6 w-6 text-purple-600 dark:text-purple-400" />
                 </div>
-                <div className="ml-4 flex flex-col justify-center">
+                <div className="ml-4 flex flex-col justify-center gap-2">
                   <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
                     Destino más visitado
                   </div>
-                  <div className="text-lg font-bold text-gray-900 dark:text-white mt-2 truncate max-w-[150px]" title={analytics?.mostVisitedDestination || "N/A"}>
+                  <div className="text-2xl font-bold text-gray-900 dark:text-white pt-1 truncate max-w-[180px]" title={analytics?.mostVisitedDestination || "N/A"}>
                     {analytics?.mostVisitedDestination || "N/A"}
                   </div>
                 </div>
@@ -574,11 +574,11 @@ export default function AnalyticsPage() {
                     <CalendarIcon className="h-6 w-6 text-gray-600 dark:text-gray-400" />
                   )}
                 </div>
-                <div className="ml-4 flex flex-col justify-center">
+                <div className="ml-4 flex flex-col justify-center gap-2">
                   <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
                     Tendencia de Gastos
                   </div>
-                  <div className="text-lg font-bold text-gray-900 dark:text-white mt-2">
+                  <div className="text-2xl font-bold text-gray-900 dark:text-white pt-1">
                     {analytics?.monthlyTrend === "up" ? "Aumentando" : 
                      analytics?.monthlyTrend === "down" ? "Disminuyendo" : "Estable"}
                   </div>
@@ -615,13 +615,13 @@ export default function AnalyticsPage() {
             </div>
           </Card>
           
-          <Card className="overflow-hidden lg:col-span-2 break-inside-avoid">
+          <Card className="overflow-hidden lg:col-span-2 break-inside-avoid mt-8">
              <div className="p-6">
               <h3 className="text-lg font-semibold mb-6 text-gray-900 dark:text-white flex items-center">
                 <span className="w-1 h-6 bg-green-500 rounded-full mr-3"></span>
                 Destinos más Populares
               </h3>
-              <TripChart trips={trips} type="destinations" height={300} />
+              <TripChart trips={trips} type="destinations" height={400} />
             </div>
           </Card>
         </div>

@@ -124,10 +124,10 @@ export default function TripChart({ trips, type = 'status', title = 'Estado de V
           <PieChart>
             <Pie
               data={data}
-              cx="50%"
+              cx="40%" // Movemos el gráfico a la izquierda para dejar espacio a la leyenda
               cy="50%"
-              innerRadius={60}
-              outerRadius={80}
+              innerRadius={50} // Reducimos radio interno
+              outerRadius={70} // Reducimos radio externo
               paddingAngle={5}
               dataKey="value"
             >

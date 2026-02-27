@@ -194,7 +194,7 @@ export class AuthService {
 
     // Add timeout to prevent infinite hanging
     const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Update profile timed out after 10s')), 10000)
+      setTimeout(() => reject(new Error('Update profile timed out after 20s')), 20000)
     );
 
     try {

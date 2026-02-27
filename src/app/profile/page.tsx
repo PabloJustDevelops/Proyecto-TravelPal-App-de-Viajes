@@ -39,7 +39,7 @@ export default function ProfilePage() {
     const timeoutId = setTimeout(() => {
       setLoading(false);
       showError("La operación ha tardado demasiado. Por favor, inténtalo de nuevo.");
-    }, 15000);
+    }, 30000);
 
     try {
       await updateProfile({

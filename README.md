@@ -1,4 +1,3 @@
-<img width="1687" height="965" alt="{33981AA6-E550-47B7-BA13-250836128147}" src="https://github.com/user-attachments/assets/f3132b98-d32e-4610-9741-4c112faa0888" /><div align="center">
   <img src="public/globe.svg" alt="App Viajes" width="120" />
   <h1>TravelPal</h1>
   <p><strong>Planifica, reserva y controla tus viajes</strong><br/>Una plataforma completa para itinerarios, gastos, presupuestos y analíticas.</p>
@@ -40,7 +39,7 @@ App Viajes es una aplicación web colaborativa para gestionar todo el ciclo de u
 ## 🖼️ Banner / Capturas
 
 <div align="center">
-  <img src="./public/hero-app-viajes.svg" alt="Banner App Viajes" width="1000" />
+ <img width="1683" height="903" alt="{DA6F8DF9-5BB8-4759-A934-D0A79B94E1FF}" src="https://github.com/user-attachments/assets/110bde5e-4db5-4703-9985-815037a49794" />
   <p><em>Banner hero del repositorio. Se puede reemplazar por capturas reales del dashboard o páginas clave.</em></p>
   
 </div>

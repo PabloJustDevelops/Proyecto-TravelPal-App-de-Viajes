@@ -269,15 +269,19 @@ export default function AnalyticsPage() {
     setIsExporting(true);
     try {
       const element = reportRef.current;
-      // Use html-to-image to generate the image
-      // Added filter and font options to avoid "trim" error
+      
+      // Generación optimizada de la imagen
       const dataUrl = await toPng(element, {
         backgroundColor: '#ffffff',
-        pixelRatio: 2,
+        pixelRatio: 1.5, // Equilibrio entre calidad y estabilidad
         cacheBust: true,
+        fontEmbedCSS: '', // Evita el error "trim" al saltar el procesamiento de fuentes externas
         filter: (node) => {
-          // Exclude elements that might cause issues
-          if (node.tagName === 'LINK' || node.tagName === 'STYLE' || node.tagName === 'SCRIPT') {
+          // Mantenemos STYLE y LINK para conservar el diseño
+          if (node.tagName === 'SCRIPT') return false;
+          
+          // Excluimos elementos marcados explícitamente
+          if (node instanceof HTMLElement && node.dataset.exportExclude === 'true') {
             return false;
           }
           return true;
@@ -296,11 +300,16 @@ export default function AnalyticsPage() {
       const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
       
       pdf.addImage(dataUrl, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`travel-report-${new Date().toISOString().split("T")[0]}.pdf`);
+      pdf.save(`reporte-viajes-${new Date().toISOString().split("T")[0]}.pdf`);
+      
+      logger.info("AnalyticsPage: PDF exportado exitosamente");
     } catch (error) {
-      console.error('Error generating PDF:', error);
+      console.error('Error generando PDF:', error);
       const msg = error instanceof Error ? error.message : "Error desconocido";
-      logger.error("AnalyticsPage: Error exporting PDF", { error: msg });
+      logger.error("AnalyticsPage: Error exporting PDF", { 
+        error: msg,
+        stack: error instanceof Error ? error.stack : undefined
+      });
     } finally {
       setIsExporting(false);
     }
@@ -379,7 +388,7 @@ export default function AnalyticsPage() {
             </p>
           </div>
           
-          <Menu as="div" className="relative inline-block text-left z-30">
+          <Menu as="div" className="relative inline-block text-left z-30" data-export-exclude="true">
             <div>
               <Menu.Button as={Fragment}>
                 <Button
@@ -436,7 +445,7 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Filters */}
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700" data-export-exclude="true">
           <div className="flex flex-wrap gap-4 items-center">
             <div className="flex items-center space-x-2">
               <FunnelIcon className="h-5 w-5 text-gray-500 dark:text-gray-400" />

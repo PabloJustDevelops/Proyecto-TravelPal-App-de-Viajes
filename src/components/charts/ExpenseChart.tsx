@@ -156,8 +156,9 @@ export default function ExpenseChart({
               align="right"
               layout="vertical"
               iconType="circle"
+              wrapperStyle={{ display: 'flex', flexDirection: 'column', gap: '8px' }}
               formatter={(value, entry: any) => (
-                <span className="text-sm text-gray-600 dark:text-gray-300 ml-2">
+                <span className="text-sm text-gray-600 dark:text-gray-300 ml-2 flex items-center h-6">
                   {value}
                 </span>
               )}

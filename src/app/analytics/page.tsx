@@ -317,7 +317,7 @@ export default function AnalyticsPage() {
 
       // Páginas adicionales si es necesario
       while (heightLeft > 0) {
-        position = heightLeft - pdfHeight;
+        position -= pageHeight; // Movemos la posición hacia arriba (negativo)
         pdf.addPage();
         pdf.addImage(dataUrl, 'PNG', 0, position, pdfWidth, pdfHeight);
         heightLeft -= pageHeight;
@@ -590,7 +590,7 @@ export default function AnalyticsPage() {
 
         {/* Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card className="overflow-hidden">
+          <Card className="overflow-hidden break-inside-avoid">
             <div className="p-6">
               <h3 className="text-lg font-semibold mb-6 text-gray-900 dark:text-white flex items-center">
                 <span className="w-1 h-6 bg-blue-500 rounded-full mr-3"></span>
@@ -605,7 +605,7 @@ export default function AnalyticsPage() {
               />
             </div>
           </Card>
-          <Card className="overflow-hidden">
+          <Card className="overflow-hidden break-inside-avoid">
             <div className="p-6">
               <h3 className="text-lg font-semibold mb-6 text-gray-900 dark:text-white flex items-center">
                 <span className="w-1 h-6 bg-purple-500 rounded-full mr-3"></span>
@@ -615,7 +615,7 @@ export default function AnalyticsPage() {
             </div>
           </Card>
           
-          <Card className="overflow-hidden lg:col-span-2">
+          <Card className="overflow-hidden lg:col-span-2 break-inside-avoid">
              <div className="p-6">
               <h3 className="text-lg font-semibold mb-6 text-gray-900 dark:text-white flex items-center">
                 <span className="w-1 h-6 bg-green-500 rounded-full mr-3"></span>

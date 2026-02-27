@@ -141,17 +141,22 @@ export default function TripChart({ trips, type = 'status', title = 'Estado de V
               align="right"
               layout="vertical"
               iconType="circle"
+              wrapperStyle={{ display: 'flex', flexDirection: 'column', gap: '8px' }}
               formatter={(value, entry: any) => (
-                <span className="text-sm text-gray-600 dark:text-gray-300 ml-2">
+                <span className="text-sm text-gray-600 dark:text-gray-300 ml-2 flex items-center h-6">
                   {value}
                 </span>
               )}
             />
           </PieChart>
         ) : (
-          <BarChart data={data} layout="vertical" margin={{ left: 20 }}>
+          <BarChart 
+            data={data} 
+            layout="vertical" 
+            margin={{ top: 10, right: 30, left: 40, bottom: 10 }}
+          >
             <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#E5E7EB" />
-            <XAxis type="number" hide />
+            <XAxis type="number" hide domain={[0, 'dataMax + 2']} />
             <YAxis 
               dataKey="name" 
               type="category" 

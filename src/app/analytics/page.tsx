@@ -298,7 +298,7 @@ export default function AnalyticsPage() {
       });
 
       const pdf = new jsPDF({
-        orientation: 'landscape', // Cambiamos a horizontal para mejor visualización de dashboards
+        orientation: 'landscape',
         unit: 'mm',
         format: 'a4'
       });
@@ -307,11 +307,22 @@ export default function AnalyticsPage() {
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
       
-      // Si la altura es mayor que una página, podríamos necesitar paginación,
-      // pero por ahora ajustamos al ancho y dejamos que fluya.
-      // Para un dashboard de una sola vista, landscape suele funcionar mejor.
-      
-      pdf.addImage(dataUrl, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      let heightLeft = pdfHeight;
+      let position = 0;
+
+      // Primera página
+      pdf.addImage(dataUrl, 'PNG', 0, position, pdfWidth, pdfHeight);
+      heightLeft -= pageHeight;
+
+      // Páginas adicionales si es necesario
+      while (heightLeft > 0) {
+        position = heightLeft - pdfHeight;
+        pdf.addPage();
+        pdf.addImage(dataUrl, 'PNG', 0, position, pdfWidth, pdfHeight);
+        heightLeft -= pageHeight;
+      }
+
       pdf.save(`reporte-viajes-${new Date().toISOString().split("T")[0]}.pdf`);
       
       logger.info("AnalyticsPage: PDF exportado exitosamente");
@@ -503,11 +514,11 @@ export default function AnalyticsPage() {
                 <div className="flex-shrink-0 p-3 bg-green-100 rounded-full dark:bg-green-900/30">
                   <CurrencyDollarIcon className="h-6 w-6 text-green-600 dark:text-green-400" />
                 </div>
-                <div className="ml-4">
+                <div className="ml-4 flex flex-col justify-center">
                   <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
                     Total Gastado
                   </div>
-                  <div className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+                  <div className="text-2xl font-bold text-gray-900 dark:text-white mt-2">
                     {formatCurrency(
                       analytics?.totalExpenses || 0,
                       selectedCurrency,
@@ -523,11 +534,11 @@ export default function AnalyticsPage() {
                 <div className="flex-shrink-0 p-3 bg-blue-100 rounded-full dark:bg-blue-900/30">
                   <ChartBarIcon className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                 </div>
-                <div className="ml-4">
+                <div className="ml-4 flex flex-col justify-center">
                   <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
                     Total Viajes
                   </div>
-                  <div className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+                  <div className="text-2xl font-bold text-gray-900 dark:text-white mt-2">
                     {analytics?.totalTrips || 0}
                   </div>
                 </div>
@@ -540,11 +551,11 @@ export default function AnalyticsPage() {
                 <div className="flex-shrink-0 p-3 bg-purple-100 rounded-full dark:bg-purple-900/30">
                   <MapPinIcon className="h-6 w-6 text-purple-600 dark:text-purple-400" />
                 </div>
-                <div className="ml-4">
+                <div className="ml-4 flex flex-col justify-center">
                   <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
                     Destino más visitado
                   </div>
-                  <div className="text-lg font-bold text-gray-900 dark:text-white mt-1 truncate max-w-[150px]" title={analytics?.mostVisitedDestination || "N/A"}>
+                  <div className="text-lg font-bold text-gray-900 dark:text-white mt-2 truncate max-w-[150px]" title={analytics?.mostVisitedDestination || "N/A"}>
                     {analytics?.mostVisitedDestination || "N/A"}
                   </div>
                 </div>
@@ -563,11 +574,11 @@ export default function AnalyticsPage() {
                     <CalendarIcon className="h-6 w-6 text-gray-600 dark:text-gray-400" />
                   )}
                 </div>
-                <div className="ml-4">
+                <div className="ml-4 flex flex-col justify-center">
                   <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
                     Tendencia de Gastos
                   </div>
-                  <div className="text-lg font-bold text-gray-900 dark:text-white mt-1">
+                  <div className="text-lg font-bold text-gray-900 dark:text-white mt-2">
                     {analytics?.monthlyTrend === "up" ? "Aumentando" : 
                      analytics?.monthlyTrend === "down" ? "Disminuyendo" : "Estable"}
                   </div>

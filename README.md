@@ -1,4 +1,4 @@
-<div align="center">
+<img width="1687" height="965" alt="{33981AA6-E550-47B7-BA13-250836128147}" src="https://github.com/user-attachments/assets/f3132b98-d32e-4610-9741-4c112faa0888" /><div align="center">
   <img src="public/globe.svg" alt="App Viajes" width="120" />
   <h1>App Viajes</h1>
   <p><strong>Planifica, reserva y controla tus viajes</strong><br/>Una plataforma completa para itinerarios, gastos, presupuestos y analíticas.</p>
@@ -19,17 +19,6 @@
     <img alt="CI/CD" src="https://img.shields.io/badge/GitHub_Actions-CI%2FCD-2088FF?logo=githubactions&logoColor=white" />
   </p>
 </div>
-
----
-
-## 📢 Aviso Importante: Reversión de Diseño (01/02/2026)
-
-Se ha realizado una reversión completa del diseño para eliminar el estilo "neobrutalista" y restaurar la interfaz profesional original.
-- **Commit de referencia**: `7880499` (Estado previo al rediseño).
-- **Cambios**: Eliminación de componentes `Neo*`, restauración de layouts clásicos y limpieza de estilos.
-- **Motivo**: Inconsistencia visual y problemas de usabilidad reportados.
-
----
 
 ## 📋 Descripción
 

@@ -273,9 +273,17 @@ export default function AnalyticsPage() {
       // Generación optimizada de la imagen
       const dataUrl = await toPng(element, {
         backgroundColor: '#ffffff',
-        pixelRatio: 1.5, // Equilibrio entre calidad y estabilidad
+        pixelRatio: 2, // Mayor calidad para evitar textos borrosos
         cacheBust: true,
-        fontEmbedCSS: '', // Evita el error "trim" al saltar el procesamiento de fuentes externas
+        fontEmbedCSS: '', // Evita el error "trim"
+        width: 1200, // Forzamos un ancho de escritorio para asegurar el layout correcto
+        style: {
+          width: '1200px', // Asegura que el contenedor tenga espacio suficiente
+          maxWidth: '1200px',
+          height: 'auto',
+          margin: '0 auto',
+          padding: '40px', // Padding interno para que no quede pegado a los bordes
+        },
         filter: (node) => {
           // Mantenemos STYLE y LINK para conservar el diseño
           if (node.tagName === 'SCRIPT') return false;
@@ -290,7 +298,7 @@ export default function AnalyticsPage() {
       });
 
       const pdf = new jsPDF({
-        orientation: 'portrait',
+        orientation: 'landscape', // Cambiamos a horizontal para mejor visualización de dashboards
         unit: 'mm',
         format: 'a4'
       });
@@ -298,6 +306,10 @@ export default function AnalyticsPage() {
       const imgProps = pdf.getImageProperties(dataUrl);
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+      
+      // Si la altura es mayor que una página, podríamos necesitar paginación,
+      // pero por ahora ajustamos al ancho y dejamos que fluya.
+      // Para un dashboard de una sola vista, landscape suele funcionar mejor.
       
       pdf.addImage(dataUrl, 'PNG', 0, 0, pdfWidth, pdfHeight);
       pdf.save(`reporte-viajes-${new Date().toISOString().split("T")[0]}.pdf`);

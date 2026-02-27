@@ -1,6 +1,6 @@
 <div align="center">
   <img src="public/globe.svg" alt="App Viajes" width="120" />
-  <h1>App Viajes</h1>
+  <h1>TravelPal</h1>
   <p><strong>Planifica, reserva y controla tus viajes</strong><br/>Una plataforma completa para itinerarios, gastos, presupuestos y analíticas.</p>
 
   <p>
@@ -19,17 +19,6 @@
     <img alt="CI/CD" src="https://img.shields.io/badge/GitHub_Actions-CI%2FCD-2088FF?logo=githubactions&logoColor=white" />
   </p>
 </div>
-
----
-
-## 📢 Aviso Importante: Reversión de Diseño (01/02/2026)
-
-Se ha realizado una reversión completa del diseño para eliminar el estilo "neobrutalista" y restaurar la interfaz profesional original.
-- **Commit de referencia**: `7880499` (Estado previo al rediseño).
-- **Cambios**: Eliminación de componentes `Neo*`, restauración de layouts clásicos y limpieza de estilos.
-- **Motivo**: Inconsistencia visual y problemas de usabilidad reportados.
-
----
 
 ## 📋 Descripción
 
@@ -51,9 +40,7 @@ App Viajes es una aplicación web colaborativa para gestionar todo el ciclo de u
 ## 🖼️ Banner / Capturas
 
 <div align="center">
-  <img src="./public/hero-app-viajes.svg" alt="Banner App Viajes" width="1000" />
-  <p><em>Banner hero del repositorio. Se puede reemplazar por capturas reales del dashboard o páginas clave.</em></p>
-  
+<img width="1677" height="971" alt="{A27E7AE7-0270-41C0-827A-CE5C69B448E3}" src="https://github.com/user-attachments/assets/0f79bbe6-983a-4016-8679-1d96e89ed60e" />  
 </div>
 
 ---

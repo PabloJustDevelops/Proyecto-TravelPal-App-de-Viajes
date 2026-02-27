@@ -452,7 +452,7 @@ export const Calendar: React.FC<CalendarProps> = ({
           {[
             { label: 'Viajes', color: 'bg-blue-500' },
             { label: 'Reservas', color: 'bg-green-500' },
-            { label: 'Pendiente', color: 'bg-yellow-500' },
+            { label: 'Pendiente', color: 'bg-orange-500' },
             { label: 'Actividades', color: 'bg-purple-500' },
             { label: 'Tareas', color: 'bg-emerald-500' },
           ].map((item) => (

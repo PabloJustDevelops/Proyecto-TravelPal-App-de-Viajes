@@ -175,7 +175,7 @@ export default function PlanningPage() {
           booking.status === "confirmed"
             ? "bg-green-500 text-white"
             : booking.status === "pending"
-              ? "bg-yellow-500 text-white"
+              ? "bg-orange-500 text-white"
               : "bg-red-500 text-white",
         time: booking.start_time,
         description: booking.description,
@@ -599,7 +599,7 @@ export default function PlanningPage() {
                   {upcomingBookings.map((booking) => (
                     <div
                       key={booking.id}
-                      className="border-l-4 border-blue-500 pl-3 dark:border-blue-400"
+                      className="border-l-4 border-green-500 pl-3 dark:border-green-400"
                     >
                       <p className="font-medium text-sm text-gray-900 dark:text-white">
                         {booking.title}
@@ -631,7 +631,7 @@ export default function PlanningPage() {
                     .map((trip) => (
                       <div
                         key={trip.id}
-                        className="border-l-4 border-green-500 pl-3 cursor-pointer hover:bg-gray-50 p-2 rounded"
+                        className="border-l-4 border-blue-500 pl-3 cursor-pointer hover:bg-gray-50 p-2 rounded"
                         onClick={() => router.push(`/trips/${trip.id}`)}
                       >
                         <p className="font-medium text-sm text-gray-900">

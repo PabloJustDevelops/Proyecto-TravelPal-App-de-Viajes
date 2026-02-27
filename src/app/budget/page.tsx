@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { createSupabaseClient, Expense } from "@/lib/supabase";
+import { Expense } from "@/lib/supabase";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import BudgetCard from "@/components/budget/BudgetCard";
 import ExpenseChart from "@/components/charts/ExpenseChart";
@@ -122,7 +122,7 @@ export default function BudgetPage() {
           ),
         );
 
-        const fetchPromise = fetch("/api/budget");
+        const fetchPromise = fetch("/api/budget", { cache: 'no-store' });
 
         const res = (await Promise.race([
           fetchPromise,
@@ -149,7 +149,10 @@ export default function BudgetPage() {
               expensesData?.filter((expense: Expense) => {
                 const expenseDate = new Date(expense.date);
                 const budgetStart = new Date(budget.start_date);
+                budgetStart.setHours(0, 0, 0, 0);
+
                 const budgetEnd = new Date(budget.end_date);
+                budgetEnd.setHours(23, 59, 59, 999);
 
                 const dateInRange =
                   expenseDate >= budgetStart && expenseDate <= budgetEnd;
@@ -364,7 +367,7 @@ export default function BudgetPage() {
 
     try {
       setSubmitting(true);
-      const supabase = createSupabaseClient();
+      setSubmitError(null);
 
       const budgetData = {
         name: formData.name.trim(),
@@ -378,9 +381,13 @@ export default function BudgetPage() {
         user_id: user?.id,
       };
 
-      // Use API instead of direct supabase call
-      const res = await fetch('/api/budget', {
-          method: 'POST',
+      // Use API for both create and update
+      const isEditing = !!editingBudget;
+      const url = isEditing ? `/api/budget/${editingBudget.id}` : '/api/budget';
+      const method = isEditing ? 'PATCH' : 'POST';
+
+      const res = await fetch(url, {
+          method: method,
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(budgetData)
       });
@@ -405,27 +412,31 @@ export default function BudgetPage() {
     if (!confirm("¿Estás seguro de que quieres eliminar este presupuesto?"))
       return;
 
+    const previousBudgets = [...budgets];
     try {
       // Optimistic update
-      const previousBudgets = [...budgets];
       setBudgets((prev) => prev.filter((b) => b.id !== budgetId));
 
-      const supabase = createSupabaseClient();
-      const { error } = await supabase
-        .from("budgets")
-        .delete()
-        .eq("id", budgetId);
+      // Use API for delete
+      const res = await fetch(`/api/budget/${budgetId}`, {
+        method: 'DELETE',
+      });
 
-      if (error) {
-        // Rollback on error
-        setBudgets(previousBudgets);
-        throw error;
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || 'Error al eliminar el presupuesto');
       }
 
-      // No llamar a loadData() aquí para evitar el loop
+      // No need to call loadData() if optimistic update is successful, 
+      // but if we want to be 100% sure we can. 
+      // Given the user issues, let's rely on optimistic for speed and maybe background refresh if needed.
+      // But for now, optimistic is fine.
     } catch (error) {
+      // Rollback on error
+      setBudgets(previousBudgets);
       const msg = getErrorMessage(error, "Error al eliminar el presupuesto");
       logger.error("Error deleting budget:", { error: msg, raw: error });
+      alert(msg);
     }
   };
 

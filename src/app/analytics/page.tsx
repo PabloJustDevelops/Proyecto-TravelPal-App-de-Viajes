@@ -615,7 +615,7 @@ export default function AnalyticsPage() {
             </div>
           </Card>
           
-          <Card className="overflow-hidden lg:col-span-2 break-inside-avoid mt-20">
+          <Card className="overflow-hidden lg:col-span-2 break-inside-avoid mt-32">
              <div className="p-6">
               <h3 className="text-lg font-semibold mb-6 text-gray-900 dark:text-white flex items-center">
                 <span className="w-1 h-6 bg-green-500 rounded-full mr-3"></span>

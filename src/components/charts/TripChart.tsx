@@ -144,14 +144,19 @@ export default function TripChart({ trips, type = 'status', title = 'Estado de V
               wrapperStyle={{ 
                 display: 'flex', 
                 flexDirection: 'column', 
-                gap: '8px',
-                right: 0,
-                width: '45%'
+                justifyContent: 'center', // Centrado vertical del bloque
+                gap: '12px', // Más espacio entre items
+                right: 0, 
+                width: '45%',
+                height: '100%', // Ocupa toda la altura para centrarse
+                top: 0
               }}
               formatter={(value, entry: any) => (
-                <span className="text-sm text-gray-600 dark:text-gray-300 ml-2 flex items-center h-6 truncate" title={value}>
-                  {value}
-                </span>
+                <div className="flex items-center ml-2">
+                  <span className="text-sm text-gray-600 dark:text-gray-300 truncate" title={value}>
+                    {value}
+                  </span>
+                </div>
               )}
             />
           </PieChart>

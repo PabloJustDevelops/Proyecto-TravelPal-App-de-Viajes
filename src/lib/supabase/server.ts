@@ -44,55 +44,62 @@ function unauthorized(): NextResponse {
   return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 }
 
+function authVerificationFailed(): NextResponse {
+  return NextResponse.json(
+    { error: "Error de autenticación" },
+    { status: 500 },
+  );
+}
+
 export async function requireUser(): Promise<RequireUserResult> {
   const supabase = await createServerSupabaseClient();
 
-  const { data, error } = await supabase.auth.getClaims();
+  try {
+    const { data, error } = await supabase.auth.getClaims();
 
-  if (error) {
-    const status = error.status;
-    const authServerFailed =
-      status === 0 || (typeof status === "number" && status >= 500);
+    if (error) {
+      const status = error.status;
+      const authServerFailed =
+        status === 0 || (typeof status === "number" && status >= 500);
 
-    if (authServerFailed) {
-      logger.error("Server session: auth verification failed", {
-        error: error.message,
-        status,
-      });
+      if (authServerFailed) {
+        logger.error("Server session: auth verification failed", {
+          error: error.message,
+          status,
+        });
 
-      return {
-        ok: false,
-        response: NextResponse.json(
-          { error: "Error de autenticación" },
-          { status: 500 },
-        ),
-      };
+        return { ok: false, response: authVerificationFailed() };
+      }
+
+      return { ok: false, response: unauthorized() };
     }
 
-    return { ok: false, response: unauthorized() };
+    const claims = data?.claims;
+
+    if (!claims?.sub) {
+      return { ok: false, response: unauthorized() };
+    }
+
+    const email = typeof claims.email === "string" ? claims.email : undefined;
+    const metadata = claims.user_metadata;
+
+    return {
+      ok: true,
+      supabase,
+      user: {
+        id: claims.sub,
+        email,
+        user_metadata:
+          metadata && typeof metadata === "object"
+            ? (metadata as Record<string, unknown>)
+            : undefined,
+      },
+    };
+  } catch (err) {
+    logger.error("Server session: auth verification threw", err);
+
+    return { ok: false, response: authVerificationFailed() };
   }
-
-  const claims = data?.claims;
-
-  if (!claims?.sub) {
-    return { ok: false, response: unauthorized() };
-  }
-
-  const email = typeof claims.email === "string" ? claims.email : undefined;
-  const metadata = claims.user_metadata;
-
-  return {
-    ok: true,
-    supabase,
-    user: {
-      id: claims.sub,
-      email,
-      user_metadata:
-        metadata && typeof metadata === "object"
-          ? (metadata as Record<string, unknown>)
-          : undefined,
-    },
-  };
 }
 
 export async function ensureUserExists(

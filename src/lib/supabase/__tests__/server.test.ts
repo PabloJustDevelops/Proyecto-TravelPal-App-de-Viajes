@@ -142,6 +142,20 @@ describe("requireUser", () => {
     }
   });
 
+  it("devuelve 500 estandarizado si el cliente de Auth lanza", async () => {
+    mockAuthClient(jest.fn().mockRejectedValue(new Error("fetch failed")));
+
+    const result = await requireUser();
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.response.status).toBe(500);
+      await expect(result.response.json()).resolves.toEqual({
+        error: "Error de autenticación",
+      });
+    }
+  });
+
   it("normaliza un usuario sin email ni metadata", async () => {
     mockAuthClient(
       jest.fn().mockResolvedValue({

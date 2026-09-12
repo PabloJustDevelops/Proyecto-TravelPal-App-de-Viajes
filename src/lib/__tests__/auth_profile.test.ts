@@ -1,6 +1,5 @@
 import { authService } from '../auth';
 import { createSupabaseClient } from '../supabase';
-import { logger } from '../logger';
 
 // Mock dependencies
 jest.mock('../supabase', () => ({
@@ -26,30 +25,23 @@ describe('AuthService Profile Update', () => {
     // Setup mock Supabase client
     mockSupabase = {
       auth: {
-        getUser: jest.fn(),
+        getSession: jest.fn(),
         updateUser: jest.fn(),
       },
       from: jest.fn(),
     };
 
     (createSupabaseClient as jest.Mock).mockReturnValue(mockSupabase);
-    
-    // Re-instantiate authService to use the mock client
-    // Note: In a real scenario, we might want to inject dependencies, 
-    // but here we are mocking the module that AuthService imports.
-    // However, AuthService instantiates the client in its property initializer.
-    // So we need to access the private 'supabase' property or rely on the mock being active when the module was imported.
-    // Since jest.mock hoists, the mock should be active. 
-    // But authService is a singleton exported from the module.
-    // We might need to manually set the supabase property if it's accessible or use prototype spying.
-    // For this test, let's assume we can access the private property via 'any' cast for testing purposes.
+
+    // AuthService instancia el cliente en un property initializer; sustituimos
+    // la instancia del singleton por el mock.
     (authService as any).supabase = mockSupabase;
   });
 
   test('should update profile successfully', async () => {
-    // Mock getUser
-    mockSupabase.auth.getUser.mockResolvedValue({
-      data: { user: { id: 'user-123', email: 'test@example.com' } },
+    // getCurrentUser() obtiene la sesión (ya no usa getUser)
+    mockSupabase.auth.getSession.mockResolvedValue({
+      data: { session: { user: { id: 'user-123', email: 'test@example.com' } } },
       error: null,
     });
 
@@ -79,9 +71,8 @@ describe('AuthService Profile Update', () => {
   });
 
   test('should handle timeout gracefully', async () => {
-    // Mock getUser
-    mockSupabase.auth.getUser.mockResolvedValue({
-      data: { user: { id: 'user-123' } },
+    mockSupabase.auth.getSession.mockResolvedValue({
+      data: { session: { user: { id: 'user-123' } } },
       error: null,
     });
 
@@ -90,7 +81,8 @@ describe('AuthService Profile Update', () => {
       select: jest.fn().mockReturnThis(),
       eq: jest.fn().mockReturnThis(),
       maybeSingle: jest.fn().mockResolvedValue({ data: {}, error: null }),
-      upsert: jest.fn().mockImplementation(() => new Promise(resolve => setTimeout(resolve, 15000))), // Delay > 10s
+      // Delay > 20s (timeout de updateProfile)
+      upsert: jest.fn().mockImplementation(() => new Promise(resolve => setTimeout(resolve, 21000))),
     };
     mockSupabase.from.mockReturnValue(mockSelectBuilder);
 
@@ -98,13 +90,13 @@ describe('AuthService Profile Update', () => {
     mockSupabase.auth.updateUser.mockResolvedValue({ error: null });
 
     const updates = { full_name: 'Timeout Name' };
-    
-    await expect(authService.updateProfile(updates)).rejects.toThrow('Update profile timed out after 10s');
-  }, 20000);
+
+    await expect(authService.updateProfile(updates)).rejects.toThrow('Update profile timed out after 20s');
+  }, 25000);
 
   test('should fail if no user logged in', async () => {
-    mockSupabase.auth.getUser.mockResolvedValue({
-      data: { user: null },
+    mockSupabase.auth.getSession.mockResolvedValue({
+      data: { session: null },
       error: null,
     });
 

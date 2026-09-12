@@ -159,7 +159,7 @@ export default function NewBookingForm({
       // y seleccionar el primero si no hay uno, o mostrar error.
       // Pero mejor aún, vamos a enviar la petición a la API.
 
-      let url = '/api/planning'; 
+      const url = '/api/planning'; 
       let method = 'POST';
       
       if (initialData) {

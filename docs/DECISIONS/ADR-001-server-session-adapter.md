@@ -20,6 +20,7 @@ Los 12 handlers consumen `requireUser()`. `ensureUserExists` se mueve al mismo m
 - 21 copias del bloque pasan a 1 seam; un único texto de 401 y una única política de sesión.
 - `getClaims()` verifica el token de verdad; con claves simétricas implica una llamada de red por petición (con asimétricas, verificación local).
 - La distinción 401/500 se deriva de `error.status` de `AuthError`: `0` o `>= 500` → 500; cualquier otro valor (o sin status) → 401.
+- Si `getClaims()` lanza en lugar de devolver un `AuthError` (p. ej. un fallo de red), `requireUser()` lo captura y responde con el mismo 500 estandarizado; la excepción nunca sube al handler.
 - Los handlers dejan de saber cómo se construye el cliente; el módulo es testeable a través de `requireUser()`.
 - `getSupabaseAdmin` sigue sin usarse; no entra en este cambio.
 

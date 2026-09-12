@@ -1,13 +1,11 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import TripsPage from "../page";
 import { useAuth } from "@/contexts/AuthContext";
-import { createSupabaseClient } from "@/lib/supabase";
 
 // Mock dependencies
 jest.mock("@/contexts/AuthContext", () => ({
   useAuth: jest.fn(),
 }));
-jest.mock("@/lib/supabase");
 jest.mock("next/navigation", () => ({
   useRouter: () => ({
     push: jest.fn(),
@@ -39,36 +37,18 @@ jest.mock("@/lib/logger", () => ({
 }));
 
 describe("TripsPage", () => {
-  const mockSupabase = {
-    from: jest.fn(),
-  };
-  const mockSelect = jest.fn();
-  const mockEq = jest.fn();
-  const mockOrder = jest.fn();
-  const mockBuilder = {
-    abortSignal: jest.fn().mockReturnThis(),
-    then: jest.fn(),
-  };
+  let fetchMock: jest.Mock;
+
+  const jsonResponse = (data: unknown) => ({
+    ok: true,
+    status: 200,
+    json: async () => data,
+  });
 
   beforeEach(() => {
     jest.clearAllMocks();
-    (createSupabaseClient as jest.Mock).mockReturnValue(mockSupabase);
-
-    // Setup supabase chain
-    mockSupabase.from.mockReturnValue({
-      select: mockSelect,
-    });
-    mockSelect.mockReturnValue({
-      eq: mockEq,
-    });
-    mockEq.mockReturnValue({
-      order: mockOrder,
-    });
-    // Default builder behavior
-    mockOrder.mockReturnValue(mockBuilder);
-    mockBuilder.then.mockImplementation((resolve) =>
-      resolve({ data: [], error: null }),
-    );
+    fetchMock = jest.fn().mockResolvedValue(jsonResponse([]));
+    global.fetch = fetchMock as unknown as typeof fetch;
   });
 
   it("shows loading spinner initially when auth is loading", () => {
@@ -119,12 +99,7 @@ describe("TripsPage", () => {
       loading: false,
     });
 
-    mockBuilder.then.mockImplementation((resolve) =>
-      resolve({
-        data: mockTrips,
-        error: null,
-      }),
-    );
+    fetchMock.mockResolvedValue(jsonResponse(mockTrips));
 
     render(<TripsPage />);
 
@@ -139,12 +114,7 @@ describe("TripsPage", () => {
       loading: false,
     });
 
-    mockBuilder.then.mockImplementation((resolve) =>
-      resolve({
-        data: [],
-        error: null,
-      }),
-    );
+    fetchMock.mockResolvedValue(jsonResponse([]));
 
     render(<TripsPage />);
 

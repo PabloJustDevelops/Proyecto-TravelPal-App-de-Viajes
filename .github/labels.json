@@ -1,5 +1,10 @@
 [
   { "name": "bug", "color": "d73a4a", "description": "Error o problema" },
   { "name": "feature", "color": "a2eeef", "description": "Nueva funcionalidad" },
-  { "name": "enhancement", "color": "a2eeef", "description": "Mejora o refactor" }
+  { "name": "enhancement", "color": "a2eeef", "description": "Mejora o refactor" },
+  { "name": "needs-triage", "color": "fbca04", "description": "Maintainer needs to evaluate this issue" },
+  { "name": "needs-info", "color": "d876e3", "description": "Waiting on reporter for more information" },
+  { "name": "ready-for-agent", "color": "0e8a16", "description": "Fully specified, ready for an AFK agent" },
+  { "name": "ready-for-human", "color": "1d76db", "description": "Requires human implementation" },
+  { "name": "wontfix", "color": "ffffff", "description": "Will not be actioned" }
 ]

@@ -1,3 +1,8 @@
+// Pin the test environment. A production NODE_ENV in the ambient environment
+// leaks into Jest and makes React resolve to its production build, where
+// React.act does not exist and every component test fails.
+process.env.NODE_ENV = 'test'
+
 const nextJest = require('next/jest')
 
 const createJestConfig = nextJest({

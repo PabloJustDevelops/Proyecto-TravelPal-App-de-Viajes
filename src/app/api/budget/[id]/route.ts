@@ -1,7 +1,6 @@
-import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
+import { requireUser } from "@/lib/supabase/server";
 
 export async function PATCH(
   request: Request,
@@ -9,39 +8,9 @@ export async function PATCH(
 ) {
   try {
     const { id } = await params;
-    const cookieStore = await cookies();
-
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll();
-          },
-          setAll(cookiesToSet) {
-            try {
-              cookiesToSet.forEach(({ name, value, options }) =>
-                cookieStore.set(name, value, options),
-              );
-            } catch {
-              // Server Component setAll ignore
-            }
-          },
-        },
-      },
-    );
-
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-
-    if (!session) {
-      return NextResponse.json(
-        { error: "No autorizado" },
-        { status: 401 },
-      );
-    }
+    const auth = await requireUser();
+    if (!auth.ok) return auth.response;
+    const { supabase, user } = auth;
 
     const body = await request.json();
     
@@ -62,7 +31,7 @@ export async function PATCH(
       .from("budgets")
       .update(updateData)
       .eq("id", id)
-      .eq("user_id", session.user.id)
+      .eq("user_id", user.id)
       .select()
       .single();
 
@@ -90,45 +59,15 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    const cookieStore = await cookies();
-
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll();
-          },
-          setAll(cookiesToSet) {
-            try {
-              cookiesToSet.forEach(({ name, value, options }) =>
-                cookieStore.set(name, value, options),
-              );
-            } catch {
-              // Server Component setAll ignore
-            }
-          },
-        },
-      },
-    );
-
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-
-    if (!session) {
-      return NextResponse.json(
-        { error: "No autorizado" },
-        { status: 401 },
-      );
-    }
+    const auth = await requireUser();
+    if (!auth.ok) return auth.response;
+    const { supabase, user } = auth;
 
     const { error } = await supabase
       .from("budgets")
       .delete()
       .eq("id", id)
-      .eq("user_id", session.user.id);
+      .eq("user_id", user.id);
 
     if (error) {
       logger.error("Error deleting budget:", error);

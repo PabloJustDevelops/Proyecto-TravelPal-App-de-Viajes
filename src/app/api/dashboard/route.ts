@@ -1,45 +1,14 @@
-import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
+import { requireUser } from "@/lib/supabase/server";
 
 export async function GET(request: Request) {
   try {
-    const cookieStore = await cookies();
+    const auth = await requireUser();
+    if (!auth.ok) return auth.response;
+    const { supabase, user } = auth;
 
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll();
-          },
-          setAll(cookiesToSet) {
-            try {
-              cookiesToSet.forEach(({ name, value, options }) =>
-                cookieStore.set(name, value, options),
-              );
-            } catch {
-              // Server Component setAll ignore
-            }
-          },
-        },
-      },
-    );
-
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-
-    if (!session) {
-      return NextResponse.json(
-        { error: "No autorizado" },
-        { status: 401 },
-      );
-    }
-
-    const userId = session.user.id;
+    const userId = user.id;
 
     // Parallel fetch for Dashboard data
     const [tripsRes, expensesRes, budgetsRes] = await Promise.all([

@@ -153,9 +153,6 @@ const nextConfig = {
 
     // Configuración del LLM para el Chatbot
     NEXT_PUBLIC_LLM_PROVIDER: process.env.NEXT_PUBLIC_LLM_PROVIDER || "groq",
-    NEXT_PUBLIC_LLM_API_KEY:
-      process.env.NEXT_PUBLIC_LLM_API_KEY ||
-      "REMOVED",
     NEXT_PUBLIC_LLM_MODEL: process.env.NEXT_PUBLIC_LLM_MODEL || "mixtral-8x7b",
     NEXT_PUBLIC_LLM_TEMPERATURE:
       process.env.NEXT_PUBLIC_LLM_TEMPERATURE || "0.7",

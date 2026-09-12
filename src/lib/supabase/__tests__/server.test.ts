@@ -1,6 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import { requireUser } from "../server";
+import { createServerSupabaseClient, requireUser } from "../server";
 
 jest.mock("@supabase/ssr");
 jest.mock("next/headers");
@@ -140,5 +140,70 @@ describe("requireUser", () => {
         error: "Error de autenticación",
       });
     }
+  });
+
+  it("normaliza un usuario sin email ni metadata", async () => {
+    mockAuthClient(
+      jest.fn().mockResolvedValue({
+        data: {
+          claims: { sub: "user-2" },
+          header: {},
+          signature: new Uint8Array(),
+        },
+        error: null,
+      }),
+    );
+
+    const result = await requireUser();
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.user).toEqual({
+        id: "user-2",
+        email: undefined,
+        user_metadata: undefined,
+      });
+    }
+  });
+});
+
+describe("createServerSupabaseClient", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it("enlaza getAll/setAll con las cookies del request", async () => {
+    const store = {
+      getAll: jest.fn(() => [{ name: "sb", value: "token" }]),
+      set: jest.fn(),
+    };
+    cookiesMock.mockResolvedValue(store);
+    createServerClientMock.mockReturnValue({});
+
+    await createServerSupabaseClient();
+
+    const options = createServerClientMock.mock.calls[0][2];
+    expect(options.cookies.getAll()).toEqual([{ name: "sb", value: "token" }]);
+
+    options.cookies.setAll([{ name: "sb", value: "nuevo", options: {} }]);
+    expect(store.set).toHaveBeenCalledWith("sb", "nuevo", {});
+  });
+
+  it("ignora el fallo al escribir cookies (Server Component)", async () => {
+    const store = {
+      getAll: jest.fn(() => []),
+      set: jest.fn(() => {
+        throw new Error("read-only");
+      }),
+    };
+    cookiesMock.mockResolvedValue(store);
+    createServerClientMock.mockReturnValue({});
+
+    await createServerSupabaseClient();
+
+    const options = createServerClientMock.mock.calls[0][2];
+    expect(() =>
+      options.cookies.setAll([{ name: "sb", value: "x", options: {} }]),
+    ).not.toThrow();
   });
 });

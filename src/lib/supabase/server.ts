@@ -40,6 +40,10 @@ export type RequireUserResult =
   | { ok: true; supabase: ServerSupabaseClient; user: ServerUser }
   | { ok: false; response: NextResponse };
 
+function unauthorized(): NextResponse {
+  return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+}
+
 export async function requireUser(): Promise<RequireUserResult> {
   const supabase = await createServerSupabaseClient();
 
@@ -65,19 +69,13 @@ export async function requireUser(): Promise<RequireUserResult> {
       };
     }
 
-    return {
-      ok: false,
-      response: NextResponse.json({ error: "No autorizado" }, { status: 401 }),
-    };
+    return { ok: false, response: unauthorized() };
   }
 
   const claims = data?.claims;
 
   if (!claims?.sub) {
-    return {
-      ok: false,
-      response: NextResponse.json({ error: "No autorizado" }, { status: 401 }),
-    };
+    return { ok: false, response: unauthorized() };
   }
 
   const email = typeof claims.email === "string" ? claims.email : undefined;

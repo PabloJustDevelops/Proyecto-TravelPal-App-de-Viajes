@@ -53,6 +53,7 @@ testsprite_tests/testsprite_frontend_test_plan.json
 # InsForge & AI agent skills
 .insforge
 .agent
+/agent/
 .agents
 .augment
 .claude

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Expense, Trip } from "@/lib/supabase";
 import DashboardLayout from "@/components/layout/DashboardLayout";
@@ -15,63 +15,33 @@ import {
   ChartBarIcon,
   CalendarIcon,
 } from "@heroicons/react/24/outline";
-import { formatCurrency, getErrorMessage } from "@/lib/utils";
+import { formatCurrency, getLoadErrorMessage } from "@/lib/utils";
 import Link from "next/link";
 import PageSkeleton from "@/components/ui/PageSkeleton";
-import { logger } from "@/lib/logger";
+import { useApiResource } from "@/hooks/use-api-resource";
 
 export default function ExpensesPage() {
-  const { user } = useAuth();
-  const [expenses, setExpenses] = useState<(Expense & { trip?: Trip })[]>([]);
-  const [filteredExpenses, setFilteredExpenses] = useState<
-    (Expense & { trip?: Trip })[]
-  >([]);
-  const [loading, setLoading] = useState(true);
+  const { user, loading: authLoading } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [tripFilter, setTripFilter] = useState<string>("all");
-  const [trips, setTrips] = useState<Trip[]>([]);
-  const [error, setError] = useState<string | null>(null);
 
-  const loadData = useCallback(async () => {
-    if (!user) return;
-    setLoading(true);
-    setError(null);
+  const url = !authLoading && user ? "/api/expenses" : null;
+  const {
+    data,
+    loading,
+    error: loadError,
+    refetch,
+  } = useApiResource<{
+    expenses: (Expense & { trip?: Trip })[];
+    trips: Trip[];
+  }>(url);
 
-    const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error("Timeout")), 15000),
-    );
+  const { expenses, trips, filteredExpenses } = useMemo(() => {
+    const expensesData = data?.expenses ?? [];
+    const tripsData = data?.trips ?? [];
 
-    try {
-      const fetchPromise = fetch("/api/expenses");
-      const res = (await Promise.race([
-        fetchPromise,
-        timeoutPromise,
-      ])) as Response;
-
-      if (!res.ok) throw new Error(`API Error: ${res.status}`);
-
-      const data = await res.json();
-
-      setExpenses(data.expenses || []);
-      setTrips(data.trips || []);
-    } catch (error: any) {
-      console.error("Error loading expenses data:", error);
-      if (error.message === "Timeout") {
-        setError(
-          "La carga de datos ha tardado demasiado. Por favor, inténtalo de nuevo.",
-        );
-      } else {
-        setError("Error al cargar los gastos. Por favor, inténtalo de nuevo.");
-        logger.error("ExpensesPage: Error loading data", { error });
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, [user]);
-
-  const filterExpenses = useCallback(() => {
-    let filtered = expenses;
+    let filtered = expensesData;
 
     // Filter by search term
     if (searchTerm) {
@@ -96,16 +66,21 @@ export default function ExpensesPage() {
       filtered = filtered.filter((expense) => expense.trip_id === tripFilter);
     }
 
-    setFilteredExpenses(filtered);
-  }, [expenses, searchTerm, categoryFilter, tripFilter]);
+    return {
+      expenses: expensesData,
+      trips: tripsData,
+      filteredExpenses: filtered,
+    };
+  }, [data, searchTerm, categoryFilter, tripFilter]);
 
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+  const error = getLoadErrorMessage(loadError, {
+    timeout:
+      "La carga de datos ha tardado demasiado. Por favor, inténtalo de nuevo.",
+    request: "Error al cargar los gastos. Por favor, inténtalo de nuevo.",
+  });
 
-  useEffect(() => {
-    filterExpenses();
-  }, [expenses, searchTerm, categoryFilter, tripFilter, filterExpenses]);
+  const showSkeleton =
+    authLoading || loading || (url !== null && data === null && !loadError);
 
   const getExpenseStats = () => {
     const totalAmount = expenses.reduce((sum, expense) => {
@@ -154,7 +129,7 @@ export default function ExpensesPage() {
 
   const stats = getExpenseStats();
 
-  if (loading) {
+  if (showSkeleton) {
     return (
       <DashboardLayout>
         <PageSkeleton />
@@ -185,7 +160,7 @@ export default function ExpensesPage() {
             Error al cargar los datos
           </h3>
           <p className="text-gray-500 mb-4">{error}</p>
-          <Button onClick={() => loadData()}>Reintentar</Button>
+          <Button onClick={() => refetch()}>Reintentar</Button>
         </div>
       </DashboardLayout>
     );

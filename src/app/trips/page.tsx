@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useState, useMemo } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
@@ -13,57 +13,25 @@ import {
 } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import PageSkeleton from "@/components/ui/PageSkeleton";
-import { logger } from "@/lib/logger";
+import { useApiResource } from "@/hooks/use-api-resource";
+import { getLoadErrorMessage } from "@/lib/utils";
 
 export default function TripsPage() {
   const { user, loading: authLoading } = useAuth();
-  const [trips, setTrips] = useState<Trip[]>([]);
-  const [filteredTrips, setFilteredTrips] = useState<Trip[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
-  const loadTrips = useCallback(async () => {
-    if (!user?.id) {
-      setLoading(false);
-      return;
-    }
+  const url = !authLoading && user?.id ? "/api/trips" : null;
+  const {
+    data,
+    loading,
+    error: loadError,
+    refetch,
+  } = useApiResource<Trip[]>(url);
 
-    try {
-      setLoading(true);
-      setError(null);
+  const trips = useMemo(() => data ?? [], [data]);
 
-      logger.debug("TripsPage: Loading trips via API");
-      
-      // Add timeout
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Timeout')), 15000)
-      );
-
-      const fetchPromise = fetch("/api/trips");
-      const res = await Promise.race([fetchPromise, timeoutPromise]) as Response;
-
-      if (!res.ok) {
-        throw new Error(`API Error: ${res.status}`);
-      }
-
-      const data = await res.json();
-      logger.debug("TripsPage: Trips loaded", data?.length);
-      setTrips(data || []);
-    } catch (error: any) {
-      const errorMessage = error.message === "Timeout" 
-        ? "La carga de viajes ha tardado demasiado. Por favor, reintenta."
-        : "Error al cargar los viajes. Por favor, intenta recargar.";
-      
-      logger.error("Error loading trips:", error);
-      setError(errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  }, [user?.id]);
-
-  const filterTrips = useCallback(() => {
+  const filteredTrips = useMemo(() => {
     let filtered = trips;
 
     // Filter by search term
@@ -91,28 +59,18 @@ export default function TripsPage() {
       }
     }
 
-    setFilteredTrips(filtered);
+    return filtered;
   }, [trips, searchTerm, statusFilter]);
 
-  useEffect(() => {
-    // Si auth está cargando, esperamos. Mantenemos loading local true.
-    if (authLoading) {
-      return;
-    }
+  const error = getLoadErrorMessage(loadError, {
+    timeout: "La carga de viajes ha tardado demasiado. Por favor, reintenta.",
+    request: "Error al cargar los viajes. Por favor, intenta recargar.",
+  });
 
-    if (user?.id) {
-      loadTrips();
-    } else {
-      // Si no hay usuario y auth terminó, paramos spinner local
-      setLoading(false);
-    }
-  }, [user?.id, authLoading, loadTrips]);
+  const showSkeleton =
+    authLoading || loading || (url !== null && data === null && !loadError);
 
-  useEffect(() => {
-    filterTrips();
-  }, [trips, searchTerm, statusFilter, filterTrips]);
-
-  if (loading) {
+  if (showSkeleton) {
     return (
       <DashboardLayout>
         <PageSkeleton />
@@ -199,7 +157,7 @@ export default function TripsPage() {
             <p className="text-sm mb-4">{error}</p>
             <Button 
               onClick={() => {
-                loadTrips();
+                refetch();
               }}
               variant="outline"
               className="bg-white hover:bg-gray-50 text-red-700 border-red-200 dark:bg-transparent dark:border-red-700 dark:text-red-400 dark:hover:bg-red-900/30"

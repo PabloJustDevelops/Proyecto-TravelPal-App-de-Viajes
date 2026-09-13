@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Expense } from "@/lib/supabase";
 import DashboardLayout from "@/components/layout/DashboardLayout";
@@ -20,7 +20,12 @@ import {
   ExclamationTriangleIcon,
   MagnifyingGlassIcon,
 } from "@heroicons/react/24/outline";
-import { formatCurrency, getErrorMessage } from "@/lib/utils";
+import {
+  formatCurrency,
+  getErrorMessage,
+  getLoadErrorMessage,
+} from "@/lib/utils";
+import { useApiResource } from "@/hooks/use-api-resource";
 
 interface Budget {
   id: string;
@@ -62,11 +67,7 @@ interface BudgetFormData {
 }
 
 export default function BudgetPage() {
-  const { user } = useAuth();
-  const [budgets, setBudgets] = useState<Budget[]>([]);
-  const [trips, setTrips] = useState<Trip[]>([]);
-  const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { user, loading: authLoading } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedTrip, setSelectedTrip] = useState("");
@@ -85,7 +86,6 @@ export default function BudgetPage() {
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
   const categories = [
     { value: "travel", label: "Viaje General" },
@@ -108,122 +108,87 @@ export default function BudgetPage() {
     { value: "CNY", label: "CNY - Yuan Chino" },
   ];
 
-  const loadData = useCallback(
-    async (signal?: AbortSignal) => {
-      try {
-        setLoading(true);
-        setError(null);
+  const url = !authLoading && user ? "/api/budget" : null;
+  const {
+    data,
+    loading,
+    error: loadError,
+    refetch,
+  } = useApiResource<{
+    budgets: BudgetWithTrip[];
+    trips: Trip[];
+    expenses: Expense[];
+  }>(url);
 
-        // Timeout promise
-        const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(
-            () => reject(new Error("Budget data fetch timed out")),
-            15000,
-          ),
-        );
-
-        const fetchPromise = fetch("/api/budget", { cache: 'no-store' });
-
-        const res = (await Promise.race([
-          fetchPromise,
-          timeoutPromise,
-        ])) as Response;
-
-        if (!res.ok) throw new Error(`API Error: ${res.status}`);
-        const data = await res.json();
-
-        const budgetsData = data.budgets || [];
-        const tripsData = data.trips || [];
-        const expensesData = data.expenses || [];
-
-        // Create a map of trip IDs to titles
-        const tripsMap = (tripsData || []).reduce((acc: any, trip: any) => {
-          acc[trip.id] = trip.title;
-          return acc;
-        }, {});
-
-        // Calculate spent amounts for each budget
-        const budgetsWithSpent =
-          budgetsData?.map((budget: BudgetWithTrip) => {
-            const budgetExpenses =
-              expensesData?.filter((expense: Expense) => {
-                const expenseDate = new Date(expense.date);
-                const budgetStart = new Date(budget.start_date);
-                budgetStart.setHours(0, 0, 0, 0);
-
-                const budgetEnd = new Date(budget.end_date);
-                budgetEnd.setHours(23, 59, 59, 999);
-
-                const dateInRange =
-                  expenseDate >= budgetStart && expenseDate <= budgetEnd;
-                const categoryMatch =
-                  budget.category === "travel" ||
-                  expense.category === budget.category;
-                const tripMatch =
-                  !budget.trip_id || expense.trip_id === budget.trip_id;
-
-                return (
-                  dateInRange &&
-                  categoryMatch &&
-                  tripMatch &&
-                  expense.currency === budget.currency
-                );
-              }) || [];
-
-            const spentAmount = budgetExpenses.reduce(
-              (sum: number, expense: Expense) => sum + expense.amount,
-              0,
-            );
-
-            return {
-              ...budget,
-              spent_amount: spentAmount,
-              trip_title: budget.trip_id ? tripsMap[budget.trip_id] : null,
-            };
-          }) || [];
-
-        setBudgets(budgetsWithSpent);
-        setTrips(tripsData || []);
-        setExpenses(expensesData || []);
-      } catch (error: any) {
-        console.error("Error loading budget data:", error);
-        if (
-          (error instanceof Error && error.name === "AbortError") ||
-          error?.code === 20 ||
-          error?.message?.includes("AbortError")
-        ) {
-          return;
-        }
-
-        if (error.message === "Budget data fetch timed out") {
-          setError(
-            "La carga de datos ha tardado demasiado. Por favor, inténtalo de nuevo.",
-          );
-        } else {
-          setError(
-            "Error al cargar los presupuestos. Por favor, inténtalo de nuevo.",
-          );
-          logger.error("BudgetPage: Error loading data", { error });
-        }
-      } finally {
-        if (!signal?.aborted) {
-          setLoading(false);
-        }
-      }
-    },
-    [user],
-  );
+  const [budgets, setBudgets] = useState<Budget[]>([]);
+  const [trips, setTrips] = useState<Trip[]>([]);
+  const [expenses, setExpenses] = useState<Expense[]>([]);
 
   useEffect(() => {
-    if (user) {
-      loadData();
-    } else {
-      // Evitar spinner infinito cuando no hay usuario
-      setLoading(false);
-    }
-  }, [user, loadData]);
+    if (!data) return;
 
-  if (loading) {
+    const budgetsData = data.budgets ?? [];
+    const tripsData = data.trips ?? [];
+    const expensesData = data.expenses ?? [];
+
+    // Create a map of trip IDs to titles
+    const tripsMap = tripsData.reduce<Record<string, string>>((acc, trip) => {
+      acc[trip.id] = trip.title;
+      return acc;
+    }, {});
+
+    // Calculate spent amounts for each budget
+    const budgetsWithSpent: Budget[] = budgetsData.map((budget) => {
+      const budgetExpenses = expensesData.filter((expense) => {
+        const expenseDate = new Date(expense.date);
+        const budgetStart = new Date(budget.start_date);
+        budgetStart.setHours(0, 0, 0, 0);
+
+        const budgetEnd = new Date(budget.end_date);
+        budgetEnd.setHours(23, 59, 59, 999);
+
+        const dateInRange = expenseDate >= budgetStart && expenseDate <= budgetEnd;
+        const categoryMatch =
+          budget.category === "travel" || expense.category === budget.category;
+        const tripMatch =
+          !budget.trip_id || expense.trip_id === budget.trip_id;
+
+        return (
+          dateInRange &&
+          categoryMatch &&
+          tripMatch &&
+          expense.currency === budget.currency
+        );
+      });
+
+      const spentAmount = budgetExpenses.reduce(
+        (sum, expense) => sum + expense.amount,
+        0,
+      );
+
+      return {
+        ...budget,
+        spent_amount: spentAmount,
+        trip_title: budget.trip_id ? tripsMap[budget.trip_id] : undefined,
+      };
+    });
+
+    setBudgets(budgetsWithSpent);
+    setTrips(tripsData);
+    setExpenses(expensesData);
+  }, [data]);
+
+  const error = getLoadErrorMessage(loadError, {
+    timeout:
+      "La carga de datos ha tardado demasiado. Por favor, inténtalo de nuevo.",
+    request:
+      "Error al cargar los presupuestos. Por favor, inténtalo de nuevo.",
+  });
+
+  const showSkeleton =
+    authLoading || loading || (url !== null && data === null && !loadError);
+
+  if (showSkeleton) {
     return (
       <DashboardLayout>
         <PageSkeleton />
@@ -254,7 +219,7 @@ export default function BudgetPage() {
             Error al cargar los datos
           </h3>
           <p className="text-gray-500 mb-4">{error}</p>
-          <Button onClick={() => loadData()}>Reintentar</Button>
+          <Button onClick={() => refetch()}>Reintentar</Button>
         </div>
       </DashboardLayout>
     );
@@ -398,7 +363,7 @@ export default function BudgetPage() {
       }
 
       setShowCreateModal(false);
-      loadData();
+      refetch();
     } catch (error) {
       const msg = getErrorMessage(error, "Error al guardar el presupuesto");
       logger.error("Error saving budget:", { error: msg, raw: error });

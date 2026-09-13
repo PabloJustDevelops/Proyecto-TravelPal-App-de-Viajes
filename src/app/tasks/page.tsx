@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Task } from "@/lib/supabase";
 import { TaskBoard } from "@/components/tasks/TaskBoard";
@@ -12,48 +12,32 @@ import {
   CalendarIcon,
 } from "@heroicons/react/24/outline";
 import { showToast } from "@/lib/toast";
+import { getLoadErrorMessage } from "@/lib/utils";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import { useApiResource } from "@/hooks/use-api-resource";
 
 export default function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"board" | "calendar">("board");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [saving, setSaving] = useState(false);
 
-  const fetchTasks = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("Timeout")), 15000)
-      );
-
-      const fetchPromise = fetch("/api/tasks");
-      const res = await Promise.race([fetchPromise, timeoutPromise]) as Response;
-
-      if (!res.ok) throw new Error("Error al cargar tareas");
-      const data = await res.json();
-      setTasks(data);
-    } catch (error: any) {
-      console.error(error);
-      if (error.message === "Timeout") {
-        setError("La carga de tareas ha tardado demasiado.");
-      } else {
-        setError("No se pudieron cargar las tareas.");
-      }
-      showToast({ type: "error", message: "Error al cargar las tareas" });
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const {
+    data,
+    loading,
+    error: loadError,
+    refetch,
+  } = useApiResource<Task[]>("/api/tasks");
 
   useEffect(() => {
-    fetchTasks();
-  }, [fetchTasks]);
+    if (data) setTasks(data);
+  }, [data]);
+
+  const error = getLoadErrorMessage(loadError, {
+    timeout: "La carga de tareas ha tardado demasiado.",
+    request: "No se pudieron cargar las tareas.",
+  });
 
   const handleCreateTask = () => {
     setEditingTask(null);
@@ -84,7 +68,7 @@ export default function TasksPage() {
         message: editingTask ? "Tarea actualizada" : "Tarea creada",
       });
       setIsModalOpen(false);
-      fetchTasks(); // Reload tasks
+      refetch(); // Reload tasks
     } catch (error) {
       console.error(error);
       showToast({ type: "error", message: "Error al guardar la tarea" });
@@ -170,7 +154,7 @@ export default function TasksPage() {
           <p className="text-gray-900 font-medium mb-2">Error al cargar las tareas</p>
           <p className="text-gray-500 mb-4">{error}</p>
           <button
-            onClick={() => fetchTasks()}
+            onClick={() => refetch()}
             className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
           >
             Reintentar

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useState, useMemo } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import NoteCard from "@/components/notes/NoteCard";
 import NoteEditor from "@/components/notes/NoteEditor";
@@ -17,16 +17,10 @@ import {
   DocumentTextIcon,
 } from "@heroicons/react/24/outline";
 import PageSkeleton from "@/components/ui/PageSkeleton";
+import { useApiResource } from "@/hooks/use-api-resource";
 
 export default function NotesPage() {
-  const { user } = useAuth();
-  const [notes, setNotes] = useState<(Note & { trip?: Trip })[]>([]);
-  const [filteredNotes, setFilteredNotes] = useState<
-    (Note & { trip?: Trip })[]
-  >([]);
-  const [trips, setTrips] = useState<Trip[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { user, loading: authLoading } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [tripFilter, setTripFilter] = useState<string>("all");
@@ -36,35 +30,22 @@ export default function NotesPage() {
   const [editingNote, setEditingNote] = useState<Note | null>(null);
   const [editorLoading, setEditorLoading] = useState(false);
 
-  const loadData = useCallback(async () => {
-    if (!user?.id) return;
-    
-    try {
-      setLoading(true);
-      setError(null);
+  const url = !authLoading && user?.id ? "/api/notes" : null;
+  const {
+    data,
+    loading,
+    error: loadError,
+    refetch,
+  } = useApiResource<{
+    notes: (Note & { trip?: Trip })[];
+    trips: Trip[];
+  }>(url);
 
-      const response = await fetch('/api/notes');
-      
-      if (!response.ok) {
-        throw new Error('Error al cargar los datos');
-      }
+  const { notes, trips, filteredNotes } = useMemo(() => {
+    const notesData = data?.notes ?? [];
+    const tripsData = data?.trips ?? [];
 
-      const data = await response.json();
-      
-      setNotes(data.notes || []);
-      setTrips(data.trips || []);
-    } catch (err: any) {
-      console.error("Error loading notes data:", err);
-      setError("Error al cargar las notas. Por favor, inténtalo de nuevo.");
-      const message = getErrorMessage(err);
-      logger.error("NotesPage: Error loading data", { error: message });
-    } finally {
-      setLoading(false);
-    }
-  }, [user?.id]);
-
-  const filterNotes = useCallback(() => {
-    let filtered = notes;
+    let filtered = notesData;
 
     // Filter by search term
     if (searchTerm) {
@@ -86,16 +67,15 @@ export default function NotesPage() {
       filtered = filtered.filter((note) => note.trip_id === tripFilter);
     }
 
-    setFilteredNotes(filtered);
-  }, [notes, searchTerm, categoryFilter, tripFilter]);
+    return { notes: notesData, trips: tripsData, filteredNotes: filtered };
+  }, [data, searchTerm, categoryFilter, tripFilter]);
 
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+  const error = loadError
+    ? "Error al cargar las notas. Por favor, inténtalo de nuevo."
+    : null;
 
-  useEffect(() => {
-    filterNotes();
-  }, [notes, searchTerm, categoryFilter, tripFilter, filterNotes]);
+  const showSkeleton =
+    authLoading || loading || (url !== null && data === null && !loadError);
 
   const handleSaveNote = async (noteData: Partial<Note>) => {
     setEditorLoading(true);
@@ -136,7 +116,7 @@ export default function NotesPage() {
         }
       }
 
-      await loadData();
+      refetch();
       handleCloseEditor();
     } catch (err: unknown) {
       const message = getErrorMessage(err, "Error al guardar la nota");
@@ -173,7 +153,7 @@ export default function NotesPage() {
 
   const categoryCounts = getCategoryCounts();
 
-  if (loading) {
+  if (showSkeleton) {
     return (
       <DashboardLayout>
         <PageSkeleton />
@@ -204,7 +184,7 @@ export default function NotesPage() {
             Error al cargar los datos
           </h3>
           <p className="text-gray-500 mb-4">{error}</p>
-          <Button onClick={() => loadData()}>Reintentar</Button>
+          <Button onClick={() => refetch()}>Reintentar</Button>
         </div>
       </DashboardLayout>
     );

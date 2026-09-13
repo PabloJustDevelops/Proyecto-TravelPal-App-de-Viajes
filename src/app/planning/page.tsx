@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import {
   CalendarIcon,
@@ -33,6 +33,7 @@ import { createSupabaseClient, Booking } from "../../lib/supabase";
 import { formatDate } from "../../lib/utils";
 import { logger } from "@/lib/logger";
 import PageSkeleton from "@/components/ui/PageSkeleton";
+import { useApiResource } from "@/hooks/use-api-resource";
 
 import { format } from 'date-fns';
 
@@ -62,23 +63,20 @@ interface ItineraryActivity {
 }
 
 export default function PlanningPage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
-  const [trips, setTrips] = useState<Trip[]>([]);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
-  const [activities, setActivities] = useState<ItineraryActivity[]>([]);
   const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [viewMode, setViewMode] = useState<
     "calendar" | "itinerary" | "bookings"
   >("calendar");
-  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [showBookingModal, setShowBookingModal] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [silentReload, setSilentReload] = useState(false);
 
   const supabase = createSupabaseClient();
 
@@ -105,34 +103,42 @@ export default function PlanningPage() {
     }
   };
 
-  const loadData = useCallback(async (showLoading = true) => {
-    if (!user) return;
+  const url = !authLoading && user ? "/api/planning" : null;
+  const {
+    data,
+    loading,
+    error: loadError,
+    refetch,
+  } = useApiResource<{
+    trips: Trip[];
+    bookings: Booking[];
+    activities: ItineraryActivity[];
+  }>(url);
 
-    try {
-      if (showLoading) setIsLoading(true);
-      setError(null);
+  const { trips, activities } = useMemo(
+    () => ({
+      trips: data?.trips ?? [],
+      activities: data?.activities ?? [],
+    }),
+    [data],
+  );
 
-      const response = await fetch("/api/planning");
+  useEffect(() => {
+    if (data) setBookings(data.bookings ?? []);
+  }, [data]);
 
-      if (!response.ok) {
-        throw new Error("Error al cargar los datos");
-      }
+  useEffect(() => {
+    setSilentReload(false);
+  }, [data, loadError]);
 
-      const data = await response.json();
+  const error = loadError
+    ? "Error al cargar la planificación. Por favor, inténtalo de nuevo."
+    : null;
 
-      setTrips(data.trips || []);
-      setBookings(data.bookings || []);
-      setActivities(data.activities || []);
-    } catch (error: any) {
-      console.error("Error loading planning data:", error);
-      setError(
-        "Error al cargar la planificación. Por favor, inténtalo de nuevo.",
-      );
-      logger.error("Error loading planning data:", error);
-    } finally {
-      if (showLoading) setIsLoading(false);
-    }
-  }, [user]);
+  const showSkeleton =
+    authLoading ||
+    (loading && !silentReload) ||
+    (url !== null && data === null && !loadError);
 
   const generateCalendarEvents = useCallback(() => {
     const calendarEvents: CalendarEvent[] = [];
@@ -245,11 +251,6 @@ export default function PlanningPage() {
     [activities],
   );
 
-  // Cargar datos iniciales
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
-
   // Generar eventos del calendario cuando cambien los datos
   useEffect(() => {
     generateCalendarEvents();
@@ -302,8 +303,6 @@ export default function PlanningPage() {
 
     void (async () => {
       try {
-        setIsLoading(true);
-
         if (event.type === "booking" && event.bookingId) {
           const { error } = await supabase
             .from("bookings")
@@ -327,12 +326,10 @@ export default function PlanningPage() {
           if (error) throw error;
         }
 
-        await loadData();
+        refetch();
       } catch (error) {
         logger.error("Error deleting event:", error);
         alert("Error al eliminar el evento");
-      } finally {
-        setIsLoading(false);
       }
     })();
   };
@@ -359,7 +356,7 @@ export default function PlanningPage() {
   const handleBookingCreated = () => {
     setShowBookingModal(false);
     setSelectedBooking(null);
-    loadData();
+    refetch();
   };
 
   const handleEventDrop = async (event: CalendarEvent, newDate: Date) => {
@@ -396,15 +393,17 @@ export default function PlanningPage() {
       }
 
       // Reload data to ensure consistency, but silently (without loading spinner)
-      await loadData(false);
+      setSilentReload(true);
+      refetch();
     } catch (error) {
       console.error('Error updating event date:', error);
       alert('Error al mover el evento');
-      await loadData(false); // Revert on error
+      setSilentReload(true); // Revert on error
+      refetch();
     }
   };
 
-  if (isLoading) {
+  if (showSkeleton) {
     return (
       <DashboardLayout>
         <PageSkeleton />
@@ -435,7 +434,7 @@ export default function PlanningPage() {
             Error al cargar los datos
           </h3>
           <p className="text-gray-500 mb-4">{error}</p>
-          <Button onClick={() => loadData()}>Reintentar</Button>
+          <Button onClick={() => refetch()}>Reintentar</Button>
         </div>
       </DashboardLayout>
     );

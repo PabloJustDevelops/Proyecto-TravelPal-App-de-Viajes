@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "skill_autoupdate_check",
+      "Shell(npx --yes skills find superpowers)",
+      "Shell(npx --yes skills find mattpocock)",
+      "Shell(npx --yes skills find --owner mattpocock)",
+      "Shell(npx --yes skills find nextjs react supabase)",
+      "Shell(npx --yes skills find --owner vercel-labs)",
+      "Shell(npx --yes skills find react --owner vercel-labs)",
+      "Shell(npx --yes skills find supabase)",
+      "Shell(npx --yes skills find jest testing)",
+      "Shell(npx --yes skills find frontend design)",
+      "Shell(npx --yes skills add --help)",
+      "Shell(npx --yes skills ls -g --json)",
+      "Shell(npx --yes skills add mattpocock/skills --list)",
+      "Shell(npx --yes skills add supabase/agent-skills --list)",
+      "Shell(npx --yes skills add supabase/agent-skills -g --skill supabase supabase-postgres-best-practices -a * -y)",
+      "Shell(npx --yes skills add vercel-labs/agent-skills -g --skill vercel-react-best-practices -a * -y)",
+      "Shell(npx --yes skills add anthropics/skills -g --skill frontend-design -a * -y)",
+      "Shell(npx --yes skills add mattpocock/skills -g -a * -y --skill ask-matt code-review codebase-design diagnosing-bugs domain-modeling grill-with-docs implement improve-codebase-architecture prototype research resolving-merge-conflicts setup-matt-pocock-skills tdd to-spec to-tickets triage wayfinder wizard grill-me grilling handoff teach to-questionnaire wait-what writing-for-agents setup-pre-commit setup-ts-deep-modules)",
+      "Shell(npx --yes skills ls -g -a command-code --json)",
+      "Shell(gh:*)"
+    ],
+    "deny": [],
+    "defaultMode": "default"
+  }
+}

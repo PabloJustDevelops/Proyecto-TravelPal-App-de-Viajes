@@ -49,3 +49,18 @@ testsprite_tests/tmp/
 testsprite_tests/standard_prd.json
 testsprite_tests/testsprite_frontend_test_plan.json
 .env*.local
+
+# InsForge & AI agent skills
+.insforge
+.agent
+.agents
+.augment
+.claude
+.cline
+.github/copilot*
+.kilocode
+.qoder
+.qwen
+.roo
+.trae
+.windsurf

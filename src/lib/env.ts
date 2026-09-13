@@ -7,7 +7,7 @@ import {
 } from "./public-env";
 
 // Módulo de uso exclusivo en servidor: además de las variables públicas,
-// valida los secretos (p. ej. SUPABASE_SERVICE_ROLE_KEY), que Next.js nunca
+// valida los secretos (p. ej. INSFORGE_API_KEY), que Next.js nunca
 // inyecta en el bundle del cliente. No importar desde componentes de cliente.
 //
 // La validación se ejecuta al importar el módulo, de modo que el build y el
@@ -15,10 +15,6 @@ import {
 
 export const serverEnvSchema = publicEnvSchema.extend({
   INSFORGE_API_KEY: z
-    .string({ error: "es obligatoria (sólo servidor, nunca exponerla al cliente)" })
-    .min(1, "no puede estar vacía"),
-
-  SUPABASE_SERVICE_ROLE_KEY: z
     .string({ error: "es obligatoria (sólo servidor, nunca exponerla al cliente)" })
     .min(1, "no puede estar vacía"),
 

@@ -11,9 +11,6 @@ import '@testing-library/jest-dom'
 process.env.NEXT_PUBLIC_INSFORGE_URL ||= 'https://test-appkey.eu-central.insforge.app'
 process.env.NEXT_PUBLIC_INSFORGE_ANON_KEY ||= 'test-insforge-anon-key'
 process.env.INSFORGE_API_KEY ||= 'test-insforge-api-key'
-process.env.NEXT_PUBLIC_SUPABASE_URL ||= 'https://test-project.supabase.co'
-process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||= 'test-anon-key'
-process.env.SUPABASE_SERVICE_ROLE_KEY ||= 'test-service-role-key'
 
 // El SDK de InsForge (@insforge/sdk/ssr) es ESM y no se puede cargar tal cual
 // bajo Jest (CJS/jsdom). Los tests de unidad aíslan el cliente de datos.

@@ -35,7 +35,7 @@ const customJestConfig = {
     '!src/pages/_app.tsx',
     '!src/pages/_document.tsx',
     '!src/pages/api/**',
-    '!src/lib/supabase.ts',
+    '!src/lib/insforge.ts',
     '!src/**/*.stories.{js,jsx,ts,tsx}',
     '!src/**/*.config.{js,jsx,ts,tsx}',
   ],

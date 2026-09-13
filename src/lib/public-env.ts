@@ -36,12 +36,6 @@ export const publicEnvSchema = z.object({
   NEXT_PUBLIC_INSFORGE_ANON_KEY: z
     .string({ error: "es obligatoria (falta en .env.local)" })
     .min(1, "no puede estar vacía"),
-  NEXT_PUBLIC_SUPABASE_URL: z
-    .string({ error: "es obligatoria (falta en .env.local)" })
-    .url("debe ser una URL válida (ej. https://xxxx.supabase.co)"),
-  NEXT_PUBLIC_SUPABASE_ANON_KEY: z
-    .string({ error: "es obligatoria (falta en .env.local)" })
-    .min(1, "no puede estar vacía"),
   NEXT_PUBLIC_LOG_LEVEL: optionalLogLevel,
   NEXT_PUBLIC_APP_URL: optionalUrl,
   NEXT_PUBLIC_LLM_MODEL: optionalNonEmpty,

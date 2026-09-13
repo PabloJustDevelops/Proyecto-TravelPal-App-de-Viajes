@@ -84,8 +84,8 @@ export interface CalendarEvent {
 export const bookingFunctions = {
   // Obtener todas las reservas del usuario
   async getAll(userId: string): Promise<Booking[]> {
-    const supabase = createInsforgeClient();
-    const { data, error } = await supabase
+    const insforge = createInsforgeClient();
+    const { data, error } = await insforge
       .database.from('bookings')
       .select('*')
       .eq('user_id', userId)
@@ -97,8 +97,8 @@ export const bookingFunctions = {
 
   // Obtener reservas por viaje
   async getByTrip(userId: string, tripId: string): Promise<Booking[]> {
-    const supabase = createInsforgeClient();
-    const { data, error } = await supabase
+    const insforge = createInsforgeClient();
+    const { data, error } = await insforge
       .database.from('bookings')
       .select('*')
       .eq('user_id', userId)
@@ -111,8 +111,8 @@ export const bookingFunctions = {
 
   // Crear nueva reserva
   async create(booking: Omit<Booking, 'id' | 'created_at' | 'updated_at'>): Promise<Booking> {
-    const supabase = createInsforgeClient();
-    const { data, error } = await supabase
+    const insforge = createInsforgeClient();
+    const { data, error } = await insforge
       .database.from('bookings')
       .insert(booking)
       .select()
@@ -124,8 +124,8 @@ export const bookingFunctions = {
 
   // Actualizar reserva
   async update(id: string, updates: Partial<Booking>): Promise<Booking> {
-    const supabase = createInsforgeClient();
-    const { data, error } = await supabase
+    const insforge = createInsforgeClient();
+    const { data, error } = await insforge
       .database.from('bookings')
       .update(updates)
       .eq('id', id)
@@ -138,8 +138,8 @@ export const bookingFunctions = {
 
   // Eliminar reserva
   async delete(id: string): Promise<void> {
-    const supabase = createInsforgeClient();
-    const { error } = await supabase
+    const insforge = createInsforgeClient();
+    const { error } = await insforge
       .database.from('bookings')
       .delete()
       .eq('id', id);
@@ -149,10 +149,10 @@ export const bookingFunctions = {
 
   // Obtener próximas reservas
   async getUpcoming(userId: string, limit: number = 5): Promise<Booking[]> {
-    const supabase = createInsforgeClient();
+    const insforge = createInsforgeClient();
     const today = new Date().toISOString().split('T')[0];
     
-    const { data, error } = await supabase
+    const { data, error } = await insforge
       .database.from('bookings')
       .select('*')
       .eq('user_id', userId)
@@ -169,8 +169,8 @@ export const bookingFunctions = {
 export const activityFunctions = {
   // Obtener actividades por viaje
   async getByTrip(userId: string, tripId: string): Promise<ItineraryActivity[]> {
-    const supabase = createInsforgeClient();
-    const { data, error } = await supabase
+    const insforge = createInsforgeClient();
+    const { data, error } = await insforge
       .database.from('itinerary_activities')
       .select('*')
       .eq('user_id', userId)
@@ -184,8 +184,8 @@ export const activityFunctions = {
 
   // Obtener actividades por fecha
   async getByDate(userId: string, tripId: string, date: string): Promise<ItineraryActivity[]> {
-    const supabase = createInsforgeClient();
-    const { data, error } = await supabase
+    const insforge = createInsforgeClient();
+    const { data, error } = await insforge
       .database.from('itinerary_activities')
       .select('*')
       .eq('user_id', userId)
@@ -199,8 +199,8 @@ export const activityFunctions = {
 
   // Crear nueva actividad
   async create(activity: Omit<ItineraryActivity, 'id' | 'created_at' | 'updated_at'>): Promise<ItineraryActivity> {
-    const supabase = createInsforgeClient();
-    const { data, error } = await supabase
+    const insforge = createInsforgeClient();
+    const { data, error } = await insforge
       .database.from('itinerary_activities')
       .insert(activity)
       .select()
@@ -212,8 +212,8 @@ export const activityFunctions = {
 
   // Actualizar actividad
   async update(id: string, updates: Partial<ItineraryActivity>): Promise<ItineraryActivity> {
-    const supabase = createInsforgeClient();
-    const { data, error } = await supabase
+    const insforge = createInsforgeClient();
+    const { data, error } = await insforge
       .database.from('itinerary_activities')
       .update(updates)
       .eq('id', id)
@@ -226,8 +226,8 @@ export const activityFunctions = {
 
   // Eliminar actividad
   async delete(id: string): Promise<void> {
-    const supabase = createInsforgeClient();
-    const { error } = await supabase
+    const insforge = createInsforgeClient();
+    const { error } = await insforge
       .database.from('itinerary_activities')
       .delete()
       .eq('id', id);
@@ -237,10 +237,10 @@ export const activityFunctions = {
 
   // Reordenar actividades
   async reorder(activities: { id: string; order_index: number }[]): Promise<void> {
-    const supabase = createInsforgeClient();
+    const insforge = createInsforgeClient();
     
     for (const activity of activities) {
-      const { error } = await supabase
+      const { error } = await insforge
         .database.from('itinerary_activities')
         .update({ order_index: activity.order_index })
         .eq('id', activity.id);
@@ -254,8 +254,8 @@ export const activityFunctions = {
 export const reminderFunctions = {
   // Obtener recordatorios del usuario
   async getAll(userId: string): Promise<Reminder[]> {
-    const supabase = createInsforgeClient();
-    const { data, error } = await supabase
+    const insforge = createInsforgeClient();
+    const { data, error } = await insforge
       .database.from('reminders')
       .select('*')
       .eq('user_id', userId)
@@ -267,8 +267,8 @@ export const reminderFunctions = {
 
   // Obtener recordatorios pendientes
   async getPending(userId: string): Promise<Reminder[]> {
-    const supabase = createInsforgeClient();
-    const { data, error } = await supabase
+    const insforge = createInsforgeClient();
+    const { data, error } = await insforge
       .database.from('reminders')
       .select('*')
       .eq('user_id', userId)
@@ -282,8 +282,8 @@ export const reminderFunctions = {
 
   // Crear recordatorio
   async create(reminder: Omit<Reminder, 'id' | 'created_at' | 'updated_at'>): Promise<Reminder> {
-    const supabase = createInsforgeClient();
-    const { data, error } = await supabase
+    const insforge = createInsforgeClient();
+    const { data, error } = await insforge
       .database.from('reminders')
       .insert(reminder)
       .select()
@@ -295,8 +295,8 @@ export const reminderFunctions = {
 
   // Marcar recordatorio como enviado
   async markAsSent(id: string): Promise<void> {
-    const supabase = createInsforgeClient();
-    const { error } = await supabase
+    const insforge = createInsforgeClient();
+    const { error } = await insforge
       .database.from('reminders')
       .update({ 
         status: 'sent', 
@@ -309,8 +309,8 @@ export const reminderFunctions = {
 
   // Descartar recordatorio
   async dismiss(id: string): Promise<void> {
-    const supabase = createInsforgeClient();
-    const { error } = await supabase
+    const insforge = createInsforgeClient();
+    const { error } = await insforge
       .database.from('reminders')
       .update({ status: 'dismissed' })
       .eq('id', id);
@@ -323,11 +323,11 @@ export const reminderFunctions = {
 export const calendarFunctions = {
   // Obtener eventos del mes
   async getByMonth(userId: string, year: number, month: number): Promise<CalendarEvent[]> {
-    const supabase = createInsforgeClient();
+    const insforge = createInsforgeClient();
     const startDate = new Date(year, month - 1, 1).toISOString().split('T')[0];
     const endDate = new Date(year, month, 0).toISOString().split('T')[0];
 
-    const { data, error } = await supabase
+    const { data, error } = await insforge
       .database.from('calendar_events')
       .select('*')
       .eq('user_id', userId)
@@ -341,8 +341,8 @@ export const calendarFunctions = {
 
   // Obtener eventos por fecha
   async getByDate(userId: string, date: string): Promise<CalendarEvent[]> {
-    const supabase = createInsforgeClient();
-    const { data, error } = await supabase
+    const insforge = createInsforgeClient();
+    const { data, error } = await insforge
       .database.from('calendar_events')
       .select('*')
       .eq('user_id', userId)
@@ -355,8 +355,8 @@ export const calendarFunctions = {
 
   // Crear evento
   async create(event: Omit<CalendarEvent, 'id' | 'created_at' | 'updated_at'>): Promise<CalendarEvent> {
-    const supabase = createInsforgeClient();
-    const { data, error } = await supabase
+    const insforge = createInsforgeClient();
+    const { data, error } = await insforge
       .database.from('calendar_events')
       .insert(event)
       .select()
@@ -368,10 +368,10 @@ export const calendarFunctions = {
 
   // Sincronizar eventos automáticamente desde reservas y actividades
   async syncEvents(userId: string): Promise<void> {
-    const supabase = createInsforgeClient();
+    const insforge = createInsforgeClient();
 
     // Eliminar eventos automáticos existentes
-    await supabase
+    await insforge
       .database.from('calendar_events')
       .delete()
       .eq('user_id', userId)
@@ -397,7 +397,7 @@ export const calendarFunctions = {
     }
 
     // Crear eventos desde actividades
-    const activities = await supabase
+    const activities = await insforge
       .database.from('itinerary_activities')
       .select('*')
       .eq('user_id', userId);

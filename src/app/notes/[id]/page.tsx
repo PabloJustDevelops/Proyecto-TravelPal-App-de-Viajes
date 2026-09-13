@@ -30,10 +30,10 @@ export default function NoteDetailPage() {
   const [deleteLoading, setDeleteLoading] = useState(false)
 
   const loadNote = useCallback(async () => {
-    const supabase = createInsforgeClient()
+    const insforge = createInsforgeClient()
 
     try {
-      const query = supabase
+      const query = insforge
         .database.from('notes')
         .select(`
           *,
@@ -83,10 +83,10 @@ export default function NoteDetailPage() {
     if (!note) return
 
     setEditorLoading(true)
-    const supabase = createInsforgeClient()
+    const insforge = createInsforgeClient()
 
     try {
-      const { error } = await supabase
+      const { error } = await insforge
         .database.from('notes')
         .update({
           title: noteData.title,
@@ -114,10 +114,10 @@ export default function NoteDetailPage() {
     if (!note || !confirm('¿Estás seguro de que quieres eliminar esta nota?')) return
 
     setDeleteLoading(true)
-    const supabase = createInsforgeClient()
+    const insforge = createInsforgeClient()
 
     try {
-      const { error } = await supabase
+      const { error } = await insforge
         .database.from('notes')
         .delete()
         .eq('id', note.id)

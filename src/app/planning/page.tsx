@@ -78,7 +78,7 @@ export default function PlanningPage() {
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [silentReload, setSilentReload] = useState(false);
 
-  const supabase = createInsforgeClient();
+  const insforge = createInsforgeClient();
 
   // Función para obtener el icono según el tipo
   const getEventIcon = (type: string, category?: string) => {
@@ -304,21 +304,21 @@ export default function PlanningPage() {
     void (async () => {
       try {
         if (event.type === "booking" && event.bookingId) {
-          const { error } = await supabase
+          const { error } = await insforge
             .database.from("bookings")
             .delete()
             .eq("id", event.bookingId);
 
           if (error) throw error;
         } else if (event.type === "activity" && event.activityId) {
-          const { error } = await supabase
+          const { error } = await insforge
             .database.from("itinerary_activities")
             .delete()
             .eq("id", event.activityId);
 
           if (error) throw error;
         } else if (event.type === "trip" && event.tripId) {
-          const { error } = await supabase
+          const { error } = await insforge
             .database.from("trips")
             .delete()
             .eq("id", event.tripId);
@@ -372,20 +372,20 @@ export default function PlanningPage() {
 
       // Update in DB based on event type
       if (event.type === 'booking' && event.bookingId) {
-        const { error } = await supabase
+        const { error } = await insforge
           .database.from('bookings')
           .update({ start_date: formattedDate })
           .eq('id', event.bookingId);
         if (error) throw error;
       } else if (event.type === 'activity' && event.activityId) {
-        const { error } = await supabase
+        const { error } = await insforge
           .database.from('itinerary_activities')
           .update({ date: formattedDate })
           .eq('id', event.activityId);
         if (error) throw error;
       } else if (event.type === 'trip' && event.tripId) {
         // For trips, we might need to handle end date logic, but for simple move:
-        const { error } = await supabase
+        const { error } = await insforge
           .database.from('trips')
           .update({ departure_date: formattedDate })
           .eq('id', event.tripId);
@@ -688,7 +688,7 @@ export default function PlanningPage() {
                   itinerary={getTripItinerary(selectedTrip.id)}
                   onSave={(itinerary) => {
                     logger.debug("Saving itinerary:", itinerary);
-                    // Aquí se guardaría el itinerario en Supabase
+                    // Aquí se guardaría el itinerario en InsForge
                   }}
                 />
               </div>

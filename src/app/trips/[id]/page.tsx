@@ -35,9 +35,9 @@ export default function TripDetailsPage({
     try {
       // Don't set loading to true here to avoid full page spinner on refresh
       // setLoading(true); 
-      const supabase = createInsforgeClient();
+      const insforge = createInsforgeClient();
 
-      const { data, error } = await supabase
+      const { data, error } = await insforge
         .database.from("trips")
         .select("*")
         .eq("id", id)

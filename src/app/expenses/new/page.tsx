@@ -30,7 +30,7 @@ export default function NewExpensePage() {
 
   const loadTrips = useCallback(async () => {
     try {
-      // Usar la API de viajes en lugar de supabase directo para consistencia
+      // Usar la API de viajes en lugar de insforge directo para consistencia
       // Aunque aquí usamos solo lectura, es mejor centralizar
       // Pero como ya existe la API /api/expenses que devuelve { expenses, trips }
       // podríamos usar esa o simplemente /api/trips

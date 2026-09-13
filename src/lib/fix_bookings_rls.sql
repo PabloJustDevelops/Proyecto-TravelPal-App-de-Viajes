@@ -1,5 +1,5 @@
 -- Script de corrección para Políticas de Seguridad (RLS) en la tabla 'bookings'
--- Ejecuta este script en el Editor SQL de Supabase para solucionar el error de permisos.
+-- Ejecuta este script en el SQL del backend de InsForge para solucionar el error de permisos.
 
 -- 1. Asegurar que RLS está habilitado
 ALTER TABLE bookings ENABLE ROW LEVEL SECURITY;

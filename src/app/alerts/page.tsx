@@ -28,10 +28,10 @@ export default function AlertsPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all')
 
   const loadAlerts = useCallback(async (signal?: AbortSignal) => {
-    const supabase = createInsforgeClient()
+    const insforge = createInsforgeClient()
 
     try {
-      const query = supabase
+      const query = insforge
         .database.from('alerts')
         .select('*')
         .eq('user_id', user!.id)
@@ -108,10 +108,10 @@ export default function AlertsPage() {
 
   const handleMarkAsRead = async (alertId: string) => {
     setActionLoading(alertId)
-    const supabase = createInsforgeClient()
+    const insforge = createInsforgeClient()
 
     try {
-      const { error } = await supabase
+      const { error } = await insforge
         .database.from('alerts')
         .update({ is_read: true })
         .eq('id', alertId)
@@ -133,10 +133,10 @@ export default function AlertsPage() {
     if (!confirm('¿Estás seguro de que quieres eliminar esta alerta?')) return
 
     setActionLoading(alertId)
-    const supabase = createInsforgeClient()
+    const insforge = createInsforgeClient()
 
     try {
-      const { error } = await supabase
+      const { error } = await insforge
         .database.from('alerts')
         .delete()
         .eq('id', alertId)
@@ -157,10 +157,10 @@ export default function AlertsPage() {
     if (unreadAlerts.length === 0) return
 
     setActionLoading('all')
-    const supabase = createInsforgeClient()
+    const insforge = createInsforgeClient()
 
     try {
-      const { error } = await supabase
+      const { error } = await insforge
         .database.from('alerts')
         .update({ is_read: true })
         .eq('user_id', user!.id)

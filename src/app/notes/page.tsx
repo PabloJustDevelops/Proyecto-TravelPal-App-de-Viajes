@@ -84,8 +84,8 @@ export default function NotesPage() {
       if (editingNote) {
         // Update existing note
         // TODO: Implement PUT API
-        const supabase = createInsforgeClient();
-        const { error } = await supabase
+        const insforge = createInsforgeClient();
+        const { error } = await insforge
           .database.from("notes")
           .update({
             title: noteData.title,

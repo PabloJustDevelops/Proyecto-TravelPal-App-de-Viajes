@@ -69,7 +69,7 @@ export default function EditTripModal({
     setError("");
 
     try {
-      const supabase = createInsforgeClient();
+      const insforge = createInsforgeClient();
 
       // Validate required fields
       if (
@@ -106,7 +106,7 @@ export default function EditTripModal({
         status: formData.status,
       };
 
-      const { error } = await supabase
+      const { error } = await insforge
         .database.from("trips")
         .update(tripData)
         .eq("id", trip.id);

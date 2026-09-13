@@ -1,9 +1,18 @@
 import { authService } from '../auth';
-import { createSupabaseClient } from '../supabase';
+import { createInsforgeClient } from '../insforge';
+import { updateProfileAction } from '../insforge/auth-actions';
 
-// Mock dependencies
-jest.mock('../supabase', () => ({
-  createSupabaseClient: jest.fn(),
+jest.mock('../insforge', () => ({
+  createInsforgeClient: jest.fn(),
+}));
+
+jest.mock('../insforge/auth-actions', () => ({
+  signInAction: jest.fn(),
+  signUpAction: jest.fn(),
+  signOutAction: jest.fn(),
+  sendResetPasswordEmailAction: jest.fn(),
+  resetPasswordAction: jest.fn(),
+  updateProfileAction: jest.fn(),
 }));
 
 jest.mock('../logger', () => ({
@@ -16,87 +25,82 @@ jest.mock('../logger', () => ({
 }));
 
 describe('AuthService Profile Update', () => {
-  let mockSupabase: any;
+  let mockClient: {
+    auth: { getCurrentUser: jest.Mock };
+    database: { from: jest.Mock };
+  };
 
   beforeEach(() => {
-    // Reset mocks
     jest.clearAllMocks();
 
-    // Setup mock Supabase client
-    mockSupabase = {
-      auth: {
-        getSession: jest.fn(),
-        updateUser: jest.fn(),
-      },
-      from: jest.fn(),
+    mockClient = {
+      auth: { getCurrentUser: jest.fn() },
+      database: { from: jest.fn() },
     };
 
-    (createSupabaseClient as jest.Mock).mockReturnValue(mockSupabase);
+    (createInsforgeClient as jest.Mock).mockReturnValue(mockClient);
 
     // AuthService instancia el cliente en un property initializer; sustituimos
     // la instancia del singleton por el mock.
-    (authService as any).supabase = mockSupabase;
+    (authService as unknown as { insforge: unknown }).insforge = mockClient;
   });
 
   test('should update profile successfully', async () => {
-    // getCurrentUser() obtiene la sesión (ya no usa getUser)
-    mockSupabase.auth.getSession.mockResolvedValue({
-      data: { session: { user: { id: 'user-123', email: 'test@example.com' } } },
+    mockClient.auth.getCurrentUser.mockResolvedValue({
+      data: {
+        user: { id: 'user-123', email: 'test@example.com', profile: null },
+      },
       error: null,
     });
 
-    // Mock profiles select (called by getCurrentUser)
-    const mockSelectBuilder = {
+    const builder = {
       select: jest.fn().mockReturnThis(),
       eq: jest.fn().mockReturnThis(),
       maybeSingle: jest.fn().mockResolvedValue({ data: { full_name: 'Old Name' }, error: null }),
       upsert: jest.fn().mockResolvedValue({ error: null }),
     };
-    mockSupabase.from.mockReturnValue(mockSelectBuilder);
+    mockClient.database.from.mockReturnValue(builder);
 
-    // Mock updateUser
-    mockSupabase.auth.updateUser.mockResolvedValue({ error: null });
+    (updateProfileAction as jest.Mock).mockResolvedValue({ id: 'user-123' });
 
-    const updates = { full_name: 'New Name' };
-    await authService.updateProfile(updates);
+    await authService.updateProfile({ full_name: 'New Name' });
 
-    expect(mockSupabase.auth.updateUser).toHaveBeenCalledWith({
-      data: { full_name: 'New Name', avatar_url: undefined },
-    });
-    expect(mockSupabase.from).toHaveBeenCalledWith('profiles');
-    expect(mockSelectBuilder.upsert).toHaveBeenCalledWith(expect.objectContaining({
-      id: 'user-123',
-      full_name: 'New Name',
-    }));
+    expect(updateProfileAction).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'New Name', full_name: 'New Name' }),
+    );
+    expect(mockClient.database.from).toHaveBeenCalledWith('profiles');
+    expect(builder.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'user-123', full_name: 'New Name' }),
+    );
   });
 
   test('should handle timeout gracefully', async () => {
-    mockSupabase.auth.getSession.mockResolvedValue({
-      data: { session: { user: { id: 'user-123' } } },
+    mockClient.auth.getCurrentUser.mockResolvedValue({
+      data: {
+        user: { id: 'user-123', email: 'test@example.com', profile: null },
+      },
       error: null,
     });
 
-    // Mock profiles select
-    const mockSelectBuilder = {
+    const builder = {
       select: jest.fn().mockReturnThis(),
       eq: jest.fn().mockReturnThis(),
       maybeSingle: jest.fn().mockResolvedValue({ data: {}, error: null }),
       // Delay > 20s (timeout de updateProfile)
       upsert: jest.fn().mockImplementation(() => new Promise(resolve => setTimeout(resolve, 21000))),
     };
-    mockSupabase.from.mockReturnValue(mockSelectBuilder);
+    mockClient.database.from.mockReturnValue(builder);
 
-    // Mock updateUser
-    mockSupabase.auth.updateUser.mockResolvedValue({ error: null });
+    (updateProfileAction as jest.Mock).mockResolvedValue({});
 
-    const updates = { full_name: 'Timeout Name' };
-
-    await expect(authService.updateProfile(updates)).rejects.toThrow('Update profile timed out after 20s');
+    await expect(authService.updateProfile({ full_name: 'Timeout Name' })).rejects.toThrow(
+      'Update profile timed out after 20s',
+    );
   }, 25000);
 
   test('should fail if no user logged in', async () => {
-    mockSupabase.auth.getSession.mockResolvedValue({
-      data: { session: null },
+    mockClient.auth.getCurrentUser.mockResolvedValue({
+      data: { user: null },
       error: null,
     });
 

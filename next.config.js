@@ -5,8 +5,6 @@ const nextConfig = {
 
   // Configuración experimental para mejorar rendimiento
   experimental: {
-    // Optimizar CSS
-    optimizeCss: true,
     // Mejorar el tree shaking
     optimizePackageImports: ["@heroicons/react", "date-fns", "recharts"],
   },

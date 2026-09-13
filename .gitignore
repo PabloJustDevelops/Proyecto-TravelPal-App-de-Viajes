@@ -64,3 +64,7 @@ testsprite_tests/testsprite_frontend_test_plan.json
 .roo
 .trae
 .windsurf
+
+# Agent skills (locales; se instalan en disco, no se versionan)
+.commandcode/skills/
+skills-lock.json

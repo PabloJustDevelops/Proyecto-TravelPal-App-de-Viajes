@@ -4,6 +4,7 @@ on:
     branches: [ main ]
     paths:
       - '.github/labels.json'
+  workflow_dispatch:
 
 jobs:
   create-labels:

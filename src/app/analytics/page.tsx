@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Trip, Expense } from "@/lib/supabase";
 import DashboardLayout from "@/components/layout/DashboardLayout";
@@ -21,8 +21,9 @@ import {
   DocumentTextIcon,
   TableCellsIcon,
 } from "@heroicons/react/24/outline";
-import { formatCurrency, getErrorMessage } from "@/lib/utils";
+import { formatCurrency, getLoadErrorMessage } from "@/lib/utils";
 import { logger } from "@/lib/logger";
+import { useApiResource } from "@/hooks/use-api-resource";
 import { Menu, Transition } from "@headlessui/react";
 import { Fragment } from "react";
 import { toPng } from "html-to-image";
@@ -49,13 +50,7 @@ interface AnalyticsData {
 }
 
 export default function AnalyticsPage() {
-  const { user } = useAuth();
-  const [trips, setTrips] = useState<Trip[]>([]);
-  const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [budgets, setBudgets] = useState<Budget[]>([]);
-  const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { user, loading: authLoading } = useAuth();
   const [dateRange, setDateRange] = useState("all");
   const [selectedCurrency, setSelectedCurrency] = useState("USD");
   const reportRef = useRef<HTMLDivElement>(null);
@@ -70,94 +65,121 @@ export default function AnalyticsPage() {
 
   const currencies = ["USD", "EUR", "GBP", "JPY", "CAD", "AUD"];
 
-  const calculateAnalytics = useCallback(
-    (tripsData: Trip[], expensesData: Expense[], budgetsData: Budget[]) => {
-      // Filter expenses by selected currency
-      const filteredExpenses = expensesData.filter(
-        (expense) => expense.currency === selectedCurrency,
-      );
+  const url = !authLoading && user ? `/api/analytics?range=${dateRange}` : null;
+  const {
+    data,
+    loading,
+    error: loadError,
+    refetch,
+  } = useApiResource<{
+    trips: Trip[];
+    expenses: Expense[];
+    budgets: Budget[];
+  }>(url);
 
-      // Total calculations
-      const totalTrips = tripsData.length;
-      const totalExpenses = filteredExpenses.reduce(
-        (sum, expense) => sum + expense.amount,
-        0,
-      );
-      const totalBudgets = budgetsData.reduce(
-        (sum, budget) =>
-          budget.currency === selectedCurrency
-            ? sum + budget.total_amount
-            : sum,
-        0,
-      );
+  const { trips, expenses, budgets, analytics } = useMemo(() => {
+    const tripsData = data?.trips ?? [];
+    const expensesData = data?.expenses ?? [];
+    const budgetsData = data?.budgets ?? [];
 
-      // Average expense per trip
-      const averageExpensePerTrip =
-        totalTrips > 0 ? totalExpenses / totalTrips : 0;
+    if (
+      tripsData.length === 0 &&
+      expensesData.length === 0 &&
+      budgetsData.length === 0
+    ) {
+      return {
+        trips: tripsData,
+        expenses: expensesData,
+        budgets: budgetsData,
+        analytics: null as AnalyticsData | null,
+      };
+    }
 
-      // Most expensive category
-      const categoryTotals = filteredExpenses.reduce(
-        (acc, expense) => {
-          acc[expense.category] = (acc[expense.category] || 0) + expense.amount;
-          return acc;
-        },
-        {} as Record<string, number>,
-      );
+    // Filter expenses by selected currency
+    const filteredExpenses = expensesData.filter(
+      (expense) => expense.currency === selectedCurrency,
+    );
 
-      const mostExpensiveCategory =
-        Object.entries(categoryTotals).sort(([, a], [, b]) => b - a)[0]?.[0] ||
-        "N/A";
+    // Total calculations
+    const totalTrips = tripsData.length;
+    const totalExpenses = filteredExpenses.reduce(
+      (sum, expense) => sum + expense.amount,
+      0,
+    );
+    const totalBudgets = budgetsData.reduce(
+      (sum, budget) =>
+        budget.currency === selectedCurrency ? sum + budget.total_amount : sum,
+      0,
+    );
 
-      // Most visited destination
-      const destinationCounts = tripsData.reduce(
-        (acc, trip) => {
-          const destination = trip.destination || "Desconocido";
-          acc[destination] = (acc[destination] || 0) + 1;
-          return acc;
-        },
-        {} as Record<string, number>,
-      );
+    // Average expense per trip
+    const averageExpensePerTrip =
+      totalTrips > 0 ? totalExpenses / totalTrips : 0;
 
-      const mostVisitedDestination =
-        Object.entries(destinationCounts).sort(
-          ([, a], [, b]) => b - a,
-        )[0]?.[0] || "N/A";
+    // Most expensive category
+    const categoryTotals = filteredExpenses.reduce(
+      (acc, expense) => {
+        acc[expense.category] = (acc[expense.category] || 0) + expense.amount;
+        return acc;
+      },
+      {} as Record<string, number>,
+    );
 
-      // Monthly trend (comparing last 2 months)
-      const now = new Date();
-      const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-      const twoMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+    const mostExpensiveCategory =
+      Object.entries(categoryTotals).sort(([, a], [, b]) => b - a)[0]?.[0] ||
+      "N/A";
 
-      const lastMonthExpenses = filteredExpenses
-        .filter((expense) => new Date(expense.date) >= lastMonth)
-        .reduce((sum, expense) => sum + expense.amount, 0);
+    // Most visited destination
+    const destinationCounts = tripsData.reduce(
+      (acc, trip) => {
+        const destination = trip.destination || "Desconocido";
+        acc[destination] = (acc[destination] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>,
+    );
 
-      const twoMonthsAgoExpenses = filteredExpenses
-        .filter((expense) => {
-          const expenseDate = new Date(expense.date);
-          return expenseDate >= twoMonthsAgo && expenseDate < lastMonth;
-        })
-        .reduce((sum, expense) => sum + expense.amount, 0);
+    const mostVisitedDestination =
+      Object.entries(destinationCounts).sort(([, a], [, b]) => b - a)[0]?.[0] ||
+      "N/A";
 
-      let monthlyTrend: "up" | "down" | "stable" = "stable";
-      if (lastMonthExpenses > twoMonthsAgoExpenses * 1.1) {
-        monthlyTrend = "up";
-      } else if (lastMonthExpenses < twoMonthsAgoExpenses * 0.9) {
-        monthlyTrend = "down";
-      }
+    // Monthly trend (comparing last 2 months)
+    const now = new Date();
+    const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const twoMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 2, 1);
 
-      // Budget utilization
-      const totalSpent = budgetsData.reduce(
-        (sum, budget) =>
-          budget.currency === selectedCurrency
-            ? sum + budget.spent_amount
-            : sum,
-        0,
-      );
-      const budgetUtilization =
-        totalBudgets > 0 ? (totalSpent / totalBudgets) * 100 : 0;
+    const lastMonthExpenses = filteredExpenses
+      .filter((expense) => new Date(expense.date) >= lastMonth)
+      .reduce((sum, expense) => sum + expense.amount, 0);
 
-      setAnalytics({
+    const twoMonthsAgoExpenses = filteredExpenses
+      .filter((expense) => {
+        const expenseDate = new Date(expense.date);
+        return expenseDate >= twoMonthsAgo && expenseDate < lastMonth;
+      })
+      .reduce((sum, expense) => sum + expense.amount, 0);
+
+    let monthlyTrend: AnalyticsData["monthlyTrend"] = "stable";
+    if (lastMonthExpenses > twoMonthsAgoExpenses * 1.1) {
+      monthlyTrend = "up";
+    } else if (lastMonthExpenses < twoMonthsAgoExpenses * 0.9) {
+      monthlyTrend = "down";
+    }
+
+    // Budget utilization
+    const totalSpent = budgetsData.reduce(
+      (sum, budget) =>
+        budget.currency === selectedCurrency ? sum + budget.spent_amount : sum,
+      0,
+    );
+    const budgetUtilization =
+      totalBudgets > 0 ? (totalSpent / totalBudgets) * 100 : 0;
+
+    return {
+      trips: tripsData,
+      expenses: expensesData,
+      budgets: budgetsData,
+      analytics: {
         totalTrips,
         totalExpenses,
         totalBudgets: budgetsData.length,
@@ -166,69 +188,19 @@ export default function AnalyticsPage() {
         mostVisitedDestination,
         monthlyTrend,
         budgetUtilization,
-      });
-    },
-    [selectedCurrency],
-  );
+      },
+    };
+  }, [data, selectedCurrency]);
 
-  const loadData = useCallback(async () => {
-    if (!user) return;
+  const error = getLoadErrorMessage(loadError, {
+    timeout:
+      "La carga de datos ha tardado demasiado. Por favor, inténtalo de nuevo.",
+    request:
+      "Error al cargar los datos de análisis. Por favor, inténtalo de nuevo.",
+  });
 
-    setLoading(true);
-    setError(null);
-    try {
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("Timeout")), 15000),
-      );
-
-      const fetchPromise = fetch(`/api/analytics?range=${dateRange}`);
-      const res = (await Promise.race([
-        fetchPromise,
-        timeoutPromise,
-      ])) as Response;
-
-      if (!res.ok) throw new Error(`API Error: ${res.status}`);
-      const data = await res.json();
-
-      setTrips(data.trips || []);
-      setExpenses(data.expenses || []);
-      setBudgets(data.budgets || []);
-
-      // calculateAnalytics called by useEffect when data changes
-    } catch (error: any) {
-      console.error("Error loading analytics data:", error);
-      if (error.message === "Timeout") {
-        setError(
-          "La carga de datos ha tardado demasiado. Por favor, inténtalo de nuevo.",
-        );
-      } else {
-        setError(
-          "Error al cargar los datos de análisis. Por favor, inténtalo de nuevo.",
-        );
-        const msg = getErrorMessage(error, "Error loading analytics data");
-        logger.error("AnalyticsPage: Error loading analytics data", {
-          error: msg,
-          raw: error,
-        });
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, [user, dateRange]);
-
-  useEffect(() => {
-    if (trips.length > 0 || expenses.length > 0 || budgets.length > 0) {
-      calculateAnalytics(trips, expenses, budgets);
-    }
-  }, [trips, expenses, budgets, calculateAnalytics]);
-
-  useEffect(() => {
-    if (user) {
-      loadData();
-    } else {
-      setLoading(false);
-    }
-  }, [user, loadData]);
+  const showSkeleton =
+    authLoading || loading || (url !== null && data === null && !loadError);
 
   const exportToJSON = () => {
     try {
@@ -337,7 +309,7 @@ export default function AnalyticsPage() {
     );
   }
 
-  if (loading) {
+  if (showSkeleton) {
     return (
       <DashboardLayout>
         <PageSkeleton />
@@ -368,7 +340,7 @@ export default function AnalyticsPage() {
             Error al cargar los datos
           </h3>
           <p className="text-gray-500 mb-4">{error}</p>
-          <Button onClick={() => loadData()}>Reintentar</Button>
+          <Button onClick={() => refetch()}>Reintentar</Button>
         </div>
       </DashboardLayout>
     );

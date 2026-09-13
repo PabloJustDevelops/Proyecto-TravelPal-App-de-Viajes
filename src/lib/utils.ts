@@ -78,6 +78,14 @@ export function validatePassword(password: string): {
   }
 }
 
+export function getLoadErrorMessage(
+  error: { kind: "timeout" | "request" } | null,
+  messages: { timeout: string; request: string },
+): string | null {
+  if (!error) return null;
+  return error.kind === "timeout" ? messages.timeout : messages.request;
+}
+
 export function getErrorMessage(err: unknown, fallbackMessage?: string): string {
   let baseMessage: string
   if (err instanceof Error) {

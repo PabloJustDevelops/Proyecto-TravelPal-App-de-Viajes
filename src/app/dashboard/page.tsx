@@ -1,14 +1,14 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { Trip, Expense } from "@/lib/supabase";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Plane, DollarSign, Calendar, MapPin, CreditCard, ShoppingBag, Utensils, Ticket, Heart } from "lucide-react";
-import { logger } from "@/lib/logger";
-import { getErrorMessage, formatCurrency } from "@/lib/utils";
+import { formatCurrency, getLoadErrorMessage } from "@/lib/utils";
+import { useApiResource } from "@/hooks/use-api-resource";
 import { motion } from "framer-motion";
 
 // Skeleton Component
@@ -87,91 +87,53 @@ const getCategoryName = (category: string) => {
 };
 
 export default function DashboardPage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
-  const [trips, setTrips] = useState<Trip[]>([]);
-  const [recentExpenses, setRecentExpenses] = useState<ExpenseWithTrip[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [totalBudget, setTotalBudget] = useState(0);
-  const [totalSpent, setTotalSpent] = useState(0);
-  const [error, setError] = useState<string | null>(null);
+  const url = !authLoading && user?.id ? "/api/dashboard" : null;
+  const {
+    data,
+    loading,
+    error: loadError,
+    refetch,
+  } = useApiResource<{
+    trips: Trip[];
+    expenses: Expense[];
+    budgets: { total_amount: number }[];
+  }>(url);
 
-  const loadData = useCallback(async () => {
-    if (!user?.id) {
-      setLoading(false);
-      return;
-    }
+  const { trips, recentExpenses, totalBudget, totalSpent } = useMemo(() => {
+    const tripsData = data?.trips ?? [];
+    const expensesData = data?.expenses ?? [];
+    const budgetsData = data?.budgets ?? [];
 
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("Timeout")), 15000),
-      );
+    // Efficient In-Memory Join for Recent Expenses
+    const tripMap = new Map(tripsData.map((trip) => [trip.id, trip.title]));
 
-      const fetchPromise = fetch("/api/dashboard");
+    const enrichedExpenses: ExpenseWithTrip[] = expensesData.map((expense) => ({
+      ...expense,
+      trips: expense.trip_id
+        ? { title: tripMap.get(expense.trip_id) || "Viaje desconocido" }
+        : undefined,
+    }));
 
-      const res = (await Promise.race([
-        fetchPromise,
-        timeoutPromise,
-      ])) as Response;
-
-      if (!res.ok) {
-        throw new Error(`API Error: ${res.status}`);
-      }
-
-      const data = await res.json();
-
-      const tripsData = data.trips || [];
-      const expensesData = data.expenses || [];
-      const budgetsData = data.budgets || [];
-
-      // Efficient In-Memory Join for Recent Expenses
-      const tripMap = new Map(tripsData.map((t: any) => [t.id, t.title]));
-
-      const enrichedExpenses = expensesData.map((expense: any) => ({
-        ...expense,
-        trips: expense.trip_id
-          ? { title: tripMap.get(expense.trip_id) || "Viaje desconocido" }
-          : undefined,
-      }));
-
-      setTrips(tripsData);
-      setRecentExpenses(enrichedExpenses);
-
-      // Calculate Totals
-      const calculatedSpent = expensesData.reduce(
-        (acc: any, curr: any) => acc + curr.amount,
+    return {
+      trips: tripsData,
+      recentExpenses: enrichedExpenses,
+      totalSpent: expensesData.reduce((acc, curr) => acc + curr.amount, 0),
+      totalBudget: budgetsData.reduce(
+        (acc, curr) => acc + curr.total_amount,
         0,
-      );
-      setTotalSpent(calculatedSpent);
+      ),
+    };
+  }, [data]);
 
-      const calculatedBudget = budgetsData.reduce(
-        (acc: any, curr: any) => acc + curr.total_amount,
-        0,
-      );
-      setTotalBudget(calculatedBudget);
+  const error = getLoadErrorMessage(loadError, {
+    timeout: "La carga de datos ha tardado demasiado. Por favor, reintenta.",
+    request: "Error al cargar los datos. Por favor, intenta recargar.",
+  });
 
-    } catch (error: any) {
-      const msg = getErrorMessage(error);
-      logger.error("Dashboard: Error loading data", { error: msg });
-
-      if (error.message === "Timeout") {
-        setError(
-          "La carga de datos ha tardado demasiado. Por favor, reintenta.",
-        );
-      } else {
-        setError("Error al cargar los datos. Por favor, intenta recargar.");
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, [user?.id]);
-
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+  const showSkeleton =
+    authLoading || loading || (url !== null && data === null && !loadError);
 
   const activeTrips = useMemo(
     () =>
@@ -205,7 +167,7 @@ export default function DashboardPage() {
     show: { opacity: 1, y: 0 }
   };
 
-  if (loading) {
+  if (showSkeleton) {
     return (
       <DashboardLayout>
         <DashboardSkeleton />
@@ -237,7 +199,7 @@ export default function DashboardPage() {
           </p>
           <p className="text-gray-500 mb-4">{error}</p>
           <button
-            onClick={() => loadData()}
+            onClick={() => refetch()}
             className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
           >
             Reintentar

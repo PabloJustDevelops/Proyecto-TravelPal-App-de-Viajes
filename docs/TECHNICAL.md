@@ -1,180 +1,130 @@
 # 🛠️ Documentación Técnica
 
-> **Guía técnica completa y configuración del proyecto App Viajes**
+> Guía técnica y configuración de TravelPal (repo `app-viajes`).
+
+Para el contexto de dominio y el modelo de datos, ver [CONTEXT.md](../CONTEXT.md). Para la
+arquitectura, [ARCHITECTURE.md](./ARCHITECTURE.md). Para las decisiones, [DECISIONS/](./DECISIONS/).
 
 ---
 
-## 📋 Requisitos del Sistema
+## Requisitos
 
-| Componente | Versión Mínima | Descripción |
-|------------|----------------|-------------|
-| 🟢 **Node.js** | `>= 18.0.0` | Runtime de JavaScript |
-| 📦 **npm** | `>= 9.0.0` | Gestor de paquetes |
-| 🗄️ **Supabase** | - | Base de datos y autenticación |
-| ✈️ **Amadeus API** | - | API de viajes (opcional) |
-
----
-
-## 🔧 Dependencias Principales
-
-### 📚 Framework y Librerías Core
-```json
-{
-  "next": "^14.x",
-  "react": "^18.x", 
-  "typescript": "^5.x"
-}
-```
-
-### 🧪 Testing y Calidad de Código
-```json
-{
-  "jest": "^29.x",
-  "eslint": "^8.x",
-  "prettier": "^3.x"
-}
-```
-
-> 💡 **Tip:** Consulta `package.json` para ver todas las dependencias exactas y sus versiones.
+| Componente | Versión | Descripción |
+|------------|---------|-------------|
+| Node.js | 22+ | Runtime (Cloudflare y CI usan Node 22) |
+| npm | 10+ | Gestor de paquetes (repo con `package-lock.json`) |
+| Proyecto InsForge | - | Postgres + Auth + Storage |
+| Amadeus API | - | API de viajes (opcional) |
 
 ---
 
-## 🚀 Instalación Paso a Paso
+## Dependencias principales
 
-### 1️⃣ **Clonar y Configurar**
+- `next` 16.3.5, `react`/`react-dom` 19
+- `@insforge/sdk` (datos, auth, storage)
+- `@opennextjs/cloudflare` + `wrangler` (dev) para el hosting
+- `typescript`, `eslint`, `jest` + Testing Library
+
+Consulta `package.json` para las versiones exactas.
+
+---
+
+## Instalación
+
 ```bash
-# Clonar el repositorio
-git clone https://github.com/PabloJustDevelops/colaboracion-alejandro-app-viajes.git
-cd colaboracion-alejandro-app-viajes
-```
-
-### 2️⃣ **Variables de Entorno**
-```bash
-# Copiar archivo de ejemplo
-cp .env.example .env.local
-
-# Editar variables (ver sección Variables de Entorno)
-```
-
-### 3️⃣ **Instalar Dependencias**
-```bash
+git clone https://github.com/PabloJustDevelops/Proyecto-TravelPal-App-de-Viajes.git
+cd Proyecto-TravelPal-App-de-Viajes
 npm install
-```
-
-### 4️⃣ **Ejecutar en Desarrollo**
-```bash
+cp .env.example .env.local   # y rellena los valores
 npm run dev
 ```
 
-🎉 **¡Listo!** La aplicación estará disponible en `http://localhost:3000`
+La app queda en `http://localhost:3000`.
 
 ---
 
-## ⚡ Comandos Disponibles
+## Comandos
 
-| Comando | Descripción | Uso |
-|---------|-------------|-----|
-| `npm run dev` | 🔥 Servidor de desarrollo | Desarrollo local |
-| `npm run build` | 📦 Build de producción | Antes del deploy |
-| `npm run start` | 🚀 Servidor de producción | Servir build |
-| `npm test` | 🧪 Ejecutar tests | Testing |
-| `npm run lint` | 🔍 Análisis de código | Calidad de código |
-| `npm run lint:fix` | 🔧 Corregir lint automáticamente | Formateo |
+| Comando | Descripción |
+|---------|-------------|
+| `npm run dev` | Servidor de desarrollo |
+| `npm run lint` | ESLint |
+| `npm run type-check` | `tsc --noEmit` |
+| `npm run test:ci` | Jest (CI) |
+| `npm run build` | `next build` |
+| `npm run preview` | Build de OpenNext + `wrangler dev` local |
+| `npm run deploy` | Build de OpenNext + deploy a Cloudflare |
 
 ---
 
-## 🔐 Variables de Entorno
+## Variables de entorno
 
-Crea un archivo `.env.local` en la raíz del proyecto:
+`.env.local` (nunca se versiona):
 
 ```bash
-# 🗄️ Configuración de Supabase (REQUERIDO)
-NEXT_PUBLIC_SUPABASE_URL=tu_supabase_url_aqui
-NEXT_PUBLIC_SUPABASE_ANON_KEY=tu_supabase_anon_key_aqui
+# InsForge (obligatorias)
+NEXT_PUBLIC_INSFORGE_URL=https://<appkey>.<region>.insforge.app
+NEXT_PUBLIC_INSFORGE_ANON_KEY=<anon key>
 
-# 📊 Configuración de Logging
+# Solo servidor: secreto de proyecto (acceso admin)
+INSFORGE_API_KEY=<api key>
+
+# Logging (opcional): debug | info | warn | error
 NEXT_PUBLIC_LOG_LEVEL=info
 
-# ✈️ API de Amadeus (OPCIONAL)
-AMADEUS_API_KEY=tu_amadeus_api_key
-AMADEUS_API_SECRET=tu_amadeus_api_secret
+# Proveedores LLM (opcional)
+OPENROUTER_API_KEY=
+
+# Amadeus (opcional)
+AMADEUS_CLIENT_ID=
+AMADEUS_CLIENT_SECRET=
 ```
 
-### 🔑 Obtener Credenciales
-
-- **Supabase**: Crea un proyecto en [supabase.com](https://supabase.com)
-- **Amadeus**: Regístrate en [developers.amadeus.com](https://developers.amadeus.com)
+`NEXT_PUBLIC_*` se inlinean en el bundle del cliente. `INSFORGE_API_KEY` es un secreto de
+servidor: en Cloudflare se sube con `wrangler secret put INSFORGE_API_KEY`.
 
 ---
 
-## 📁 Estructura del Proyecto
+## Estructura
 
 ```
-app-viajes/
-├── 📂 src/
-│   ├── 📂 app/                    # 🏠 Páginas y layouts (App Router)
-│   │   ├── 📄 layout.tsx          # Layout principal
-│   │   ├── 📄 page.tsx            # Página de inicio
-│   │   └── 📂 auth/               # Páginas de autenticación
-│   ├── 📂 components/             # 🧩 Componentes reutilizables
-│   │   ├── 📂 ui/                 # Componentes de UI base
-│   │   ├── 📂 auth/               # Componentes de autenticación
-│   │   └── 📂 travel/             # Componentes de viajes
-│   └── 📂 lib/                    # 🔧 Utilidades y configuración
-│       ├── 📄 supabase.ts         # Cliente de Supabase
-│       ├── 📄 logger.ts           # Sistema de logging
-│       └── 📄 toast.ts            # Notificaciones
-├── 📂 docs/                       # 📚 Documentación
-├── 📂 .github/                    # 🤖 Workflows y plantillas
-└── 📄 package.json                # Configuración del proyecto
+src/
+├── app/                    # App Router: páginas y API routes
+├── components/             # UI por dominio + ui/ base
+├── contexts/               # AuthContext, ThemeContext
+└── lib/
+    ├── insforge.ts         # Cliente de navegador (createInsforgeClient)
+    ├── insforge/server.ts  # requireUser(), cliente de servidor
+    ├── insforge/auth-actions.ts  # Server actions de auth
+    ├── auth.ts             # AuthService
+    ├── public-env.ts       # Validación de variables públicas
+    └── env.ts              # Validación de secretos de servidor
+migrations/                 # Esquema InsForge (fuente de verdad)
 ```
 
 ---
 
-## 🔧 Configuración Adicional
+## Testing y calidad
 
-### 🎨 **Tailwind CSS**
-El proyecto usa Tailwind CSS para estilos. La configuración está en `tailwind.config.js`.
-
-### 🧪 **Testing**
-- Framework: **Jest** + **React Testing Library**
-- Archivos de test: `*.test.ts` o `*.test.tsx`
-- Configuración: `jest.config.js`
-
-### 📝 **ESLint & Prettier**
-- ESLint: `.eslintrc.json`
-- Prettier: `.prettierrc`
-- Ejecuta `npm run lint:fix` para formatear automáticamente
+- Jest + React Testing Library; tests en `__tests__/` o `*.test.ts(x)`.
+- Configuración: `jest.config.js`, `jest.setup.js`.
+- ESLint: `eslint.config.mjs`.
+- CI: `.github/workflows/ci.yml` (lint, type-check, tests, build y build del Worker).
 
 ---
 
-## 🆘 Solución de Problemas
+## Solución de problemas
 
-### ❌ Error de instalación de dependencias
+### Error de instalación de dependencias
 ```bash
-# Limpiar cache y reinstalar
 rm -rf node_modules package-lock.json
 npm install
 ```
 
-### ❌ Error de variables de entorno
-- Verifica que `.env.local` existe y tiene las variables correctas
-- Reinicia el servidor de desarrollo después de cambiar variables
+### Error de variables de entorno
+- Verifica que `.env.local` existe y tiene los valores correctos.
+- Reinicia el servidor de desarrollo tras cambiar variables.
 
-### ❌ Error de Supabase
-- Verifica que la URL y la clave anónima son correctas
-- Asegúrate de que el proyecto de Supabase está activo
-
----
-
-## 📞 Soporte
-
-¿Necesitas ayuda? 
-
-- 📧 **Email**: [pablo@example.com](mailto:pablo@example.com)
-- 🐛 **Issues**: [GitHub Issues](https://github.com/PabloJustDevelops/colaboracion-alejandro-app-viajes/issues)
-- 📖 **Documentación**: Revisa los otros archivos en `docs/`
-
----
-
-*Última actualización: Enero 2025*
+### La app no arranca en Cloudflare
+- Recuerda que `INSFORGE_API_KEY` debe existir como secreto de runtime.
+- `npm run preview` reproduce el runtime de Workers en local.

@@ -1,10 +1,10 @@
-import { createServerClient } from "@supabase/ssr";
+import { createServerClient } from "@insforge/sdk/ssr";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
 import { publicEnv } from "@/lib/public-env";
 
-export type ServerSupabaseClient = ReturnType<typeof createServerClient>;
+export type ServerInsforgeClient = ReturnType<typeof createServerClient>;
 
 export type ServerUser = {
   id: string;
@@ -12,33 +12,16 @@ export type ServerUser = {
   user_metadata?: Record<string, unknown>;
 };
 
-export async function createServerSupabaseClient(): Promise<ServerSupabaseClient> {
-  const cookieStore = await cookies();
-
-  return createServerClient(
-    publicEnv.NEXT_PUBLIC_SUPABASE_URL,
-    publicEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll();
-        },
-        setAll(cookiesToSet) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options),
-            );
-          } catch {
-            // Server Components cannot write cookies; safe to ignore.
-          }
-        },
-      },
-    },
-  );
+export async function createServerInsforgeClient(): Promise<ServerInsforgeClient> {
+  return createServerClient({
+    baseUrl: publicEnv.NEXT_PUBLIC_INSFORGE_URL,
+    anonKey: publicEnv.NEXT_PUBLIC_INSFORGE_ANON_KEY,
+    cookies: await cookies(),
+  });
 }
 
 export type RequireUserResult =
-  | { ok: true; supabase: ServerSupabaseClient; user: ServerUser }
+  | { ok: true; client: ServerInsforgeClient; user: ServerUser }
   | { ok: false; response: NextResponse };
 
 function unauthorized(): NextResponse {
@@ -52,14 +35,34 @@ function authVerificationFailed(): NextResponse {
   );
 }
 
+function normalizeUser(user: {
+  id: string;
+  email: string;
+  metadata: Record<string, unknown> | null;
+  profile: { name?: string; avatar_url?: string } | null;
+}): ServerUser {
+  const metadata: Record<string, unknown> = { ...(user.metadata ?? {}) };
+
+  // El nombre y el avatar viven en `profile`; los exponemos también como
+  // `full_name`/`avatar_url` porque es lo que consumen los handlers.
+  if (metadata.full_name === undefined && user.profile?.name) {
+    metadata.full_name = user.profile.name;
+  }
+  if (metadata.avatar_url === undefined && user.profile?.avatar_url) {
+    metadata.avatar_url = user.profile.avatar_url;
+  }
+
+  return { id: user.id, email: user.email, user_metadata: metadata };
+}
+
 export async function requireUser(): Promise<RequireUserResult> {
-  const supabase = await createServerSupabaseClient();
+  const client = await createServerInsforgeClient();
 
   try {
-    const { data, error } = await supabase.auth.getClaims();
+    const { data, error } = await client.auth.getCurrentUser();
 
     if (error) {
-      const status = error.status;
+      const status = error.statusCode;
       const authServerFailed =
         status === 0 || (typeof status === "number" && status >= 500);
 
@@ -75,27 +78,13 @@ export async function requireUser(): Promise<RequireUserResult> {
       return { ok: false, response: unauthorized() };
     }
 
-    const claims = data?.claims;
+    const user = data?.user;
 
-    if (!claims?.sub) {
+    if (!user?.id) {
       return { ok: false, response: unauthorized() };
     }
 
-    const email = typeof claims.email === "string" ? claims.email : undefined;
-    const metadata = claims.user_metadata;
-
-    return {
-      ok: true,
-      supabase,
-      user: {
-        id: claims.sub,
-        email,
-        user_metadata:
-          metadata && typeof metadata === "object"
-            ? (metadata as Record<string, unknown>)
-            : undefined,
-      },
-    };
+    return { ok: true, client, user: normalizeUser(user) };
   } catch (err) {
     logger.error("Server session: auth verification threw", err);
 
@@ -104,13 +93,13 @@ export async function requireUser(): Promise<RequireUserResult> {
 }
 
 export async function ensureUserExists(
-  supabase: ServerSupabaseClient,
+  client: ServerInsforgeClient,
   user: ServerUser,
 ) {
   if (!user?.id) return;
 
   try {
-    const { data, error } = await supabase
+    const { data, error } = await client.database
       .from("users")
       .select("id")
       .eq("id", user.id)
@@ -121,7 +110,7 @@ export async function ensureUserExists(
     }
 
     if (!data) {
-      const { error: insertError } = await supabase.from("users").insert([
+      const { error: insertError } = await client.database.from("users").insert([
         {
           id: user.id,
           email: user.email,

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
-import { requireUser } from "@/lib/supabase/server";
+import { requireUser } from "@/lib/insforge/server";
 
 export async function PATCH(
   request: Request,
@@ -10,7 +10,7 @@ export async function PATCH(
     const { id } = await params;
     const auth = await requireUser();
     if (!auth.ok) return auth.response;
-    const { supabase, user } = auth;
+    const { client, user } = auth;
 
     const body = await request.json();
     
@@ -27,8 +27,8 @@ export async function PATCH(
       updated_at: new Date().toISOString()
     };
 
-    const { data, error } = await supabase
-      .from("budgets")
+    const { data, error } = await client
+      .database.from("budgets")
       .update(updateData)
       .eq("id", id)
       .eq("user_id", user.id)
@@ -61,10 +61,10 @@ export async function DELETE(
     const { id } = await params;
     const auth = await requireUser();
     if (!auth.ok) return auth.response;
-    const { supabase, user } = auth;
+    const { client, user } = auth;
 
-    const { error } = await supabase
-      .from("budgets")
+    const { error } = await client
+      .database.from("budgets")
       .delete()
       .eq("id", id)
       .eq("user_id", user.id);

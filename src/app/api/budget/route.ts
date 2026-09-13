@@ -1,25 +1,25 @@
 import { NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
-import { ensureUserExists, requireUser } from "@/lib/supabase/server";
+import { ensureUserExists, requireUser } from "@/lib/insforge/server";
 
 export async function GET(request: Request) {
   try {
     const auth = await requireUser();
     if (!auth.ok) return auth.response;
-    const { supabase, user } = auth;
+    const { client, user } = auth;
 
     const userId = user.id;
 
     // Load budgets
-    const budgetsQuery = supabase
-        .from("budgets")
+    const budgetsQuery = client
+        .database.from("budgets")
         .select("*")
         .eq("user_id", userId)
         .order("created_at", { ascending: false });
 
     // Load trips
-    const tripsQuery = supabase
-        .from("trips")
+    const tripsQuery = client
+        .database.from("trips")
         .select(
         "id, title, user_id, origin, destination, departure_date, return_date, status, created_at, updated_at",
         )
@@ -27,8 +27,8 @@ export async function GET(request: Request) {
         .order("title");
 
     // Load expenses for calculations
-    const expensesQuery = supabase
-        .from("expenses")
+    const expensesQuery = client
+        .database.from("expenses")
         .select(
         "id, user_id, title, amount, currency, category, date, trip_id, description, receipt_url, created_at, updated_at",
         )
@@ -67,7 +67,7 @@ export async function POST(request: Request) {
   try {
     const auth = await requireUser();
     if (!auth.ok) return auth.response;
-    const { supabase, user } = auth;
+    const { client, user } = auth;
 
     const body = await request.json();
     const { 
@@ -89,7 +89,7 @@ export async function POST(request: Request) {
     }
 
     // Ensure user exists in public.users to avoid FK constraint error
-    await ensureUserExists(supabase, user);
+    await ensureUserExists(client, user);
 
     const newBudget = {
       user_id: user.id,
@@ -103,8 +103,8 @@ export async function POST(request: Request) {
       description: description || null
     };
 
-    const { data, error } = await supabase
-      .from("budgets")
+    const { data, error } = await client
+      .database.from("budgets")
       .insert([newBudget])
       .select()
       .single();

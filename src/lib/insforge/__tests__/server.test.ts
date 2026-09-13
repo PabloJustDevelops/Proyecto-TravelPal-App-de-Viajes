@@ -1,8 +1,10 @@
-import { createServerClient } from "@supabase/ssr";
+import { createServerClient } from "@insforge/sdk/ssr";
 import { cookies } from "next/headers";
-import { createServerSupabaseClient, requireUser } from "../server";
+import { createServerInsforgeClient, requireUser } from "../server";
 
-jest.mock("@supabase/ssr");
+jest.mock("@insforge/sdk/ssr", () => ({
+  createServerClient: jest.fn(),
+}));
 jest.mock("next/headers");
 jest.mock("next/server");
 jest.mock("@/lib/logger", () => ({
@@ -17,33 +19,29 @@ jest.mock("@/lib/logger", () => ({
 const createServerClientMock = createServerClient as jest.Mock;
 const cookiesMock = cookies as unknown as jest.Mock;
 
-function mockAuthClient(getClaims: jest.Mock) {
-  createServerClientMock.mockReturnValue({ auth: { getClaims } });
+function mockAuthClient(getCurrentUser: jest.Mock) {
+  createServerClientMock.mockReturnValue({ auth: { getCurrentUser } });
 }
+
+const userFixture = {
+  id: "user-1",
+  email: "ana@example.com",
+  emailVerified: true,
+  createdAt: "2024-01-01T00:00:00Z",
+  updatedAt: "2024-01-01T00:00:00Z",
+  metadata: { full_name: "Ana" },
+  profile: { name: "Ana", avatar_url: "https://cdn.example.com/ana.png" },
+};
 
 describe("requireUser", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    cookiesMock.mockResolvedValue({
-      getAll: jest.fn(() => []),
-      set: jest.fn(),
-    });
+    cookiesMock.mockResolvedValue({ get: jest.fn() });
   });
 
-  it("devuelve el usuario normalizado desde los claims", async () => {
+  it("devuelve el usuario normalizado desde getCurrentUser", async () => {
     mockAuthClient(
-      jest.fn().mockResolvedValue({
-        data: {
-          claims: {
-            sub: "user-1",
-            email: "ana@example.com",
-            user_metadata: { full_name: "Ana" },
-          },
-          header: { alg: "ES256", kid: "k1", typ: "JWT" },
-          signature: new Uint8Array(),
-        },
-        error: null,
-      }),
+      jest.fn().mockResolvedValue({ data: { user: userFixture }, error: null }),
     );
 
     const result = await requireUser();
@@ -53,14 +51,19 @@ describe("requireUser", () => {
       expect(result.user).toEqual({
         id: "user-1",
         email: "ana@example.com",
-        user_metadata: { full_name: "Ana" },
+        user_metadata: {
+          full_name: "Ana",
+          avatar_url: "https://cdn.example.com/ana.png",
+        },
       });
-      expect(result.supabase).toBeDefined();
+      expect(result.client).toBeDefined();
     }
   });
 
   it("devuelve 401 cuando no hay sesión", async () => {
-    mockAuthClient(jest.fn().mockResolvedValue({ data: null, error: null }));
+    mockAuthClient(
+      jest.fn().mockResolvedValue({ data: { user: null }, error: null }),
+    );
 
     const result = await requireUser();
 
@@ -76,8 +79,8 @@ describe("requireUser", () => {
   it("devuelve 401 cuando el token no es válido", async () => {
     mockAuthClient(
       jest.fn().mockResolvedValue({
-        data: null,
-        error: { message: "invalid JWT", status: 401 },
+        data: { user: null },
+        error: { message: "invalid JWT", statusCode: 401 },
       }),
     );
 
@@ -92,8 +95,8 @@ describe("requireUser", () => {
   it("devuelve 500 cuando falla el servidor de Auth", async () => {
     mockAuthClient(
       jest.fn().mockResolvedValue({
-        data: null,
-        error: { message: "fetch failed", status: 0 },
+        data: { user: null },
+        error: { message: "fetch failed", statusCode: 0 },
       }),
     );
 
@@ -111,8 +114,8 @@ describe("requireUser", () => {
   it("devuelve 500 cuando el servidor de Auth responde con un error >= 500", async () => {
     mockAuthClient(
       jest.fn().mockResolvedValue({
-        data: null,
-        error: { message: "internal error", status: 503 },
+        data: { user: null },
+        error: { message: "internal error", statusCode: 503 },
       }),
     );
 
@@ -145,9 +148,15 @@ describe("requireUser", () => {
     mockAuthClient(
       jest.fn().mockResolvedValue({
         data: {
-          claims: { sub: "user-2" },
-          header: {},
-          signature: new Uint8Array(),
+          user: {
+            id: "user-2",
+            email: "",
+            emailVerified: false,
+            createdAt: "2024-01-01T00:00:00Z",
+            updatedAt: "2024-01-01T00:00:00Z",
+            metadata: null,
+            profile: null,
+          },
         },
         error: null,
       }),
@@ -159,50 +168,32 @@ describe("requireUser", () => {
     if (result.ok) {
       expect(result.user).toEqual({
         id: "user-2",
-        email: undefined,
-        user_metadata: undefined,
+        email: "",
+        user_metadata: {},
       });
     }
   });
 });
 
-describe("createServerSupabaseClient", () => {
+describe("createServerInsforgeClient", () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it("enlaza getAll/setAll con las cookies del request", async () => {
-    const store = {
-      getAll: jest.fn(() => [{ name: "sb", value: "token" }]),
-      set: jest.fn(),
-    };
+  it("pasa el store de cookies al cliente de servidor", async () => {
+    const store = { get: jest.fn() };
     cookiesMock.mockResolvedValue(store);
     createServerClientMock.mockReturnValue({});
 
-    await createServerSupabaseClient();
+    await createServerInsforgeClient();
 
-    const options = createServerClientMock.mock.calls[0][2];
-    expect(options.cookies.getAll()).toEqual([{ name: "sb", value: "token" }]);
-
-    options.cookies.setAll([{ name: "sb", value: "nuevo", options: {} }]);
-    expect(store.set).toHaveBeenCalledWith("sb", "nuevo", {});
-  });
-
-  it("ignora el fallo al escribir cookies (Server Component)", async () => {
-    const store = {
-      getAll: jest.fn(() => []),
-      set: jest.fn(() => {
-        throw new Error("read-only");
+    expect(cookies).toHaveBeenCalled();
+    expect(createServerClientMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        baseUrl: expect.stringContaining("insforge.app"),
+        anonKey: expect.any(String),
+        cookies: store,
       }),
-    };
-    cookiesMock.mockResolvedValue(store);
-    createServerClientMock.mockReturnValue({});
-
-    await createServerSupabaseClient();
-
-    const options = createServerClientMock.mock.calls[0][2];
-    expect(() =>
-      options.cookies.setAll([{ name: "sb", value: "x", options: {} }]),
-    ).not.toThrow();
+    );
   });
 });

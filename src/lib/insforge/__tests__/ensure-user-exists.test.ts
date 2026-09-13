@@ -1,10 +1,13 @@
 import { logger } from "@/lib/logger";
 import {
   ensureUserExists,
-  type ServerSupabaseClient,
+  type ServerInsforgeClient,
   type ServerUser,
 } from "../server";
 
+jest.mock("@insforge/sdk/ssr", () => ({
+  createServerClient: jest.fn(),
+}));
 jest.mock("@/lib/logger", () => ({
   logger: {
     error: jest.fn(),
@@ -41,7 +44,11 @@ function fakeClient({
     insert,
   }));
 
-  return { client: { from } as unknown as ServerSupabaseClient, insert, from };
+  return {
+    client: { database: { from } } as unknown as ServerInsforgeClient,
+    insert,
+    from,
+  };
 }
 
 const user: ServerUser = {

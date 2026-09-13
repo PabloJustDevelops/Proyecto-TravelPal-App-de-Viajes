@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
-import { requireUser } from "@/lib/supabase/server";
+import { requireUser } from "@/lib/insforge/server";
 
 export async function GET(request: Request) {
   try {
     const auth = await requireUser();
     if (!auth.ok) return auth.response;
-    const { supabase, user } = auth;
+    const { client, user } = auth;
 
     const userId = user.id;
     const { searchParams } = new URL(request.url);
@@ -25,8 +25,8 @@ export async function GET(request: Request) {
     }
 
     // Load trips
-    let tripsQuery = supabase
-        .from("trips")
+    let tripsQuery = client
+        .database.from("trips")
         .select(
         "id, user_id, title, origin, destination, departure_date, return_date, airline, flight_number, status, notes, created_at, updated_at",
         )
@@ -38,8 +38,8 @@ export async function GET(request: Request) {
     }
 
     // Load expenses
-    let expensesQuery = supabase
-        .from("expenses")
+    let expensesQuery = client
+        .database.from("expenses")
         .select("*")
         .eq("user_id", userId)
         .order("date", { ascending: false });
@@ -50,8 +50,8 @@ export async function GET(request: Request) {
 
     // Load budgets (no date range filter usually, or maybe created_at?)
     // Keeping consistent with original page logic: no date filter on budgets query shown in page.tsx
-    const budgetsQuery = supabase
-        .from("budgets")
+    const budgetsQuery = client
+        .database.from("budgets")
         .select("*")
         .eq("user_id", userId)
         .order("created_at", { ascending: false });

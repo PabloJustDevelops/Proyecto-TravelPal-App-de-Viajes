@@ -1,15 +1,15 @@
 import { NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
-import { requireUser } from "@/lib/supabase/server";
+import { requireUser } from "@/lib/insforge/server";
 
 export async function GET(request: Request) {
   try {
     const auth = await requireUser();
     if (!auth.ok) return auth.response;
-    const { supabase, user } = auth;
+    const { client, user } = auth;
 
-    const { data, error } = await supabase
-      .from("tasks")
+    const { data, error } = await client
+      .database.from("tasks")
       .select("*")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false });
@@ -36,7 +36,7 @@ export async function POST(request: Request) {
   try {
     const auth = await requireUser();
     if (!auth.ok) return auth.response;
-    const { supabase, user } = auth;
+    const { client, user } = auth;
 
     const body = await request.json();
     const { title, description, status, priority, due_date } = body;
@@ -57,8 +57,8 @@ export async function POST(request: Request) {
       due_date: due_date || null,
     };
 
-    const { data, error } = await supabase
-      .from("tasks")
+    const { data, error } = await client
+      .database.from("tasks")
       .insert([newTask])
       .select()
       .single();

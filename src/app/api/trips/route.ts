@@ -1,15 +1,15 @@
 import { NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
-import { ensureUserExists, requireUser } from "@/lib/supabase/server";
+import { ensureUserExists, requireUser } from "@/lib/insforge/server";
 
 export async function GET(request: Request) {
   try {
     const auth = await requireUser();
     if (!auth.ok) return auth.response;
-    const { supabase, user } = auth;
+    const { client, user } = auth;
 
-    const { data, error } = await supabase
-      .from("trips")
+    const { data, error } = await client
+      .database.from("trips")
       .select("*")
       .eq("user_id", user.id)
       .order("departure_date", { ascending: false });
@@ -34,10 +34,10 @@ export async function POST(request: Request) {
   try {
     const auth = await requireUser();
     if (!auth.ok) return auth.response;
-    const { supabase, user } = auth;
+    const { client, user } = auth;
 
     // Ensure user exists in public.users to avoid FK constraint errors
-    await ensureUserExists(supabase, user);
+    await ensureUserExists(client, user);
 
     const body = await request.json();
     const { 
@@ -74,8 +74,8 @@ export async function POST(request: Request) {
       status: status || "planned",
     };
 
-    const { data, error } = await supabase
-      .from("trips")
+    const { data, error } = await client
+      .database.from("trips")
       .insert([newTrip])
       .select()
       .single();

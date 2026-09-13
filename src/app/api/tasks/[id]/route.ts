@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
-import { requireUser } from "@/lib/supabase/server";
+import { requireUser } from "@/lib/insforge/server";
 
 export async function PUT(
   request: Request,
@@ -10,14 +10,14 @@ export async function PUT(
     const { id } = await params;
     const auth = await requireUser();
     if (!auth.ok) return auth.response;
-    const { supabase, user } = auth;
+    const { client, user } = auth;
 
     const body = await request.json();
     
     // Validar que el usuario sea el propietario de la tarea
     // (RLS ya lo hace, pero es buena práctica verificar antes de intentar update)
-    const { data: existingTask, error: fetchError } = await supabase
-      .from("tasks")
+    const { data: existingTask, error: fetchError } = await client
+      .database.from("tasks")
       .select("user_id")
       .eq("id", id)
       .single();
@@ -36,8 +36,8 @@ export async function PUT(
       );
     }
 
-    const { error } = await supabase
-      .from("tasks")
+    const { error } = await client
+      .database.from("tasks")
       .update(body)
       .eq("id", id)
       .eq("user_id", user.id);
@@ -68,10 +68,10 @@ export async function DELETE(
     const { id } = await params;
     const auth = await requireUser();
     if (!auth.ok) return auth.response;
-    const { supabase, user } = auth;
+    const { client, user } = auth;
 
-    const { error } = await supabase
-      .from("tasks")
+    const { error } = await client
+      .database.from("tasks")
       .delete()
       .eq("id", id)
       .eq("user_id", user.id);

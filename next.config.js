@@ -180,4 +180,9 @@ const nextConfig = {
   }),
 };
 
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { initOpenNextCloudflareForDev } = require("@opennextjs/cloudflare");
+
+initOpenNextCloudflareForDev();
+
 module.exports = nextConfig;

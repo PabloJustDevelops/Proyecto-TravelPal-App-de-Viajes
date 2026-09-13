@@ -43,6 +43,11 @@ next-env.d.ts
 
 .vercel
 
+# Cloudflare / OpenNext
+/.open-next/
+/.wrangler/
+.dev.vars*
+
 # Testsprite
 # Ignora directorio temporal y artefactos generados por la herramienta de pruebas
 testsprite_tests/tmp/

@@ -4,22 +4,7 @@ import { createServerSupabaseClient, requireUser } from "../server";
 
 jest.mock("@supabase/ssr");
 jest.mock("next/headers");
-// The jsdom Response (whatwg-fetch) has no static json() nor body streams, which
-// NextResponse.json relies on. Stub it so the module runs under test.
-jest.mock("next/server", () => {
-  class StubResponse extends Response {
-    static json(body: unknown, init?: ResponseInit) {
-      return new Response(JSON.stringify(body), {
-        ...init,
-        headers: {
-          "content-type": "application/json",
-          ...((init?.headers as Record<string, string>) ?? {}),
-        },
-      });
-    }
-  }
-  return { NextResponse: StubResponse };
-});
+jest.mock("next/server");
 jest.mock("@/lib/logger", () => ({
   logger: {
     error: jest.fn(),

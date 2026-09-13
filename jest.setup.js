@@ -5,6 +5,13 @@
 // Learn more: https://github.com/testing-library/jest-dom
 import '@testing-library/jest-dom'
 
+// Entorno mínimo para la validación estricta (src/lib/env.ts). No son secretos
+// reales: sólo valores con forma válida para que los módulos que importan env
+// puedan cargarse en los tests.
+process.env.NEXT_PUBLIC_SUPABASE_URL ||= 'https://test-project.supabase.co'
+process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||= 'test-anon-key'
+process.env.SUPABASE_SERVICE_ROLE_KEY ||= 'test-service-role-key'
+
 // Mock Next.js router
 jest.mock('next/router', () => ({
   useRouter() {

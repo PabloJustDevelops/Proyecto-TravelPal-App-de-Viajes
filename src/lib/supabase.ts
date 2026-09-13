@@ -1,18 +1,9 @@
 import { createClient } from "@supabase/supabase-js";
 import { createBrowserClient } from "@supabase/ssr";
-import { logger } from "@/lib/logger";
+import { publicEnv } from "@/lib/public-env";
 
-// Variables de entorno requeridas (sin valores placeholder para evitar confusiones)
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-if (!supabaseUrl || !supabaseAnonKey) {
-  // Falla temprana y clara para facilitar diagnóstico de Testsprite y desarrollo
-  const msg =
-    "Supabase no configurado: define NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_ANON_KEY en .env.local";
-  logger.error(msg);
-  throw new Error(msg);
-}
+const supabaseUrl = publicEnv.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = publicEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 // Cliente Supabase para servidor (crear bajo demanda si se necesita)
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);

@@ -30,6 +30,12 @@ const optionalLogLevel = z.preprocess(
 );
 
 export const publicEnvSchema = z.object({
+  NEXT_PUBLIC_INSFORGE_URL: z
+    .string({ error: "es obligatoria (falta en .env.local)" })
+    .url("debe ser una URL válida (ej. https://xxxx.eu-central.insforge.app)"),
+  NEXT_PUBLIC_INSFORGE_ANON_KEY: z
+    .string({ error: "es obligatoria (falta en .env.local)" })
+    .min(1, "no puede estar vacía"),
   NEXT_PUBLIC_SUPABASE_URL: z
     .string({ error: "es obligatoria (falta en .env.local)" })
     .url("debe ser una URL válida (ej. https://xxxx.supabase.co)"),

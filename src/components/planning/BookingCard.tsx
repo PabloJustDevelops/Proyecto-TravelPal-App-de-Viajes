@@ -16,7 +16,7 @@ import {
 import Button from "../ui/Button";
 import { Card } from "../ui/Card";
 import { formatDate } from "../../lib/utils";
-import { Booking } from "@/lib/supabase";
+import { Booking } from "@/lib/insforge";
 
 interface BookingCardProps {
   booking: Booking;

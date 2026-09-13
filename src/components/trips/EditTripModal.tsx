@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import Modal from "../ui/Modal";
 import Input from "../ui/Input";
 import Button from "../ui/Button";
-import { createSupabaseClient, Trip } from "@/lib/supabase";
+import { createInsforgeClient, Trip } from "@/lib/insforge";
 import { logger } from "@/lib/logger";
 
 interface EditTripModalProps {
@@ -69,7 +69,7 @@ export default function EditTripModal({
     setError("");
 
     try {
-      const supabase = createSupabaseClient();
+      const supabase = createInsforgeClient();
 
       // Validate required fields
       if (
@@ -107,7 +107,7 @@ export default function EditTripModal({
       };
 
       const { error } = await supabase
-        .from("trips")
+        .database.from("trips")
         .update(tripData)
         .eq("id", trip.id);
 

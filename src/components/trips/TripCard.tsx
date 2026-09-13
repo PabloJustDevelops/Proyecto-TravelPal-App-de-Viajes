@@ -1,6 +1,6 @@
 'use client'
 
-import { Trip } from '@/lib/supabase'
+import { Trip } from '@/lib/insforge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { formatDate } from '@/lib/utils'
 import {

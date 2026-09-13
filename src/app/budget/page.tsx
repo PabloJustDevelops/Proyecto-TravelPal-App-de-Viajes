@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { Expense } from "@/lib/supabase";
+import { Expense } from "@/lib/insforge";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import BudgetCard from "@/components/budget/BudgetCard";
 import ExpenseChart from "@/components/charts/ExpenseChart";

@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
-import { Trip, Expense } from "@/lib/supabase";
+import { Trip, Expense } from "@/lib/insforge";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Plane, DollarSign, Calendar, MapPin, CreditCard, ShoppingBag, Utensils, Ticket, Heart } from "lucide-react";
 import { formatCurrency, getLoadErrorMessage } from "@/lib/utils";

@@ -6,7 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 jest.mock('@/contexts/AuthContext', () => ({
   useAuth: jest.fn(),
 }))
-jest.mock('@/lib/supabase')
+jest.mock('@/lib/insforge')
 jest.mock('@/lib/logger', () => ({
   logger: {
     info: jest.fn(),

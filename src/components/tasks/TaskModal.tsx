@@ -1,7 +1,7 @@
 import React, { Fragment, useEffect } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { useForm } from 'react-hook-form';
-import { Task } from '@/lib/supabase';
+import { Task } from '@/lib/insforge';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 
 interface TaskModalProps {

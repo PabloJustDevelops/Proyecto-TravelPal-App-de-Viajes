@@ -1,6 +1,6 @@
 import React from 'react';
 import { Calendar } from '@/components/calendar/Calendar';
-import { Task } from '@/lib/supabase';
+import { Task } from '@/lib/insforge';
 
 interface TaskCalendarViewProps {
   tasks: Task[];

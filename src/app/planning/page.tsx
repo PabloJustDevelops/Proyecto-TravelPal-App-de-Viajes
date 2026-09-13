@@ -29,7 +29,7 @@ import Modal from "../../components/ui/Modal";
 
 import NewBookingForm from "../../components/planning/NewBookingForm";
 import { useAuth } from "../../contexts/AuthContext";
-import { createSupabaseClient, Booking } from "../../lib/supabase";
+import { createInsforgeClient, Booking } from "../../lib/insforge";
 import { formatDate } from "../../lib/utils";
 import { logger } from "@/lib/logger";
 import PageSkeleton from "@/components/ui/PageSkeleton";
@@ -78,7 +78,7 @@ export default function PlanningPage() {
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [silentReload, setSilentReload] = useState(false);
 
-  const supabase = createSupabaseClient();
+  const supabase = createInsforgeClient();
 
   // Función para obtener el icono según el tipo
   const getEventIcon = (type: string, category?: string) => {
@@ -305,21 +305,21 @@ export default function PlanningPage() {
       try {
         if (event.type === "booking" && event.bookingId) {
           const { error } = await supabase
-            .from("bookings")
+            .database.from("bookings")
             .delete()
             .eq("id", event.bookingId);
 
           if (error) throw error;
         } else if (event.type === "activity" && event.activityId) {
           const { error } = await supabase
-            .from("itinerary_activities")
+            .database.from("itinerary_activities")
             .delete()
             .eq("id", event.activityId);
 
           if (error) throw error;
         } else if (event.type === "trip" && event.tripId) {
           const { error } = await supabase
-            .from("trips")
+            .database.from("trips")
             .delete()
             .eq("id", event.tripId);
 
@@ -373,20 +373,20 @@ export default function PlanningPage() {
       // Update in DB based on event type
       if (event.type === 'booking' && event.bookingId) {
         const { error } = await supabase
-          .from('bookings')
+          .database.from('bookings')
           .update({ start_date: formattedDate })
           .eq('id', event.bookingId);
         if (error) throw error;
       } else if (event.type === 'activity' && event.activityId) {
         const { error } = await supabase
-          .from('itinerary_activities')
+          .database.from('itinerary_activities')
           .update({ date: formattedDate })
           .eq('id', event.activityId);
         if (error) throw error;
       } else if (event.type === 'trip' && event.tripId) {
         // For trips, we might need to handle end date logic, but for simple move:
         const { error } = await supabase
-          .from('trips')
+          .database.from('trips')
           .update({ departure_date: formattedDate })
           .eq('id', event.tripId);
         if (error) throw error;

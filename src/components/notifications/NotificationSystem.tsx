@@ -10,7 +10,7 @@ import {
   InformationCircleIcon,
 } from "@heroicons/react/24/outline";
 import { useAuth } from "../../contexts/AuthContext";
-import { createSupabaseClient } from "../../lib/supabase";
+import { createInsforgeClient } from "../../lib/insforge";
 import { formatDate, getErrorMessage } from "../../lib/utils";
 import { logger } from "@/lib/logger";
 
@@ -57,10 +57,10 @@ export const NotificationSystem: React.FC<NotificationSystemProps> = ({
 
       try {
         setIsLoading(true);
-        const supabase = createSupabaseClient();
+        const supabase = createInsforgeClient();
 
         const query = supabase
-          .from("alerts")
+          .database.from("alerts")
           .select("*")
           .eq("user_id", user.id)
           .eq("is_read", false)
@@ -156,10 +156,10 @@ export const NotificationSystem: React.FC<NotificationSystemProps> = ({
     if (!notification) return;
 
     try {
-      const supabase = createSupabaseClient();
+      const supabase = createInsforgeClient();
       const alertId = notificationId.replace("alert_", "");
       const { error } = await supabase
-        .from("alerts")
+        .database.from("alerts")
         .update({ is_read: true })
         .eq("id", alertId);
 
@@ -177,10 +177,10 @@ export const NotificationSystem: React.FC<NotificationSystemProps> = ({
   // Descartar notificación (marcar como leída)
   const dismissNotification = async (notificationId: string) => {
     try {
-      const supabase = createSupabaseClient();
+      const supabase = createInsforgeClient();
       const alertId = notificationId.replace("alert_", "");
       const { error } = await supabase
-        .from("alerts")
+        .database.from("alerts")
         .update({ is_read: true })
         .eq("id", alertId);
 
@@ -196,9 +196,9 @@ export const NotificationSystem: React.FC<NotificationSystemProps> = ({
   // Marcar todas como leídas
   const markAllAsRead = async () => {
     try {
-      const supabase = createSupabaseClient();
+      const supabase = createInsforgeClient();
       const { error } = await supabase
-        .from("alerts")
+        .database.from("alerts")
         .update({ is_read: true })
         .eq("user_id", user!.id)
         .eq("is_read", false);

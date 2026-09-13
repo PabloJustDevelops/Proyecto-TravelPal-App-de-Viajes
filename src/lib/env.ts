@@ -14,6 +14,10 @@ import {
 // arranque fallan con un mensaje claro si falta alguna variable obligatoria.
 
 export const serverEnvSchema = publicEnvSchema.extend({
+  INSFORGE_API_KEY: z
+    .string({ error: "es obligatoria (sólo servidor, nunca exponerla al cliente)" })
+    .min(1, "no puede estar vacía"),
+
   SUPABASE_SERVICE_ROLE_KEY: z
     .string({ error: "es obligatoria (sólo servidor, nunca exponerla al cliente)" })
     .min(1, "no puede estar vacía"),

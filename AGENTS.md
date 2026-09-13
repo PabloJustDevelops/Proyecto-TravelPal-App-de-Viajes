@@ -40,3 +40,17 @@ La app corre en Cloudflare Workers con `@opennextjs/cloudflare` (build, preview 
 
 Pendiente: desconectar la integracion de Vercel con este repositorio desde la cuenta de Vercel
 de Pablo (requiere su login). El repo ya no la necesita.
+
+### Despliegue automatico (pendiente, dashboard de Cloudflare)
+
+Workers Builds es el equivalente a lo que hacia Vercel. Lo configura Pablo en el dashboard:
+
+1. Workers & Pages -> `app-viajes` -> Settings -> Builds -> Connect to Git.
+2. Autorizar GitHub y elegir el repo `PabloJustDevelops/Proyecto-TravelPal-App-de-Viajes`.
+3. Rama de produccion: `main`. Build command: `npx opennextjs-cloudflare build`.
+   Deploy command: `npx wrangler deploy`.
+4. Variables de build: `NEXT_PUBLIC_INSFORGE_URL` y `NEXT_PUBLIC_INSFORGE_ANON_KEY`
+   (se inlinean en el bundle durante el build).
+5. Secret de runtime: `INSFORGE_API_KEY` (Settings -> Variables and Secrets). Nunca al repo.
+
+Manual, por ahora: `npm run deploy` (build de OpenNext + deploy) con `wrangler login`.

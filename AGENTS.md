@@ -32,3 +32,11 @@ Key patterns:
 - Reference users with `auth.users(id)`; use `auth.uid()` in RLS policies.
 - For storage uploads, persist both the returned `url` and `key`.
 <!-- INSFORGE:END -->
+
+## Hosting
+
+La app corre en Cloudflare Workers con `@opennextjs/cloudflare` (build, preview y deploy via
+`opennextjs-cloudflare`). Vercel queda retirado del repo.
+
+Pendiente: desconectar la integracion de Vercel con este repositorio desde la cuenta de Vercel
+de Pablo (requiere su login). El repo ya no la necesita.

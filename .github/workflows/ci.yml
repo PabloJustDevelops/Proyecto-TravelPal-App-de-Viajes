@@ -48,7 +48,11 @@ jobs:
 
   deploy:
     needs: [build, worker]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    # OJO: el build de Linux del CI produce un Worker que no arranca (500 "Server failed to
+    # respond") mientras que el mismo commit construido en Windows si funciona. Hasta que se
+    # aclare, el despliegue queda DESACTIVADO por defecto: para activarlo, crear en el repo la
+    # variable DEPLOY_ENABLED = true (Settings -> Secrets and variables -> Actions -> Variables).
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.DEPLOY_ENABLED == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

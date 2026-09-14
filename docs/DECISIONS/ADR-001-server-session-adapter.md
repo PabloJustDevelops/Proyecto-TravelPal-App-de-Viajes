@@ -26,4 +26,6 @@ Los 12 handlers consumen `requireUser()`. `ensureUserExists` se mueve al mismo m
 
 ## Estado
 
-Aprobado
+Obsoleto. Describe el adaptador de sesión de servidor sobre Supabase, que ya no existe
+(`src/lib/supabase/server.ts` se sustituyó por `src/lib/insforge/server.ts`; ver ADR-002).
+Se conserva como registro histórico de por qué hay un único `requireUser()`.

@@ -5,6 +5,21 @@
 // Learn more: https://github.com/testing-library/jest-dom
 import '@testing-library/jest-dom'
 
+// Entorno mínimo para la validación estricta (src/lib/env.ts). No son secretos
+// reales: sólo valores con forma válida para que los módulos que importan env
+// puedan cargarse en los tests.
+process.env.NEXT_PUBLIC_INSFORGE_URL ||= 'https://test-appkey.eu-central.insforge.app'
+process.env.NEXT_PUBLIC_INSFORGE_ANON_KEY ||= 'test-insforge-anon-key'
+process.env.INSFORGE_API_KEY ||= 'test-insforge-api-key'
+
+// El SDK de InsForge (@insforge/sdk/ssr) es ESM y no se puede cargar tal cual
+// bajo Jest (CJS/jsdom). Los tests de unidad aíslan el cliente de datos.
+jest.mock('@/lib/insforge', () => ({
+  createInsforgeClient: jest.fn(() => ({
+    database: { from: jest.fn() },
+  })),
+}))
+
 // Mock Next.js router
 jest.mock('next/router', () => ({
   useRouter() {

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import Button from "@/components/ui/Button";
 import { useAuth } from "@/contexts/AuthContext";
-import { createSupabaseClient, Trip } from "@/lib/supabase";
+import { createInsforgeClient, Trip } from "@/lib/insforge";
 import { logger } from "@/lib/logger";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import EditTripModal from "@/components/trips/EditTripModal";
@@ -35,10 +35,10 @@ export default function TripDetailsPage({
     try {
       // Don't set loading to true here to avoid full page spinner on refresh
       // setLoading(true); 
-      const supabase = createSupabaseClient();
+      const insforge = createInsforgeClient();
 
-      const { data, error } = await supabase
-        .from("trips")
+      const { data, error } = await insforge
+        .database.from("trips")
         .select("*")
         .eq("id", id)
         .single();

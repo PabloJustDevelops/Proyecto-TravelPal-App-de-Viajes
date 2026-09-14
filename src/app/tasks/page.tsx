@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { Task } from "@/lib/supabase";
+import { Task } from "@/lib/insforge";
 import { TaskBoard } from "@/components/tasks/TaskBoard";
 import { TaskCalendarView } from "@/components/tasks/TaskCalendarView";
 import { TaskModal } from "@/components/tasks/TaskModal";

@@ -1,9 +1,18 @@
-import { createSupabaseClient } from './supabase'
-import { User, type AuthChangeEvent, type Session } from '@supabase/supabase-js'
+import { createInsforgeClient } from './insforge'
 import { logger } from '@/lib/logger'
 import { getErrorMessage } from '@/lib/utils'
+import {
+  resetPasswordAction,
+  sendResetPasswordEmailAction,
+  signInAction,
+  signOutAction,
+  signUpAction,
+  updateProfileAction,
+} from './insforge/auth-actions'
 
-export interface AuthUser extends User {
+export interface AuthUser {
+  id: string
+  email: string
   full_name?: string
   avatar_url?: string
   bio?: string
@@ -12,61 +21,40 @@ export interface AuthUser extends User {
   website?: string
 }
 
+type ProfileFields = {
+  full_name?: string
+  avatar_url?: string
+  bio?: string
+  phone?: string
+  location?: string
+  website?: string
+}
+
+const PROFILE_FETCH_TIMEOUT_MS = 5000
+const UPDATE_PROFILE_TIMEOUT_MS = 20000
+const UPLOAD_TIMEOUT_MS = 30000
+
 export class AuthService {
-  private supabase = createSupabaseClient()
+  private insforge = createInsforgeClient()
 
   async signUp(email: string, password: string, fullName: string) {
     logger.info('AuthService: Iniciando signUp con email:', email)
-    const { data, error } = await this.supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: fullName,
-        },
-        // Deshabilitar confirmación de email para desarrollo
-        emailRedirectTo: undefined,
-      },
-    })
-
-    logger.debug('AuthService: Respuesta de signUp:', { data, error })
-    if (error) {
-      logger.error('AuthService: Error en signUp:', { error: getErrorMessage(error) })
-      throw error
-    }
-    return data
+    return signUpAction({ email, password, name: fullName })
   }
 
   async signIn(email: string, password: string) {
     logger.info('AuthService: Iniciando signIn con email:', email)
-    
-    try {
-      logger.debug('AuthService: Llamando a supabase.auth.signInWithPassword...')
-      const { data, error } = await this.supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
 
-      logger.debug('AuthService: Respuesta de signIn completa:', { 
-        data: data ? {
-          user: data.user ? { id: data.user.id, email: data.user.email } : null,
-          session: data.session ? 'session_exists' : null
-        } : null, 
-        error: error ? { message: error.message, status: error.status } : null 
-      })
-      
-      if (error) {
-        logger.error('AuthService: Error en signIn:', { error: getErrorMessage(error) })
-        throw new Error(`Error de autenticación: ${error.message}`)
-      }
-      
-      if (!data.user) {
+    try {
+      const result = await signInAction({ email, password })
+
+      if (!result?.user) {
         logger.error('AuthService: No se obtuvo usuario después del signIn')
         throw new Error('No se pudo autenticar el usuario')
       }
-      
+
       logger.info('AuthService: signIn completado exitosamente')
-      return data
+      return result
     } catch (err: unknown) {
       logger.error('AuthService: Excepción en signIn:', { error: getErrorMessage(err) })
       throw err
@@ -74,8 +62,7 @@ export class AuthService {
   }
 
   async signOut() {
-    const { error } = await this.supabase.auth.signOut()
-    if (error) throw error
+    await signOutAction()
   }
 
   async resetPassword(email: string) {
@@ -87,104 +74,101 @@ export class AuthService {
 
     // Normalizar el email (trim y lowercase)
     const normalizedEmail = email.trim().toLowerCase()
+    const origin = typeof window !== 'undefined' ? window.location.origin : ''
 
-    const { error } = await this.supabase.auth.resetPasswordForEmail(normalizedEmail, {
-      redirectTo: `${window.location.origin}/reset-password`,
-    })
-
-    if (error) {
-      logger.error('AuthService: Error en resetPassword:', { error: getErrorMessage(error) })
-      // Proporcionar mensajes de error más específicos
-      if (error.message.includes('invalid')) {
-        throw new Error('El email proporcionado no es válido')
-      } else if (error.message.includes('not found')) {
-        throw new Error('No se encontró una cuenta con este email')
-      } else {
-        throw new Error(`Error al enviar email de recuperación: ${error.message}`)
-      }
+    try {
+      await sendResetPasswordEmailAction({
+        email: normalizedEmail,
+        redirectTo: `${origin}/reset-password`,
+      })
+    } catch (err) {
+      logger.error('AuthService: Error en resetPassword:', { error: getErrorMessage(err) })
+      throw new Error(`Error al enviar email de recuperación: ${getErrorMessage(err)}`)
     }
   }
 
-  async updatePassword(password: string) {
-    const { error } = await this.supabase.auth.updateUser({
-      password,
-    })
-
-    if (error) throw error
+  async updatePassword(password: string, token: string) {
+    await resetPasswordAction({ newPassword: password, otp: token })
   }
 
   async getCurrentUser(): Promise<AuthUser | null> {
-    let sessionUser: User | null = null;
     try {
-      logger.debug('AuthService: Getting current user...');
-      
-      // Intentar obtener sesión primero para evitar llamada a getUser si no es necesaria
-      const { data: { session }, error: sessionError } = await this.supabase.auth.getSession();
-      
-      if (sessionError || !session?.user) {
-        if (sessionError) logger.debug('AuthService: Error obteniendo sesión:', sessionError.message);
-        return null;
+      logger.debug('AuthService: Getting current user...')
+
+      const { data, error } = await this.insforge.auth.getCurrentUser()
+
+      if (error || !data?.user) {
+        if (error) logger.debug('AuthService: Error obteniendo usuario:', error.message)
+        return null
       }
 
-      sessionUser = session.user;
-      const user = session.user;
+      const user = data.user
 
-      // Get additional user data from our profiles table
-      // Usamos maybeSingle para no lanzar error si no existe perfil aun
-      // Timeout específico solo para la base de datos, no para toda la auth
-      const dbTimeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('DB profile fetch timed out')), 5000)
-      );
+      // Datos adicionales del perfil en nuestra tabla `profiles`.
+      // Timeout específico solo para la base de datos, no para toda la auth.
+      const dbTimeoutPromise = new Promise((_, reject) =>
+        setTimeout(
+          () => reject(new Error('DB profile fetch timed out')),
+          PROFILE_FETCH_TIMEOUT_MS,
+        ),
+      )
 
-      let userData = null;
+      let profile: Record<string, unknown> | null = null
       try {
-        const { data, error: dbError } = await Promise.race([
-          this.supabase
+        const { data: profileData, error: dbError } = (await Promise.race([
+          this.insforge.database
             .from('profiles')
             .select('*')
             .eq('id', user.id)
             .maybeSingle(),
-          dbTimeoutPromise
-        ]) as any;
+          dbTimeoutPromise,
+        ])) as {
+          data: Record<string, unknown> | null
+          error: { message: string } | null
+        }
 
         if (dbError) {
-           logger.warn('AuthService: Error obteniendo datos extra del usuario:', dbError.message);
+          logger.warn('AuthService: Error obteniendo datos extra del usuario:', dbError.message)
         } else {
-           userData = data;
+          profile = profileData
         }
       } catch (dbErr) {
-        logger.warn('AuthService: Timeout o error al obtener perfil, continuando con usuario básico:', dbErr);
+        logger.warn(
+          'AuthService: Timeout o error al obtener perfil, continuando con usuario básico:',
+          dbErr,
+        )
       }
 
-      logger.debug('AuthService: User retrieved successfully', { id: user.id });
+      logger.debug('AuthService: User retrieved successfully', { id: user.id })
       return {
-        ...user,
-        full_name: userData?.full_name,
-        avatar_url: userData?.avatar_url,
-        bio: userData?.bio,
-        phone: userData?.phone,
-        location: userData?.location,
-        website: userData?.website,
+        id: user.id,
+        email: user.email,
+        full_name:
+          (profile?.full_name as string | undefined) ?? user.profile?.name ?? undefined,
+        avatar_url:
+          (profile?.avatar_url as string | undefined) ??
+          user.profile?.avatar_url ??
+          undefined,
+        bio: profile?.bio as string | undefined,
+        phone: profile?.phone as string | undefined,
+        location: profile?.location as string | undefined,
+        website: profile?.website as string | undefined,
       }
     } catch (err) {
-      if (sessionUser) {
-        logger.warn('AuthService: Error crítico en getCurrentUser, pero existe sesión. Retornando usuario básico.', err);
-        return sessionUser as AuthUser;
-      }
-      logger.error('AuthService: Excepción inesperada en getCurrentUser y no hay sesión recuperable:', err)
+      logger.error('AuthService: Excepción inesperada en getCurrentUser:', err)
       return null
     }
   }
 
-  async updateProfile(updates: { full_name?: string; avatar_url?: string; bio?: string; phone?: string; location?: string; website?: string }) {
+  async updateProfile(updates: ProfileFields) {
     logger.info('AuthService: Updating profile...', updates)
-    
-    let user;
+
+    let user
     try {
-        user = await this.getCurrentUser()
+      user = await this.getCurrentUser()
     } catch (e) {
-        logger.error('AuthService: Failed to get user for update', e);
-        throw new Error('Could not verify current session');
+      logger.error('AuthService: Failed to get user for update', e)
+      throw new Error('Could not verify current session')
     }
 
     if (!user) {
@@ -192,41 +176,34 @@ export class AuthService {
       throw new Error('No user logged in')
     }
 
-    // Add timeout to prevent infinite hanging
-    const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Update profile timed out after 20s')), 20000)
-    );
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(
+        () => reject(new Error('Update profile timed out after 20s')),
+        UPDATE_PROFILE_TIMEOUT_MS,
+      ),
+    )
 
     try {
-      // 1. Update auth metadata
-      const updateAuthPromise = this.supabase.auth.updateUser({
-        data: {
-          full_name: updates.full_name,
-          avatar_url: updates.avatar_url,
-        },
-      });
+      // 1. Actualizar el perfil de auth (setProfile en servidor)
+      const updateAuthPromise = updateProfileAction({
+        name: updates.full_name,
+        avatar_url: updates.avatar_url,
+        ...updates,
+      })
 
-      // 2. Update profiles table
-      const updateDbPromise = this.supabase
-        .from('profiles')
-        .upsert({
-          id: user.id,
-          updated_at: new Date().toISOString(),
-          ...updates,
-        });
+      // 2. Actualizar la tabla profiles
+      const updateDbPromise = this.insforge.database.from('profiles').upsert({
+        id: user.id,
+        updated_at: new Date().toISOString(),
+        ...updates,
+      })
 
-      // Execute both in parallel with timeout
-      const [authResult, dbResult] = await Promise.race([
+      const [, dbResult] = (await Promise.race([
         Promise.all([updateAuthPromise, updateDbPromise]),
-        timeoutPromise
-      ]) as [any, any];
+        timeoutPromise,
+      ])) as [unknown, { error: { message: string } | null }]
 
-      if (authResult.error) {
-        logger.error('AuthService: Auth metadata update failed', authResult.error)
-        throw authResult.error
-      }
-
-      if (dbResult.error) {
+      if (dbResult?.error) {
         logger.error('AuthService: Profile DB update failed', dbResult.error)
         throw dbResult.error
       }
@@ -245,60 +222,35 @@ export class AuthService {
 
     const fileExt = file.name.split('.').pop()
     const fileName = `${user.id}/${Math.random().toString(36).substring(2)}.${fileExt}`
-    const filePath = `${fileName}`
 
-    // Add timeout for upload
-    const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Avatar upload timed out after 30s')), 30000)
-    );
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(
+        () => reject(new Error('Avatar upload timed out after 30s')),
+        UPLOAD_TIMEOUT_MS,
+      ),
+    )
 
     try {
-      const uploadPromise = this.supabase.storage
-        .from('avatars')
-        .upload(filePath, file);
+      const bucket = this.insforge.storage.from('avatars')
 
-      const { error: uploadError } = await Promise.race([uploadPromise, timeoutPromise]) as any;
+      const { error: uploadError } = (await Promise.race([
+        bucket.upload(fileName, file),
+        timeoutPromise,
+      ])) as { error: { message: string } | null }
 
       if (uploadError) {
         logger.error('AuthService: Error uploading avatar:', uploadError)
         throw uploadError
       }
 
-      const { data } = this.supabase.storage
-        .from('avatars')
-        .getPublicUrl(filePath)
+      const { data } = bucket.getPublicUrl(fileName)
 
-      logger.info('AuthService: Avatar uploaded successfully', { publicUrl: data.publicUrl })
-      return data.publicUrl
+      logger.info('AuthService: Avatar uploaded successfully', { publicUrl: data?.publicUrl })
+      return data?.publicUrl ?? ''
     } catch (error) {
       logger.error('AuthService: Avatar upload exception', error)
       throw error
     }
-  }
-
-  onAuthStateChange(callback: (user: AuthUser | null) => void) {
-    return this.supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session | null) => {
-      if (session?.user) {
-        // Optimización: Si el evento es TOKEN_REFRESHED, quizás no necesitamos recargar todo el perfil si ya lo tenemos en memoria,
-        // pero como authService es stateless, intentamos obtenerlo de forma segura.
-        try {
-            const user = await this.getCurrentUser();
-            if (user) {
-                callback(user);
-            } else {
-                // Fallback crítico: Si getCurrentUser falla (ej. error de red al ir a DB), 
-                // pero tenemos sesión válida, no desloguear al usuario.
-                logger.warn('AuthService: getCurrentUser falló pero hay sesión, usando fallback.');
-                callback(session.user as AuthUser);
-            }
-        } catch (error) {
-            logger.error('AuthService: Error crítico en onAuthStateChange, usando fallback de sesión:', error);
-            callback(session.user as AuthUser);
-        }
-      } else {
-        callback(null)
-      }
-    })
   }
 }
 

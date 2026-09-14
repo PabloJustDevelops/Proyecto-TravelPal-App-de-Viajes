@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeftIcon } from '@heroicons/react/24/outline'
 import { useAuth } from '@/contexts/AuthContext'
-import { createSupabaseClient, Trip } from '@/lib/supabase'
+import { Trip } from '@/lib/insforge'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
@@ -30,7 +30,7 @@ export default function NewExpensePage() {
 
   const loadTrips = useCallback(async () => {
     try {
-      // Usar la API de viajes en lugar de supabase directo para consistencia
+      // Usar la API de viajes en lugar de insforge directo para consistencia
       // Aunque aquí usamos solo lectura, es mejor centralizar
       // Pero como ya existe la API /api/expenses que devuelve { expenses, trips }
       // podríamos usar esa o simplemente /api/trips

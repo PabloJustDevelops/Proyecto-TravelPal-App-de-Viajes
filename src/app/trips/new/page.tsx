@@ -7,7 +7,6 @@ import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { useAuth } from "@/contexts/AuthContext";
-import { createSupabaseClient } from "@/lib/supabase";
 import { logger } from "@/lib/logger";
 import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
@@ -59,8 +58,6 @@ export default function NewTripPage() {
     setError("");
 
     try {
-      const supabase = createSupabaseClient();
-
       // Validate required fields
       if (
         !formData.title ||

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
-import { requireUser } from "@/lib/supabase/server";
+import { requireUser } from "@/lib/insforge/server";
 
 export async function GET(
   request: Request,
@@ -10,10 +10,10 @@ export async function GET(
     const id = (await params).id;
     const auth = await requireUser();
     if (!auth.ok) return auth.response;
-    const { supabase, user } = auth;
+    const { client, user } = auth;
 
-    const { data, error } = await supabase
-      .from("expenses")
+    const { data, error } = await client
+      .database.from("expenses")
       .select("*")
       .eq("id", id)
       .eq("user_id", user.id)
@@ -45,7 +45,7 @@ export async function PUT(
     const id = (await params).id;
     const auth = await requireUser();
     if (!auth.ok) return auth.response;
-    const { supabase, user } = auth;
+    const { client, user } = auth;
 
     const body = await request.json();
     console.log('Recibida petición PUT en /api/expenses/[id] con body:', body);
@@ -78,8 +78,8 @@ export async function PUT(
       updated_at: new Date().toISOString()
     };
 
-    const { data, error } = await supabase
-      .from("expenses")
+    const { data, error } = await client
+      .database.from("expenses")
       .update(updateData)
       .eq("id", id)
       .eq("user_id", user.id)
@@ -114,10 +114,10 @@ export async function DELETE(
     const id = (await params).id;
     const auth = await requireUser();
     if (!auth.ok) return auth.response;
-    const { supabase, user } = auth;
+    const { client, user } = auth;
 
-    const { error } = await supabase
-      .from("expenses")
+    const { error } = await client
+      .database.from("expenses")
       .delete()
       .eq("id", id)
       .eq("user_id", user.id);

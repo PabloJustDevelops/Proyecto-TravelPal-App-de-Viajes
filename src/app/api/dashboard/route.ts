@@ -1,29 +1,29 @@
 import { NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
-import { requireUser } from "@/lib/supabase/server";
+import { requireUser } from "@/lib/insforge/server";
 
 export async function GET(request: Request) {
   try {
     const auth = await requireUser();
     if (!auth.ok) return auth.response;
-    const { supabase, user } = auth;
+    const { client, user } = auth;
 
     const userId = user.id;
 
     // Parallel fetch for Dashboard data
     const [tripsRes, expensesRes, budgetsRes] = await Promise.all([
-      supabase
-        .from("trips")
+      client
+        .database.from("trips")
         .select("*")
         .eq("user_id", userId)
         .order("departure_date", { ascending: true }),
-      supabase
-        .from("expenses")
+      client
+        .database.from("expenses")
         .select("*")
         .eq("user_id", userId)
         .order("date", { ascending: false }),
-      supabase
-        .from("budgets")
+      client
+        .database.from("budgets")
         .select("total_amount")
         .eq("user_id", userId)
     ]);

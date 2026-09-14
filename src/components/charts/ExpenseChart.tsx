@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Expense } from '@/lib/supabase'
+import { Expense } from '@/lib/insforge'
 import { formatCurrency } from '@/lib/utils'
 import { 
   PieChart, 

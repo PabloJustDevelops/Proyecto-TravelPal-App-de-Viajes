@@ -1,26 +1,26 @@
 import { NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
-import { ensureUserExists, requireUser } from "@/lib/supabase/server";
+import { ensureUserExists, requireUser } from "@/lib/insforge/server";
 
 export async function GET(request: Request) {
   try {
     const auth = await requireUser();
     if (!auth.ok) return auth.response;
-    const { supabase, user } = auth;
+    const { client, user } = auth;
 
     const [tripsRes, bookingsRes, activitiesRes] = await Promise.all([
-      supabase
-        .from("trips")
+      client
+        .database.from("trips")
         .select("*")
         .eq("user_id", user.id)
         .order("departure_date", { ascending: true }),
-      supabase
-        .from("bookings")
+      client
+        .database.from("bookings")
         .select("*")
         .eq("user_id", user.id)
         .order("start_date", { ascending: true }),
-      supabase
-        .from("itinerary_activities")
+      client
+        .database.from("itinerary_activities")
         .select("*")
         .eq("user_id", user.id)
     ]);
@@ -51,11 +51,11 @@ export async function POST(request: Request) {
   try {
     const auth = await requireUser();
     if (!auth.ok) return auth.response;
-    const { supabase, user } = auth;
+    const { client, user } = auth;
 
     // Ensure user exists in public.users, although bookings references auth.users directly
     // but maybe trips reference public.users and we need consistency
-    await ensureUserExists(supabase, user);
+    await ensureUserExists(client, user);
 
     const body = await request.json();
     const { 
@@ -100,8 +100,8 @@ export async function POST(request: Request) {
       notes: notes || null
     };
 
-    const { data, error } = await supabase
-      .from("bookings")
+    const { data, error } = await client
+      .database.from("bookings")
       .insert([newBooking])
       .select()
       .single();
@@ -128,7 +128,7 @@ export async function PUT(request: Request) {
   try {
     const auth = await requireUser();
     if (!auth.ok) return auth.response;
-    const { supabase, user } = auth;
+    const { client, user } = auth;
 
     const body = await request.json();
     const { 
@@ -178,8 +178,8 @@ export async function PUT(request: Request) {
       (updatedBooking as any)[key] === undefined && delete (updatedBooking as any)[key]
     );
 
-    const { data, error } = await supabase
-      .from("bookings")
+    const { data, error } = await client
+      .database.from("bookings")
       .update(updatedBooking)
       .eq('id', id)
       .eq('user_id', user.id) // Ensure user owns the booking

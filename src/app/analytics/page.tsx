@@ -2,7 +2,7 @@
 
 import { useState, useRef, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { Trip, Expense } from "@/lib/supabase";
+import { Trip, Expense } from "@/lib/insforge";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import ExpenseChart from "@/components/charts/ExpenseChart";
 import TripChart from "@/components/charts/TripChart";

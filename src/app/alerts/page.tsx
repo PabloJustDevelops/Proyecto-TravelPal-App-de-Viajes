@@ -5,7 +5,7 @@ import DashboardLayout from '@/components/layout/DashboardLayout'
 import AlertCard from '@/components/alerts/AlertCard'
 import Button from '@/components/ui/Button'
 import { useAuth } from '@/contexts/AuthContext'
-import { createSupabaseClient, Alert } from '@/lib/supabase'
+import { createInsforgeClient, Alert } from '@/lib/insforge'
 import { logger } from '@/lib/logger'
 import { getErrorMessage } from '@/lib/utils'
 import { 
@@ -28,11 +28,11 @@ export default function AlertsPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all')
 
   const loadAlerts = useCallback(async (signal?: AbortSignal) => {
-    const supabase = createSupabaseClient()
+    const insforge = createInsforgeClient()
 
     try {
-      const query = supabase
-        .from('alerts')
+      const query = insforge
+        .database.from('alerts')
         .select('*')
         .eq('user_id', user!.id)
         .order('created_at', { ascending: false })
@@ -108,11 +108,11 @@ export default function AlertsPage() {
 
   const handleMarkAsRead = async (alertId: string) => {
     setActionLoading(alertId)
-    const supabase = createSupabaseClient()
+    const insforge = createInsforgeClient()
 
     try {
-      const { error } = await supabase
-        .from('alerts')
+      const { error } = await insforge
+        .database.from('alerts')
         .update({ is_read: true })
         .eq('id', alertId)
 
@@ -133,11 +133,11 @@ export default function AlertsPage() {
     if (!confirm('¿Estás seguro de que quieres eliminar esta alerta?')) return
 
     setActionLoading(alertId)
-    const supabase = createSupabaseClient()
+    const insforge = createInsforgeClient()
 
     try {
-      const { error } = await supabase
-        .from('alerts')
+      const { error } = await insforge
+        .database.from('alerts')
         .delete()
         .eq('id', alertId)
 
@@ -157,11 +157,11 @@ export default function AlertsPage() {
     if (unreadAlerts.length === 0) return
 
     setActionLoading('all')
-    const supabase = createSupabaseClient()
+    const insforge = createInsforgeClient()
 
     try {
-      const { error } = await supabase
-        .from('alerts')
+      const { error } = await insforge
+        .database.from('alerts')
         .update({ is_read: true })
         .eq('user_id', user!.id)
         .eq('is_read', false)

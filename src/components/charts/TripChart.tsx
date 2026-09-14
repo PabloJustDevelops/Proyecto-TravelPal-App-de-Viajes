@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Trip } from '@/lib/supabase'
+import { Trip } from '@/lib/insforge'
 import { 
   PieChart, 
   Pie, 

@@ -8,7 +8,7 @@ import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Modal from "@/components/ui/Modal";
 import { useAuth } from "@/contexts/AuthContext";
-import { createSupabaseClient, Note, Trip } from "@/lib/supabase";
+import { createInsforgeClient, Note, Trip } from "@/lib/insforge";
 import { logger } from "@/lib/logger";
 import { getErrorMessage } from "@/lib/utils";
 import {
@@ -84,9 +84,9 @@ export default function NotesPage() {
       if (editingNote) {
         // Update existing note
         // TODO: Implement PUT API
-        const supabase = createSupabaseClient();
-        const { error } = await supabase
-          .from("notes")
+        const insforge = createInsforgeClient();
+        const { error } = await insforge
+          .database.from("notes")
           .update({
             title: noteData.title,
             content: noteData.content,

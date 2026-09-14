@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Input from "../ui/Input";
 import Button from "../ui/Button";
-import { createSupabaseClient, Booking } from "@/lib/supabase";
+import { Booking } from "@/lib/insforge";
 import { useAuth } from "@/contexts/AuthContext";
 import { logger } from "@/lib/logger";
 
@@ -105,8 +105,6 @@ export default function NewBookingForm({
     setError("");
 
     try {
-      const supabase = createSupabaseClient();
-
       // Map number of people to notes/description
       const notes = `Personas: ${formData.number_of_people}\n${formData.description}`;
 

@@ -1,4 +1,5 @@
 import { logger } from './logger'
+import { serverEnv } from './env'
 
 type OAuthToken = {
   access_token: string
@@ -6,15 +7,21 @@ type OAuthToken = {
   expires_in: number
 }
 
+const DEFAULT_AMADEUS_HOST = 'https://test.api.amadeus.com'
+
 let cachedToken: { token: string; expiresAt: number } | null = null
 
-const AMADEUS_HOST = process.env.AMADEUS_API_HOST || 'https://test.api.amadeus.com'
+function amadeusHost(): string {
+  return serverEnv.AMADEUS_API_HOST || DEFAULT_AMADEUS_HOST
+}
 
 async function fetchAccessToken(): Promise<string> {
+  const host = amadeusHost()
+
   // Soportar ambas convenciones de nombres para evitar roturas:
   // Preferir AMADEUS_CLIENT_ID/AMADEUS_CLIENT_SECRET; fallback a AMADEUS_API_KEY/AMADEUS_API_SECRET
-  const clientId = process.env.AMADEUS_CLIENT_ID || process.env.AMADEUS_API_KEY
-  const clientSecret = process.env.AMADEUS_CLIENT_SECRET || process.env.AMADEUS_API_SECRET
+  const clientId = serverEnv.AMADEUS_CLIENT_ID || serverEnv.AMADEUS_API_KEY
+  const clientSecret = serverEnv.AMADEUS_CLIENT_SECRET || serverEnv.AMADEUS_API_SECRET
   if (!clientId || !clientSecret) {
     throw new Error('Configuración de Amadeus incompleta: faltan AMADEUS_CLIENT_ID/SECRET o AMADEUS_API_KEY/SECRET')
   }
@@ -24,7 +31,7 @@ async function fetchAccessToken(): Promise<string> {
     return cachedToken.token
   }
 
-  const url = `${AMADEUS_HOST}/v1/security/oauth2/token`
+  const url = `${host}/v1/security/oauth2/token`
   const body = new URLSearchParams({
     grant_type: 'client_credentials',
     client_id: clientId,
@@ -65,7 +72,7 @@ export type FlightSearchParams = {
 
 export async function searchFlightOffers(params: FlightSearchParams) {
   const token = await fetchAccessToken()
-  const url = new URL(`${AMADEUS_HOST}/v2/shopping/flight-offers`)
+  const url = new URL(`${amadeusHost()}/v2/shopping/flight-offers`)
 
   const qp: Record<string, string> = {
     originLocationCode: params.originLocationCode,

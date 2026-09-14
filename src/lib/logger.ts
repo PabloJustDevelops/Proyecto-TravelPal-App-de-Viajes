@@ -1,6 +1,7 @@
 type LogLevel = "debug" | "info" | "warn" | "error";
 import { showToast } from "./toast";
 import { getErrorMessage } from "./utils";
+import { publicEnv } from "./public-env";
 
 const LEVELS: Record<LogLevel, number> = {
   debug: 10,
@@ -10,7 +11,7 @@ const LEVELS: Record<LogLevel, number> = {
 };
 
 function getEnvLevel(): LogLevel {
-  const env = (process.env.NEXT_PUBLIC_LOG_LEVEL || "").toLowerCase();
+  const env = (publicEnv.NEXT_PUBLIC_LOG_LEVEL || "").toLowerCase();
   if (env in LEVELS) return env as LogLevel;
   // Por defecto: info en desarrollo, warn en producción
   return process.env.NODE_ENV !== "production" ? "info" : "warn";

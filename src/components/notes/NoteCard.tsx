@@ -1,6 +1,6 @@
 'use client'
 
-import { Note } from '@/lib/supabase'
+import { Note } from '@/lib/insforge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { formatDate } from '@/lib/utils'
 import {

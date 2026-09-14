@@ -3,15 +3,14 @@ on:
   push:
     branches: [ main ]
   pull_request:
-    branches: [ main ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      NEXT_PUBLIC_INSFORGE_URL: ${{ secrets.NEXT_PUBLIC_INSFORGE_URL }}
+      NEXT_PUBLIC_INSFORGE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_INSFORGE_ANON_KEY }}
+      INSFORGE_API_KEY: ${{ secrets.INSFORGE_API_KEY }}
       NEXT_PUBLIC_LOG_LEVEL: ${{ secrets.NEXT_PUBLIC_LOG_LEVEL }}
     steps:
       - uses: actions/checkout@v4
@@ -19,8 +18,6 @@ jobs:
         run: |
           if [ -z "${{ secrets.NEXT_PUBLIC_LOG_LEVEL }}" ]; then
             echo "NEXT_PUBLIC_LOG_LEVEL=warn" >> $GITHUB_ENV
-          else
-            echo "NEXT_PUBLIC_LOG_LEVEL=${{ secrets.NEXT_PUBLIC_LOG_LEVEL }}" >> $GITHUB_ENV
           fi
       - uses: actions/setup-node@v4
         with:
@@ -28,5 +25,23 @@ jobs:
           cache: 'npm'
       - run: npm ci
       - run: npm run lint
-      - run: npm test --if-present
+      - run: npm run type-check
+      - run: npm run test:ci
       - run: npm run build
+
+  worker:
+    name: worker-build
+    runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_INSFORGE_URL: ${{ secrets.NEXT_PUBLIC_INSFORGE_URL }}
+      NEXT_PUBLIC_INSFORGE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_INSFORGE_ANON_KEY }}
+      INSFORGE_API_KEY: ${{ secrets.INSFORGE_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: npm ci
+      - name: Build the Cloudflare Worker (no deploy)
+        run: npx opennextjs-cloudflare build

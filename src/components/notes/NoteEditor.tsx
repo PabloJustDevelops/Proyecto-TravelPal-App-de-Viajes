@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Note } from '@/lib/supabase'
+import { Note } from '@/lib/insforge'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'

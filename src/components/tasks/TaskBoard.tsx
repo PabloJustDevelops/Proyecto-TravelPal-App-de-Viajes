@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Task } from '@/lib/supabase';
+import { Task } from '@/lib/insforge';
 import { TaskCard } from './TaskCard';
 import { TrashIcon } from '@heroicons/react/24/outline';
 

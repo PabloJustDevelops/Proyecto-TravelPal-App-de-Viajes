@@ -1,6 +1,6 @@
 'use client'
 
-import { Alert } from '@/lib/supabase'
+import { Alert } from '@/lib/insforge'
 import { formatDate } from '@/lib/utils'
 import { 
   ExclamationTriangleIcon,

@@ -29,61 +29,49 @@ export function AuthProvider({ children, deps }: { children: React.ReactNode; de
   const logger = deps?.logger ?? defaultLogger
 
   useEffect(() => {
-    let mounted = true;
-    logger.debug("AuthContext: Inicializando useEffect");
+    let mounted = true
+    logger.debug('AuthContext: Inicializando useEffect')
 
     const initAuth = async () => {
       try {
         // Timeout de seguridad para evitar carga infinita
-        const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Auth timeout')), 8000)
-        );
-        
-        const userPromise = authService.getCurrentUser();
-        
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Auth timeout')), 8000),
+        )
+
+        const userPromise = authService.getCurrentUser()
+
         // Race entre obtener usuario y timeout
-        const user = await Promise.race([userPromise, timeoutPromise]) as AuthUser | null;
-        
+        const user = (await Promise.race([userPromise, timeoutPromise])) as AuthUser | null
+
         if (mounted) {
-          logger.debug("AuthContext: Usuario inicial obtenido:", user);
-          setUser(user);
+          logger.debug('AuthContext: Usuario inicial obtenido:', user)
+          setUser(user)
         }
       } catch (error) {
-        logger.error("AuthContext: Error o timeout inicializando auth:", { error });
-        // En caso de error, asumimos no autenticado para permitir renderizar (y que ProtectedRoute redirija si es necesario)
-        if (mounted) setUser(null);
+        logger.error('AuthContext: Error o timeout inicializando auth:', { error })
+        // En caso de error, asumimos no autenticado para permitir renderizar
+        // (y que ProtectedRoute redirija si es necesario)
+        if (mounted) setUser(null)
       } finally {
-        if (mounted) setLoading(false);
+        if (mounted) setLoading(false)
       }
-    };
+    }
 
-    initAuth();
-
-    // Listen for auth changes
-    logger.debug("AuthContext: Configurando listener de cambios de auth");
-    const {
-      data: { subscription },
-    } = authService.onAuthStateChange((user) => {
-      if (mounted) {
-        logger.debug("AuthContext: Cambio de estado de auth:", user?.id);
-        
-        // Evitar actualizaciones redundantes si el usuario es el mismo
-        setUser((prevUser) => {
-            if (prevUser?.id === user?.id && prevUser?.email === user?.email && prevUser?.full_name === user?.full_name) {
-                return prevUser;
-            }
-            return user;
-        });
-        setLoading(false);
-      }
-    });
+    initAuth()
 
     return () => {
-      mounted = false;
-      logger.debug("AuthContext: Limpiando subscription");
-      subscription.unsubscribe();
-    };
-  }, []);
+      mounted = false
+    }
+  }, [])
+
+  // Las mutaciones de auth corren en el servidor; tras cada una releemos la
+  // sesión para reflejar el nuevo estado en la UI.
+  const refreshUser = async () => {
+    const current = await authService.getCurrentUser()
+    setUser(current)
+    return current
+  }
 
   const signIn = async (email: string, password: string) => {
     logger.info('AuthContext: Iniciando signIn')
@@ -91,12 +79,13 @@ export function AuthProvider({ children, deps }: { children: React.ReactNode; de
     try {
       const result = await authService.signIn(email, password)
       logger.info('AuthContext: signIn exitoso', result)
-      // No establecer loading a false aquí, dejar que onAuthStateChange lo maneje
+      await refreshUser()
     } catch (err: unknown) {
       const message = getErrorMessage(err)
       logger.error('AuthContext: Error en signIn', { error: message })
-      setLoading(false)
       throw err
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -104,6 +93,7 @@ export function AuthProvider({ children, deps }: { children: React.ReactNode; de
     setLoading(true)
     try {
       await authService.signUp(email, password, fullName)
+      await refreshUser()
     } finally {
       setLoading(false)
     }
@@ -113,10 +103,10 @@ export function AuthProvider({ children, deps }: { children: React.ReactNode; de
     setLoading(true)
     try {
       // Timeout de seguridad para el logout
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Sign out timeout')), 5000)
-      );
-      
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Sign out timeout')), 5000),
+      )
+
       await Promise.race([authService.signOut(), timeoutPromise])
     } catch (error) {
       logger.error('AuthContext: Error en signOut', { error })
@@ -133,9 +123,7 @@ export function AuthProvider({ children, deps }: { children: React.ReactNode; de
 
   const updateProfile = async (updates: { full_name?: string; avatar_url?: string }) => {
     await authService.updateProfile(updates)
-    // Refresh user data
-    const updatedUser = await authService.getCurrentUser()
-    setUser(updatedUser)
+    await refreshUser()
   }
 
   const uploadAvatar = async (file: File) => {

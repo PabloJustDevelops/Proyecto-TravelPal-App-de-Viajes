@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
-import { createSupabaseClient, Note, Trip } from '@/lib/supabase'
+import { createInsforgeClient, Note, Trip } from '@/lib/insforge'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import NoteEditor from '@/components/notes/NoteEditor'
 import Button from '@/components/ui/Button'
@@ -30,11 +30,11 @@ export default function NoteDetailPage() {
   const [deleteLoading, setDeleteLoading] = useState(false)
 
   const loadNote = useCallback(async () => {
-    const supabase = createSupabaseClient()
+    const insforge = createInsforgeClient()
 
     try {
-      const query = supabase
-        .from('notes')
+      const query = insforge
+        .database.from('notes')
         .select(`
           *,
           trip:trips(*)
@@ -83,11 +83,11 @@ export default function NoteDetailPage() {
     if (!note) return
 
     setEditorLoading(true)
-    const supabase = createSupabaseClient()
+    const insforge = createInsforgeClient()
 
     try {
-      const { error } = await supabase
-        .from('notes')
+      const { error } = await insforge
+        .database.from('notes')
         .update({
           title: noteData.title,
           content: noteData.content,
@@ -114,11 +114,11 @@ export default function NoteDetailPage() {
     if (!note || !confirm('¿Estás seguro de que quieres eliminar esta nota?')) return
 
     setDeleteLoading(true)
-    const supabase = createSupabaseClient()
+    const insforge = createInsforgeClient()
 
     try {
-      const { error } = await supabase
-        .from('notes')
+      const { error } = await insforge
+        .database.from('notes')
         .delete()
         .eq('id', note.id)
 

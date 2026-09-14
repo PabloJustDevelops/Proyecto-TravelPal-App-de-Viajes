@@ -1,5 +1,5 @@
 import React from 'react';
-import { Task } from '@/lib/supabase';
+import { Task } from '@/lib/insforge';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { 

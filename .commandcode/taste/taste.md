@@ -1,0 +1,5 @@
+- Prefiere skills locales/proyecto sobre skills globales en Command Code; al instalar skills para un repo, deben viviren `.commandcode/skills/` del proyecto, no en global. Confidence: 0.95
+- Prefiere preguntas directas en el terminal (mediante la herramienta de preguntas) sobre explicaciones largas con opciones embebidas en texto; cuando hay varias opciones, lanzarlas como pregunta directa para que el usuario elija. Confidence: 0.85
+- Prefiere comunicarse en español; el usuario escribe en español y espera respuestas en español. Confidence: 0.95
+- Al cerrar issues de GitHub, referenciar el commit que resuelve el issue en el comentario de cierre. Confidence: 0.9
+- Prefiere migraciones incrementales (ej. 2 páginas primero, verificar, luego el resto) sobre cambios masivos de una sola vez. Confidence: 0.7

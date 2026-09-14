@@ -1,102 +1,79 @@
-// We use require and jest.doMock to avoid hoisting issues with variables
-describe("AuthService Resilience", () => {
-  let authService: any;
-  let mockSupabase: any;
-  let mockSession: any;
-  let mockUser: any;
+import { authService } from '../auth';
+import { createInsforgeClient } from '../insforge';
+
+jest.mock('../insforge', () => ({
+  createInsforgeClient: jest.fn(),
+}));
+
+jest.mock('../insforge/auth-actions', () => ({
+  signInAction: jest.fn(),
+  signUpAction: jest.fn(),
+  signOutAction: jest.fn(),
+  sendResetPasswordEmailAction: jest.fn(),
+  resetPasswordAction: jest.fn(),
+  updateProfileAction: jest.fn(),
+}));
+
+jest.mock('../logger', () => ({
+  logger: {
+    info: jest.fn(),
+    error: jest.fn(),
+    debug: jest.fn(),
+    warn: jest.fn(),
+  },
+}));
+
+describe('AuthService Resilience', () => {
+  let mockClient: {
+    auth: { getCurrentUser: jest.Mock };
+    database: { from: jest.Mock };
+  };
 
   beforeEach(() => {
-    jest.resetModules(); // Clear cache to allow re-mocking
+    jest.clearAllMocks();
 
-    mockUser = {
-      id: "user-123",
-      email: "test@example.com",
-      aud: "authenticated",
-      created_at: "2023-01-01T00:00:00Z",
+    mockClient = {
+      auth: { getCurrentUser: jest.fn() },
+      database: { from: jest.fn() },
     };
 
-    mockSession = {
-      user: mockUser,
-      access_token: "token",
-    };
-
-    mockSupabase = {
-      auth: {
-        getSession: jest
-          .fn()
-          .mockResolvedValue({ data: { session: mockSession }, error: null }),
-        getUser: jest
-          .fn()
-          .mockResolvedValue({ data: { user: mockUser }, error: null }),
-        onAuthStateChange: jest.fn(),
-      },
-      from: jest.fn(),
-    };
-
-    // Setup default DB mock
-    const mockBuilder = {
-      select: jest.fn().mockReturnThis(),
-      eq: jest.fn().mockReturnThis(),
-      maybeSingle: jest.fn().mockReturnThis(),
-    };
-    mockSupabase.from.mockReturnValue(mockBuilder);
-
-    jest.doMock("../supabase", () => ({
-      createSupabaseClient: () => mockSupabase,
-    }));
-
-    // Import AuthService AFTER mocking
-    const { AuthService } = require("../auth");
-    authService = new AuthService();
+    (createInsforgeClient as jest.Mock).mockReturnValue(mockClient);
+    (authService as unknown as { insforge: unknown }).insforge = mockClient;
   });
 
-  it("getCurrentUser should return basic user if DB fetch fails", async () => {
-    // Setup DB failure
-    const mockBuilder = {
+  it('getCurrentUser should return basic user if DB fetch fails', async () => {
+    mockClient.auth.getCurrentUser.mockResolvedValue({
+      data: {
+        user: {
+          id: 'user-123',
+          email: 'test@example.com',
+          profile: { name: 'Test' },
+        },
+      },
+      error: null,
+    });
+
+    const builder = {
       select: jest.fn().mockReturnThis(),
       eq: jest.fn().mockReturnThis(),
-      maybeSingle: jest
-        .fn()
-        .mockResolvedValue({ data: null, error: { message: "DB Error" } }),
+      maybeSingle: jest.fn().mockResolvedValue({ data: null, error: { message: 'DB Error' } }),
     };
-    mockSupabase.from.mockReturnValue(mockBuilder);
+    mockClient.database.from.mockReturnValue(builder);
 
     const user = await authService.getCurrentUser();
 
     expect(user).not.toBeNull();
-    expect(user.id).toBe(mockUser.id);
-    expect(user.email).toBe(mockUser.email);
-    // Profile data should be undefined
-    expect(user.full_name).toBeUndefined();
+    expect(user?.id).toBe('user-123');
+    expect(user?.email).toBe('test@example.com');
+    // Sin fila en profiles, cae al nombre del perfil de auth
+    expect(user?.full_name).toBe('Test');
   });
 
-  it("onAuthStateChange should use session fallback if getCurrentUser fails completely", async () => {
-    // Mock getCurrentUser to fail completely (return null)
-    // Since we are using the real class instance, we can spy on it
-    const getCurrentUserSpy = jest
-      .spyOn(authService, "getCurrentUser")
-      .mockResolvedValue(null);
+  it('getCurrentUser should return null if the auth call fails', async () => {
+    mockClient.auth.getCurrentUser.mockRejectedValue(new Error('network down'));
 
-    let authCallback: any;
-    mockSupabase.auth.onAuthStateChange.mockImplementation((cb: any) => {
-      authCallback = cb;
-      return { data: { subscription: { unsubscribe: jest.fn() } } };
-    });
+    const user = await authService.getCurrentUser();
 
-    const spyCallback = jest.fn();
-    authService.onAuthStateChange(spyCallback);
-
-    // Simulate Auth Change Event with valid session
-    await authCallback("SIGNED_IN", mockSession);
-
-    // Even though getCurrentUser returned null, we should get the session user back
-    expect(spyCallback).toHaveBeenCalledWith(
-      expect.objectContaining({
-        id: mockUser.id,
-        email: mockUser.email,
-      }),
-    );
-
-    getCurrentUserSpy.mockRestore();
+    expect(user).toBeNull();
   });
 });

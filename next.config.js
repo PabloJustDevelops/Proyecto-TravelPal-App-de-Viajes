@@ -5,8 +5,6 @@ const nextConfig = {
 
   // Configuración experimental para mejorar rendimiento
   experimental: {
-    // Optimizar CSS
-    optimizeCss: true,
     // Mejorar el tree shaking
     optimizePackageImports: ["@heroicons/react", "date-fns", "recharts"],
   },
@@ -179,5 +177,10 @@ const nextConfig = {
     },
   }),
 };
+
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { initOpenNextCloudflareForDev } = require("@opennextjs/cloudflare");
+
+initOpenNextCloudflareForDev();
 
 module.exports = nextConfig;

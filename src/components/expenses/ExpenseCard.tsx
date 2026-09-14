@@ -1,6 +1,6 @@
 'use client'
 
-import { Expense } from '@/lib/supabase'
+import { Expense } from '@/lib/insforge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import {

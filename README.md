@@ -7,41 +7,35 @@
     <a href="#instalacion">Instalación</a> ·
     <a href="#caracteristicas">Características</a> ·
     <a href="#documentacion">Documentación</a> ·
-    <a href="#capturas">Capturas</a> ·
     <a href="#roadmap">Roadmap</a>
   </p>
 
   <p>
     <img alt="Next.js" src="https://img.shields.io/badge/Next.js-16-black?logo=nextdotjs" />
+    <img alt="React" src="https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white" />
     <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white" />
-    <img alt="Supabase" src="https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?logo=supabase&logoColor=white" />
-    <img alt="Amadeus API" src="https://img.shields.io/badge/Amadeus-API-0B1F3B" />
+    <img alt="InsForge" src="https://img.shields.io/badge/InsForge-Backend-4B5563" />
+    <img alt="Cloudflare Workers" src="https://img.shields.io/badge/Cloudflare-Workers-F38020?logo=cloudflare&logoColor=white" />
     <img alt="CI/CD" src="https://img.shields.io/badge/GitHub_Actions-CI%2FCD-2088FF?logo=githubactions&logoColor=white" />
   </p>
 </div>
 
 ## 📋 Descripción
 
-App Viajes es una aplicación web colaborativa para gestionar todo el ciclo de un viaje: creación de itinerarios, control de gastos, presupuestos inteligentes y analíticas visuales. El proyecto enfatiza documentación clara, estándares de calidad y un flujo de trabajo profesional.
+TravelPal es una aplicación web para gestionar todo el ciclo de un viaje: itinerarios, control de
+gastos, presupuestos y analíticas. El backend es **InsForge** (Postgres + Auth + Storage) y el
+hosting es **Cloudflare Workers** con `@opennextjs/cloudflare`.
 
 ## 🚀 Características
 
 - ✅ Gestión completa de viajes: crear, editar y organizar itinerarios
 - 💸 Control de gastos por viaje con categorías y métricas
-- 💼 Presupuestos inteligentes y seguimiento financiero
+- 💼 Presupuestos y seguimiento financiero
 - 📊 Dashboard analítico con visualizaciones interactivas
-- 🔐 Autenticación segura con Supabase Auth
+- 🔐 Autenticación con InsForge (server actions; refresh token httpOnly)
 - 🧭 Integración con Amadeus API para datos de vuelos
 - 🧩 Logger centralizado y notificaciones toast
 - 📱 Diseño responsive y accesible
-
----
-
-## 🖼️ Banner / Capturas
-
-<div align="center">
-<img width="1677" height="971" alt="{A27E7AE7-0270-41C0-827A-CE5C69B448E3}" src="https://github.com/user-attachments/assets/0f79bbe6-983a-4016-8679-1d96e89ed60e" />  
-</div>
 
 ---
 
@@ -50,14 +44,15 @@ App Viajes es una aplicación web colaborativa para gestionar todo el ciclo de u
 ```
 app-viajes/
 ├── src/
-│   ├── app/                 # Rutas y páginas (App Router)
+│   ├── app/                 # Rutas, páginas y API routes (App Router)
 │   ├── components/          # UI y componentes por dominio
-│   ├── lib/                 # Servicios, clientes y utilidades
+│   ├── lib/                 # Clientes (insforge), auth, utilidades
 │   └── contexts/            # Contextos de React
-├── docs/                    # Documentación colaborativa (MDs mejorados)
+├── migrations/              # Esquema InsForge (fuente de verdad, ver ADR-004)
+├── docs/                    # Documentación colaborativa
 ├── .github/                 # Workflows, plantillas y labels
-├── testsprite_tests/        # Suite de pruebas automatizadas
-└── README.md                # Landing del repositorio (esta página)
+├── CONTEXT.md               # Contexto de dominio para agentes
+└── README.md
 ```
 
 ---
@@ -65,18 +60,15 @@ app-viajes/
 ## ⚙️ Instalación y Uso
 
 ### Prerrequisitos
-- Node.js 18+
-- npm o yarn
-- Cuenta de Supabase (Auth/DB)
-- API Key de Amadeus (opcional)
+- Node.js 22+
+- npm
+- Un proyecto de InsForge (URL + anon key + API key)
+- API key de Amadeus (opcional)
 
 ### Instalación
 ```bash
-# Clonar el repositorio
-git clone https://github.com/PabloJustDevelops/colaboracion-alejandro-app-viajes.git
-cd colaboracion-alejandro-app-viajes
-
-# Instalar dependencias
+git clone https://github.com/PabloJustDevelops/Proyecto-TravelPal-App-de-Viajes.git
+cd Proyecto-TravelPal-App-de-Viajes
 npm install
 ```
 
@@ -84,97 +76,53 @@ npm install
 ```bash
 # Copiar variables de entorno
 cp .env.example .env.local
+```
 
-# Variables necesarias
-NEXT_PUBLIC_SUPABASE_URL=tu_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=tu_supabase_anon_key
-AMADEUS_CLIENT_ID=tu_amadeus_client_id
-AMADEUS_CLIENT_SECRET=tu_amadeus_client_secret
+Variables de `.env.local` (nunca se versionan):
+```bash
+NEXT_PUBLIC_INSFORGE_URL=https://<appkey>.<region>.insforge.app
+NEXT_PUBLIC_INSFORGE_ANON_KEY=<anon key>
+INSFORGE_API_KEY=<api key de proyecto, solo servidor>
+AMADEUS_CLIENT_ID=<opcional>
+AMADEUS_CLIENT_SECRET=<opcional>
 ```
 
 ### Ejecución
 ```bash
-# Desarrollo
-npm run dev
-
-# Tests
-npm test
-
-# Producción
-npm run build
-
-# Lint y formato
-npm run lint
-npm run format
+npm run dev          # Desarrollo (http://localhost:3000)
+npm run lint         # ESLint
+npm run type-check   # TypeScript
+npm run test:ci      # Jest
+npm run build        # next build
 ```
 
-La app corre en `http://localhost:3000`.
+### Despliegue (Cloudflare Workers)
+```bash
+npm run preview      # Build de OpenNext + wrangler dev local
+npm run deploy       # Build de OpenNext + deploy a Cloudflare
+```
+`INSFORGE_API_KEY` es un secreto de runtime: se sube con `wrangler secret put INSFORGE_API_KEY`.
 
-### Uso rápido
-- Autenticación: registro/login
-- Crear viaje: `/trips`
-- Gastos por viaje: `/expenses`
-- Presupuestos: `/budget`
-- Analíticas: `/analytics`
+📖 **Documentación**
 
-📖 **Documentación Colaborativa**
-
-La documentación detallada está en `docs/`:
-
-- **[TECHNICAL.md](docs/TECHNICAL.md)**: Guía técnica y configuración
-- **[CONTRIBUTING.md](docs/CONTRIBUTING.md)**: Cómo contribuir
-- **[ARCHITECTURE.md](docs/ARCHITECTURE.md)**: Arquitectura y patrones
-- **[BRANCHING.md](docs/BRANCHING.md)**: Estrategia de ramas y workflow
-- **[PR_PROCESS.md](docs/PR_PROCESS.md)**: Proceso de Pull Requests
-- **[COMMITS.md](docs/COMMITS.md)**: Convenciones de commits
+- **[CONTEXT.md](CONTEXT.md)**: contexto de dominio (stack, comandos, modelo de datos, glosario)
+- **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**: arquitectura y flujo de datos
+- **[docs/DECISIONS/](docs/DECISIONS/)**: ADRs (InsForge, Cloudflare, esquema)
+- **[docs/TECHNICAL.md](docs/TECHNICAL.md)**: guía técnica
+- **[docs/CONTRIBUTING.md](docs/CONTRIBUTING.md)**: cómo contribuir
+- **[docs/COMMITS.md](docs/COMMITS.md)** / **[docs/PR_PROCESS.md](docs/PR_PROCESS.md)**: flujo de trabajo
 
 ---
 
-## 🧪 Testing
-
-Suite con **Jest** y **Testsprite**:
-```bash
-npm test                  # Suite completa
-npm run test:auth         # Autenticación
-npm run test:trips        # Gestión de viajes
-npm run test:expenses     # Gastos
-```
-
-Coberturas:
-- Autenticación y autorización
-- CRUD de viajes y gastos
-- Validaciones de formularios
-- Integración con APIs
-- Componentes de UI críticos
-
 ## 🔧 Tecnologías
 
-- Frontend: Next.js 15, React 18, TypeScript
-- Estilos: Tailwind CSS, componentes personalizados
-- Backend: Supabase (PostgreSQL, Auth, Storage)
+- Frontend: Next.js 16 (App Router), React 19, TypeScript
+- Estilos: Tailwind CSS
+- Backend: InsForge (Postgres, Auth, Storage) vía `@insforge/sdk`
+- Hosting: Cloudflare Workers con `@opennextjs/cloudflare`
 - APIs: Amadeus API
-- Testing: Jest, Testsprite
-- CI/CD: GitHub Actions
-- Linting: ESLint, Prettier
-- Commits: Commitlint, Conventional Commits
-
-## 📊 Estado del Desarrollo
-
-**✅ Funcionalidades Completadas**
-- Sistema de autenticación completo
-- CRUD de viajes con validaciones
-- Gestión de gastos por categorías
-- Dashboard con métricas principales
-- Sistema de presupuestos
-- Analíticas con gráficos interactivos
-- Logger centralizado con toast notifications
-- Diseño responsive y accesible
-
-**🔄 En Desarrollo**
-- Filtros avanzados en analíticas
-- Exportación de datos (PDF/Excel)
-- Notificaciones push
-- Modo offline básico
+- Testing: Jest + Testing Library
+- CI/CD: GitHub Actions (lint, type-check, tests, build y build del Worker)
 
 ## 📋 Roadmap
 - Internacionalización (i18n)
@@ -187,29 +135,16 @@ Coberturas:
 - **[Pablo Rodríguez Garijo](https://github.com/PabloJustDevelops)** - Desarrollador principal
 - **Alejandro García Redondo** - Desarrollador ayudante
 
-
----
-
-> Nota: Proyecto colaborativo enfocado en buenas prácticas, documentación y flujo profesional.
-
 ## 🤝 Contribuir
 
-¡Las contribuciones son bienvenidas! Por favor:
-
-1. Fork el proyecto
-2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
-3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
-4. Push a la rama (`git push origin feature/AmazingFeature`)
-5. Abre un Pull Request
-
-Consulta [CONTRIBUTING.md](docs/CONTRIBUTING.md) para más detalles.
+1. Crea una rama para tu cambio
+2. Commit con Conventional Commits (ver [docs/COMMITS.md](docs/COMMITS.md))
+3. Abre un Pull Request (ver [docs/PR_PROCESS.md](docs/PR_PROCESS.md))
 
 ## 📄 Licencia
 
-Este proyecto está bajo la Licencia MIT. Ver `LICENSE` para más información.
+MIT.
 
 ## 📞 Contacto
 
 Pablo Rodríguez Garijo - [@PabloJustDevelops](https://github.com/PabloJustDevelops)
-
-Link del proyecto: [https://github.com/PabloJustDevelops/Proyecto-TravelPal-App-de-Viajes](https://github.com/PabloJustDevelops/Proyecto-TravelPal-App-de-Viajes)

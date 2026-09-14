@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createLLMService, LLMMessage } from "@/lib/llmService";
 import { logger } from "@/lib/logger";
-import { requireUser } from "@/lib/supabase/server";
+import { requireUser } from "@/lib/insforge/server";
 
 export async function POST(request: Request) {
   try {

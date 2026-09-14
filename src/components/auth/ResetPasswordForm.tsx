@@ -6,7 +6,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { createSupabaseClient } from "@/lib/supabase";
 import { authService } from "@/lib/auth";
 import Button from "@/components/ui/Button";
 
@@ -30,6 +29,7 @@ export default function ResetPasswordForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSessionReady, setIsSessionReady] = useState(false);
+  const [resetToken, setResetToken] = useState<string | null>(null);
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -43,51 +43,33 @@ export default function ResetPasswordForm() {
   });
 
   useEffect(() => {
-    const handleCodeExchange = async () => {
-      const code = searchParams.get("code");
+    const handleResetLink = async () => {
+      const token = searchParams.get("token");
+      const status = searchParams.get("insforge_status");
+      const flowError = searchParams.get("insforge_error");
 
-      if (code) {
-        try {
-          const supabase = createSupabaseClient();
-          const { error } = await supabase.auth.exchangeCodeForSession(code);
-
-          if (error) {
-            console.error("Error intercambiando código:", error);
-            setError("El enlace de recuperación es inválido o ha expirado.");
-          } else {
-            setIsSessionReady(true);
-          }
-        } catch (err) {
-          console.error("Excepción al intercambiar código:", err);
-          setError("Error al procesar el enlace de recuperación.");
-        }
-      } else {
-        // Comprobar si ya hay una sesión activa (por si acaso)
-        const supabase = createSupabaseClient();
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-        if (session) {
-          setIsSessionReady(true);
-        } else {
-          // Si no hay código ni sesión, revisar hash (legacy flow) o mostrar error
-          const hash = window.location.hash;
-          if (
-            !hash ||
-            (!hash.includes("access_token") && !hash.includes("type=recovery"))
-          ) {
-            setError("Enlace de recuperación inválido o incompleto.");
-          }
-          // Si hay hash, supabase-js suele manejarlo automáticamente, esperamos a que la sesión se establezca
-        }
+      // InsForge redirige aquí con ?token=...&insforge_status=ready tras
+      // validar el enlace de recuperación, o con insforge_status=error.
+      if (status === "error") {
+        setError(flowError || "El enlace de recuperación es inválido o ha expirado.");
+        return;
       }
+
+      if (token && status === "ready") {
+        setResetToken(token);
+        setIsSessionReady(true);
+        return;
+      }
+
+      // Sin token no hay forma de autorizar el cambio de contraseña.
+      setError("Enlace de recuperación inválido o incompleto.");
     };
 
-    handleCodeExchange();
+    handleResetLink();
   }, [searchParams]);
 
   const onSubmit = async (data: ResetPasswordFormData) => {
-    if (!isSessionReady) {
+    if (!isSessionReady || !resetToken) {
       setError(
         "No se ha podido verificar tu identidad. Por favor, solicita un nuevo enlace.",
       );
@@ -98,7 +80,7 @@ export default function ResetPasswordForm() {
       setIsLoading(true);
       setError(null);
 
-      await authService.updatePassword(data.password);
+      await authService.updatePassword(data.password, resetToken);
 
       // Redirigir al login con mensaje de éxito
       router.replace("/signin?message=password-updated");

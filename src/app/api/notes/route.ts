@@ -1,23 +1,23 @@
 import { NextResponse } from "next/server";
 import { logger } from "@/lib/logger";
-import { ensureUserExists, requireUser } from "@/lib/supabase/server";
+import { ensureUserExists, requireUser } from "@/lib/insforge/server";
 
 export async function GET(request: Request) {
   try {
     const auth = await requireUser();
     if (!auth.ok) return auth.response;
-    const { supabase, user } = auth;
+    const { client, user } = auth;
 
     const userId = user.id;
 
     const [notesRes, tripsRes] = await Promise.all([
-      supabase
-        .from("notes")
+      client
+        .database.from("notes")
         .select(`*, trip:trips(*)`)
         .eq("user_id", userId)
         .order("updated_at", { ascending: false }),
-      supabase
-        .from("trips")
+      client
+        .database.from("trips")
         .select("id, title, user_id, origin, destination, departure_date, return_date, status, created_at, updated_at")
         .eq("user_id", userId)
         .order("departure_date", { ascending: false })
@@ -50,10 +50,10 @@ export async function POST(request: Request) {
   try {
     const auth = await requireUser();
     if (!auth.ok) return auth.response;
-    const { supabase, user } = auth;
+    const { client, user } = auth;
 
     // Ensure user exists in public.users
-    await ensureUserExists(supabase, user);
+    await ensureUserExists(client, user);
 
     const body = await request.json();
     const { 
@@ -79,8 +79,8 @@ export async function POST(request: Request) {
       is_favorite: false
     };
 
-    const { data, error } = await supabase
-      .from("notes")
+    const { data, error } = await client
+      .database.from("notes")
       .insert([newNote])
       .select()
       .single();

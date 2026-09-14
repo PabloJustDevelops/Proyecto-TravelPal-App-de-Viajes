@@ -1,4 +1,6 @@
 import { logger } from "./logger";
+import { serverEnv } from "./env";
+import { publicEnv } from "./public-env";
 
 export interface LLMMessage {
   role: "system" | "user" | "assistant";
@@ -260,7 +262,7 @@ export class LLMService {
             "HTTP-Referer":
               typeof window !== "undefined"
                 ? window.location.origin
-                : process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
+                : publicEnv.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
             "X-Title": "App Viajes",
           },
           body: JSON.stringify({
@@ -403,26 +405,25 @@ export function createLLMService(): LLMService | null {
   const provider = "openrouter";
   // Usar variable de entorno de servidor
   // Priorizamos OPENROUTER_API_KEY, fallback a GROQ_API_KEY si el usuario usa la misma key para OpenRouter
-  const apiKey =
-    process.env.OPENROUTER_API_KEY || process.env.GROQ_API_KEY || "";
+  const apiKey = serverEnv.OPENROUTER_API_KEY || serverEnv.GROQ_API_KEY || "";
 
   // Modelo por defecto: Llama 3.1 8B Instruct (Free tier on OpenRouter often available)
   // o google/gemini-2.0-flash-lite-preview-02-05:free
   const model =
-    process.env.OPENROUTER_MODEL ||
-    process.env.NEXT_PUBLIC_LLM_MODEL ||
+    serverEnv.OPENROUTER_MODEL ||
+    publicEnv.NEXT_PUBLIC_LLM_MODEL ||
     "meta-llama/llama-3.1-8b-instruct:free";
 
   const temperature = parseEnvNumber(
-    process.env.NEXT_PUBLIC_LLM_TEMPERATURE,
+    publicEnv.NEXT_PUBLIC_LLM_TEMPERATURE,
     DEFAULT_CONFIG.temperature,
   );
   const maxTokens = parseEnvInt(
-    process.env.NEXT_PUBLIC_LLM_MAX_TOKENS,
+    publicEnv.NEXT_PUBLIC_LLM_MAX_TOKENS,
     DEFAULT_CONFIG.maxTokens,
   );
   const timeout = parseEnvInt(
-    process.env.NEXT_PUBLIC_LLM_TIMEOUT,
+    publicEnv.NEXT_PUBLIC_LLM_TIMEOUT,
     DEFAULT_CONFIG.timeout,
   );
 

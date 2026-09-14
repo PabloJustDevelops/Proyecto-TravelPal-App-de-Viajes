@@ -41,16 +41,14 @@ La app corre en Cloudflare Workers con `@opennextjs/cloudflare` (build, preview 
 Pendiente: desconectar la integracion de Vercel con este repositorio desde la cuenta de Vercel
 de Pablo (requiere su login). El repo ya no la necesita.
 
-### Despliegue automatico (pendiente, dashboard de Cloudflare)
+### Despliegue automatico (GitHub Actions)
 
-Workers Builds es el equivalente a lo que hacia Vercel. Lo configura Pablo en el dashboard:
+El despliegue lo hace el trabajo `deploy` de `.github/workflows/ci.yml`: al empujar a `main` corre
+`npm ci`, `npx opennextjs-cloudflare build` y `npx opennextjs-cloudflare deploy` con Node 22.
+El trabajo depende de `build` y `worker`, y solo se ejecuta en push a `main` (nunca en pull requests).
 
-1. Workers & Pages -> `app-viajes` -> Settings -> Builds -> Connect to Git.
-2. Autorizar GitHub y elegir el repo `PabloJustDevelops/Proyecto-TravelPal-App-de-Viajes`.
-3. Rama de produccion: `main`. Build command: `npx opennextjs-cloudflare build`.
-   Deploy command: `npx wrangler deploy`.
-4. Variables de build: `NEXT_PUBLIC_INSFORGE_URL` y `NEXT_PUBLIC_INSFORGE_ANON_KEY`
-   (se inlinean en el bundle durante el build).
-5. Secret de runtime: `INSFORGE_API_KEY` (Settings -> Variables and Secrets). Nunca al repo.
+Usa el secreto `CLOUDFLARE_API_TOKEN`, mas `NEXT_PUBLIC_INSFORGE_URL`, `NEXT_PUBLIC_INSFORGE_ANON_KEY`
+e `INSFORGE_API_KEY`. El `CLOUDFLARE_ACCOUNT_ID` va literal en el workflow, no es un secreto.
 
-Manual, por ahora: `npm run deploy` (build de OpenNext + deploy) con `wrangler login`.
+No hace falta configurar Workers Builds a mano en el dashboard: GitHub Actions es la unica via de deploy.
+Manual, si hiciera falta: `npm run deploy` (build de OpenNext + deploy) con `wrangler login`.

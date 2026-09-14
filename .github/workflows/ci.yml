@@ -43,16 +43,21 @@ jobs:
           node-version: '22'
           cache: 'npm'
       - run: npm ci
+      # OpenNext genera cloudflare/next-env.mjs leyendo los ficheros .env (NO process.env).
+      # Sin este fichero el worker arranca con next-env.mjs vacio y revienta (500 Server failed
+      # to respond). Los valores no se imprimen: van directos al fichero.
+      - name: Escribir .env.local para el build de OpenNext
+        run: |
+          printf 'NEXT_PUBLIC_INSFORGE_URL=%s\nNEXT_PUBLIC_INSFORGE_ANON_KEY=%s\nINSFORGE_API_KEY=%s\n' \
+            "${{ secrets.NEXT_PUBLIC_INSFORGE_URL }}" \
+            "${{ secrets.NEXT_PUBLIC_INSFORGE_ANON_KEY }}" \
+            "${{ secrets.INSFORGE_API_KEY }}" > .env.local
       - name: Build the Cloudflare Worker (no deploy)
         run: npx opennextjs-cloudflare build
 
   deploy:
     needs: [build, worker]
-    # OJO: el build de Linux del CI produce un Worker que no arranca (500 "Server failed to
-    # respond") mientras que el mismo commit construido en Windows si funciona. Hasta que se
-    # aclare, el despliegue queda DESACTIVADO por defecto: para activarlo, crear en el repo la
-    # variable DEPLOY_ENABLED = true (Settings -> Secrets and variables -> Actions -> Variables).
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.DEPLOY_ENABLED == 'true'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -61,6 +66,12 @@ jobs:
           node-version: '22'
           cache: 'npm'
       - run: npm ci
+      - name: Escribir .env.local para el build de OpenNext
+        run: |
+          printf 'NEXT_PUBLIC_INSFORGE_URL=%s\nNEXT_PUBLIC_INSFORGE_ANON_KEY=%s\nINSFORGE_API_KEY=%s\n' \
+            "${{ secrets.NEXT_PUBLIC_INSFORGE_URL }}" \
+            "${{ secrets.NEXT_PUBLIC_INSFORGE_ANON_KEY }}" \
+            "${{ secrets.INSFORGE_API_KEY }}" > .env.local
       - name: Build the Cloudflare Worker
         run: npx opennextjs-cloudflare build
         env:

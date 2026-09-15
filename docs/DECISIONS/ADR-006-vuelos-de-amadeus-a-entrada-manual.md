@@ -57,8 +57,9 @@ proxy a un proveedor retirado no arregla nada.
   políticas de `bookings` son por fila (`auth.uid() = user_id`) y los grants de tabla ya cubren las
   columnas nuevas.
 - El issue #38 debe actualizarse: su Etapa 1 pasa de "añadir `requireUser()`" a "borrar el
-  endpoint", y `flights/search` sale de su tabla de endpoints supervivientes. Sobreviven `chat` y
-  `auth/refresh`.
+  endpoint", y `flights/search` sale de su tabla de endpoints supervivientes. Sobrevive
+  `auth/refresh` (el proxy `chat` se retira también; ver
+  [ADR-008](ADR-008-retirada-del-asistente.md)).
 - Los documentos que citaban Amadeus (`README.md`, `docs/ARCHITECTURE.md`, `docs/TECHNICAL.md`,
   `docs/MCPs.md`) se corrigen. La auditoría se deja como historia y se anota al final.
 - Cualquier precio de vuelo futuro que no sea el que teclea el usuario saldrá de una fuente de

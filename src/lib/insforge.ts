@@ -98,6 +98,20 @@ export interface JournalEntry {
   updated_at: string;
 }
 
+export interface JournalPhoto {
+  id: string;
+  user_id: string;
+  trip_id: string;
+  url: string;
+  key: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// Bucket de Storage para las fotos del diario. La url sirve para pintar la
+// foto y la key es lo que hace falta para borrar el objeto.
+export const JOURNAL_PHOTOS_BUCKET = "journal-photos";
+
 export interface Booking {
   id: string;
   user_id: string;

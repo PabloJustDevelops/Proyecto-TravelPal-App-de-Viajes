@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { Expense } from '@/lib/insforge'
 import { formatCurrency } from '@/lib/utils'
+import { buildExpenseTrend } from './expenseTrend'
 import { 
   PieChart, 
   Pie, 
@@ -106,21 +107,7 @@ export default function ExpenseChart({
 
       setData(processedData)
     } else if (type === 'timeline') {
-      // Logic for timeline (monthly)
-      const monthlyTotals = expenses.reduce((acc, expense) => {
-        const date = new Date(expense.date)
-        const key = date.toLocaleDateString('es-ES', { month: 'short', year: 'numeric' })
-        acc[key] = (acc[key] || 0) + expense.amount
-        return acc
-      }, {} as Record<string, number>)
-
-      const processedData = Object.entries(monthlyTotals).map(([name, value]) => ({
-        name,
-        value,
-        color: '#3B82F6'
-      }))
-      // Sort by date could be complex with just strings, but let's assume simple sort for now or improve if needed
-      setData(processedData)
+      setData(buildExpenseTrend(expenses))
     }
   }, [expenses, type])
 

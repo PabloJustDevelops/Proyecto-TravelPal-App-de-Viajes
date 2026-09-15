@@ -79,4 +79,19 @@ export function parsePublicEnv(
   return parseEnv(publicEnvSchema, source);
 }
 
-export const publicEnv = parsePublicEnv(process.env);
+// El bundler sólo sustituye por su valor los accesos estáticos
+// (process.env.NEXT_PUBLIC_X). Pasar el objeto process.env entero deja el
+// navegador con un objeto vacío y la validación revienta al evaluar el módulo,
+// así que cada variable pública se enumera aquí una a una.
+const publicEnvSource: Record<string, string | undefined> = {
+  NEXT_PUBLIC_INSFORGE_URL: process.env.NEXT_PUBLIC_INSFORGE_URL,
+  NEXT_PUBLIC_INSFORGE_ANON_KEY: process.env.NEXT_PUBLIC_INSFORGE_ANON_KEY,
+  NEXT_PUBLIC_LOG_LEVEL: process.env.NEXT_PUBLIC_LOG_LEVEL,
+  NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
+  NEXT_PUBLIC_LLM_MODEL: process.env.NEXT_PUBLIC_LLM_MODEL,
+  NEXT_PUBLIC_LLM_TEMPERATURE: process.env.NEXT_PUBLIC_LLM_TEMPERATURE,
+  NEXT_PUBLIC_LLM_MAX_TOKENS: process.env.NEXT_PUBLIC_LLM_MAX_TOKENS,
+  NEXT_PUBLIC_LLM_TIMEOUT: process.env.NEXT_PUBLIC_LLM_TIMEOUT,
+};
+
+export const publicEnv = parsePublicEnv(publicEnvSource);

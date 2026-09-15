@@ -15,12 +15,12 @@ export default function EmptyState({
 }: EmptyStateProps) {
   return (
     <div className="flex flex-col items-center justify-center py-12 text-center">
-      {icon && <div className="mb-4 text-gray-400">{icon}</div>}
-      <h3 className="text-sm font-medium text-gray-900 dark:text-white">
+      {icon && <div className="mb-4 text-muted">{icon}</div>}
+      <h3 className="font-serif text-heading leading-snug text-ink">
         {title}
       </h3>
       {description && (
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+        <p className="mt-2 max-w-prose text-sm leading-reading text-muted">
           {description}
         </p>
       )}

@@ -49,7 +49,7 @@ describe("sistema de diseno: una sola clase de campo", () => {
   it("la clase canonica de los campos solo se declara en fieldStyles", () => {
     const offenders = sourceFiles
       .filter((file) =>
-        /focus:ring-blue-500 focus:border-blue-500/.test(
+        /focus:ring-accent\/35 focus:border-accent/.test(
           readFileSync(file, "utf8"),
         ),
       )
@@ -76,7 +76,7 @@ describe("sistema de diseno: un solo boton primario", () => {
           .split("\n")
           .some(
             (line) =>
-              line.includes("bg-blue-600") && line.includes("hover:bg-blue-700"),
+              line.includes("bg-accent") && line.includes("hover:bg-accent-hover"),
           ),
       )
       .map(relative);
@@ -162,5 +162,61 @@ describe("sistema de diseno: movimiento y tipografia", () => {
     expect(css).not.toContain("font-family");
     expect(layout.match(/next\/font\/google/g) ?? []).toHaveLength(1);
     expect(layout).toContain("inter.className");
+  });
+});
+
+// El rumbo "cuaderno de viaje" es un contrato, no una preferencia: la paleta vive en tokens y
+// los componentes compartidos piden color por nombre, no por escala cruda de tailwind. Asi el
+// cambio de acento o de papel se hace en un sitio y no hay que repintar pantalla por pantalla.
+describe("sistema de diseno: el rumbo en tokens", () => {
+  const css = readFileSync(path.join(SRC, "app", "globals.css"), "utf8");
+  const layout = readFileSync(path.join(SRC, "app", "layout.tsx"), "utf8");
+
+  const TOKEN_FILES = [
+    "src/components/ui/Button.tsx",
+    "src/components/ui/Card.tsx",
+    "src/components/ui/EmptyState.tsx",
+    "src/components/ui/ErrorState.tsx",
+    "src/components/ui/Input.tsx",
+    "src/components/ui/LoadingSpinner.tsx",
+    "src/components/ui/Modal.tsx",
+    "src/components/ui/PageSkeleton.tsx",
+    "src/components/ui/PageTitle.tsx",
+    "src/components/ui/Toast.tsx",
+    "src/components/ui/fieldStyles.ts",
+  ];
+
+  it("el papel, la tinta, la linea y el acento se declaran como tokens en claro y en oscuro", () => {
+    for (const token of [
+      "--paper",
+      "--surface",
+      "--ink",
+      "--muted",
+      "--line",
+      "--accent",
+    ]) {
+      expect(css).toContain(`${token}:`);
+    }
+
+    // La paleta oscura existe de verdad: no es un juego de valores a medias.
+    expect(css).toMatch(/\.dark\s*\{[\s\S]*?--paper:/);
+  });
+
+  it("la serif de titulares se resuelve por variable, sin un segundo import de fuentes", () => {
+    expect(css).toContain("--font-serif: var(--font-fraunces)");
+    expect(layout).toContain("--font-fraunces");
+  });
+
+  it("los componentes compartidos no vuelven a la escala cruda de tailwind", () => {
+    const rawPalette =
+      /(bg|text|border|ring|divide)-(gray|blue|red|green|yellow|indigo|purple|pink|orange|emerald|sky)-[0-9]{2,3}/;
+
+    const offenders = TOKEN_FILES.filter((file) =>
+      readFileSync(path.join(process.cwd(), file), "utf8")
+        .split("\n")
+        .some((line) => rawPalette.test(line)),
+    );
+
+    expect(offenders).toEqual([]);
   });
 });

@@ -13,7 +13,19 @@ export async function middleware(req: NextRequest) {
 
   const hasSession = Boolean(accessToken)
 
-  const protectedRoutes = ['/dashboard', '/trips', '/expenses', '/budget', '/notes', '/planning', '/analytics', '/alerts']
+  const protectedRoutes = [
+    '/dashboard',
+    '/trips',
+    '/expenses',
+    '/budget',
+    '/notes',
+    '/planning',
+    '/analytics',
+    '/alerts',
+    '/tasks',
+    '/settings',
+    '/profile',
+  ]
   const authRoutes = [
     '/signin',
     '/signup',

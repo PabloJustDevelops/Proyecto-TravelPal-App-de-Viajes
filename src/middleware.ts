@@ -20,7 +20,6 @@ export async function middleware(req: NextRequest) {
     '/budget',
     '/notes',
     '/planning',
-    '/analytics',
     '/alerts',
     '/tasks',
     '/settings',

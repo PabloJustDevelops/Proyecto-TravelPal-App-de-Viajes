@@ -107,7 +107,7 @@ describe("sistema de diseno: un solo boton primario", () => {
   // de terceros clona (Menu.Item de headlessui) o disparadores de un input oculto. La lista es
   // explicita para que no pueda crecer sin que alguien lo revise.
   const NATIVE_BUTTON_FILES = [
-    "src/app/analytics/page.tsx",
+    "src/app/dashboard/page.tsx",
     "src/app/planning/page.tsx",
     "src/app/profile/page.tsx",
     "src/app/settings/page.tsx",

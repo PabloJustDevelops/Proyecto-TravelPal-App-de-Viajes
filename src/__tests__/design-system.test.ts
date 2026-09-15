@@ -143,3 +143,24 @@ describe("sistema de diseno: un solo sistema de iconos", () => {
     expect(offenders).toEqual(EMOJI_ALLOWLIST);
   });
 });
+
+describe("sistema de diseno: movimiento y tipografia", () => {
+  const css = readFileSync(path.join(SRC, "app", "globals.css"), "utf8");
+  const layout = readFileSync(path.join(SRC, "app", "layout.tsx"), "utf8");
+
+  it("no queda una transicion global a 300ms", () => {
+    expect(css).not.toMatch(/transition-duration:\s*300ms/);
+    expect(css).not.toMatch(/transition-property:/);
+  });
+
+  it("la preferencia de movimiento reducido del sistema se respeta", () => {
+    expect(css).toContain("prefers-reduced-motion");
+  });
+
+  it("la tipografia se declara en un unico sitio", () => {
+    // globals.css no impone familia: la define next/font en layout.tsx.
+    expect(css).not.toContain("font-family");
+    expect(layout.match(/next\/font\/google/g) ?? []).toHaveLength(1);
+    expect(layout).toContain("inter.className");
+  });
+});

@@ -221,6 +221,16 @@ describe("sistema de diseno: el rumbo en tokens", () => {
     expect(css).toMatch(/\.dark\s*\{[\s\S]*?--paper:/);
   });
 
+  it("el modo oscuro se declara tambien a nivel de plataforma", () => {
+    // Los controles nativos (selects, scrollbars) tienen que seguir el modo elegido.
+    expect(css).toContain("color-scheme: light");
+    expect(css).toContain("color-scheme: dark");
+  });
+
+  it("el tema se aplica antes del primer pintado, sin parpadeo", () => {
+    expect(layout).toContain("themeInitScript");
+  });
+
   it("la serif de titulares se resuelve por variable, sin un segundo import de fuentes", () => {
     expect(css).toContain("--font-serif: var(--font-fraunces)");
     expect(layout).toContain("--font-fraunces");

@@ -14,6 +14,11 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 // `font-serif` la resuelva desde globals.css, sin declarar un segundo import.
 const fraunces = Fraunces({ subsets: ['latin'], variable: '--font-fraunces', display: 'swap' })
 
+// El tema se aplica antes del primer pintado. Sin esto, quien tiene el modo oscuro guardado ve
+// un parpadeo claro hasta que monta el proveedor de tema. Usa la misma clave y la misma
+// semantica que ThemeContext.
+const themeInitScript = `(function(){try{var t=localStorage.getItem('theme')||'system';var d=t==='dark'||(t==='system'&&window.matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.classList.toggle('dark',d)}catch(e){}})()`
+
 export const metadata: Metadata = {
   title: 'Gestión de Viajes',
   description: 'Aplicación completa para la gestión de viajes, gastos y planificación',
@@ -36,6 +41,7 @@ export default function RootLayout({
   return (
     <html lang="es" suppressHydrationWarning>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>

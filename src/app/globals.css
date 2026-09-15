@@ -9,15 +9,22 @@
  *   1. paleta cruda: los valores del rumbo, en `:root` (claro) y `.dark` (oscuro);
  *   2. tokens semanticos: el nombre con el que el codigo nuevo pide un color
  *      (`bg-surface`, `text-ink`, `border-line`, `bg-accent`...);
- *   3. alias de compatibilidad: la app arrastra cientos de utilidades crudas de la escala de
+ *  3. alias de compatibilidad: la app arrastra cientos de utilidades crudas de la escala de
  *      tailwind (`gray-*`, `blue-*`, `red-*`...) repartidas por decenas de ficheros. Redefinir
  *      esas escalas aqui hace que esas pantallas hereden el rumbo sin repintarlas una a una.
  *      El codigo nuevo usa la capa 2; la capa 3 existe para no romper lo que ya hay.
+ *
+ * Modo oscuro: el rumbo es claro primero. El oscuro no es una piel distinta, es el inverso
+ * literal del papel (mismo acento, misma tinta, del reves) y se resuelve entero por tokens, de
+ * forma que el armazon y los componentes compartidos cambian de modo sin que ninguna pantalla
+ * declare un `dark:` propio. Las paginas que aun llevan utilidades crudas con `dark:` son
+ * deuda de pantalla, no del sistema: se barren cuando decida el rework funcional.
  */
 
 /* --- Capa 1: paleta cruda ------------------------------------------------------------- */
 
 :root {
+  color-scheme: light;
   --paper: #fbf8f3;
   --surface: #f3ede3;
   --surface-strong: #e9e1d3;
@@ -43,6 +50,7 @@
  * ninguna pantalla tenga que declarar un `dark:` propio.
  */
 .dark {
+  color-scheme: dark;
   --paper: #14120f;
   --surface: #1e1b16;
   --surface-strong: #26221c;

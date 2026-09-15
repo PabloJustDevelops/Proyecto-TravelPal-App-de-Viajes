@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { Trip, Expense } from "@/lib/insforge";
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import ExpenseChart from "@/components/charts/ExpenseChart";
 import TripChart from "@/components/charts/TripChart";
 import { Card } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
@@ -14,23 +13,14 @@ import ErrorState from "@/components/ui/ErrorState";
 import { fieldClassName } from "@/components/ui/fieldStyles";
 import {
   ArrowDownTrayIcon,
-  ArrowTrendingDownIcon,
-  ArrowTrendingUpIcon,
-  CakeIcon,
   CalendarIcon,
-  ChartBarIcon,
-  CreditCardIcon,
-  CurrencyDollarIcon,
   DocumentTextIcon,
   FunnelIcon,
-  HeartIcon,
   MapPinIcon,
   PaperAirplaneIcon,
-  ShoppingBagIcon,
   TableCellsIcon,
-  TicketIcon,
 } from "@heroicons/react/24/outline";
-import { formatCurrency, getLoadErrorMessage, cn } from "@/lib/utils";
+import { getLoadErrorMessage, cn } from "@/lib/utils";
 import { logger } from "@/lib/logger";
 import { useApiResource } from "@/hooks/use-api-resource";
 import { Menu, Transition } from "@headlessui/react";
@@ -43,7 +33,7 @@ const DashboardSkeleton = () => (
   <div className="space-y-6 animate-pulse">
     <div className="h-8 bg-surface-strong rounded w-1/3"></div>
     <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-      {[...Array(8)].map((_, i) => (
+      {[...Array(4)].map((_, i) => (
         <div
           key={i}
           className="bg-surface overflow-hidden shadow rounded-lg p-5"
@@ -77,50 +67,6 @@ interface Budget {
   currency: string;
   category: string;
 }
-
-interface ExpenseWithTrip extends Expense {
-  trips?: {
-    title: string;
-  };
-}
-
-const getCategoryIcon = (category: string) => {
-  switch (category?.toLowerCase()) {
-    case 'food':
-    case 'comida':
-      return <CakeIcon className="h-5 w-5 text-orange-500" />;
-    case 'transport':
-    case 'transporte':
-      return <PaperAirplaneIcon className="h-5 w-5 text-blue-500" />;
-    case 'accommodation':
-    case 'alojamiento':
-      return <MapPinIcon className="h-5 w-5 text-purple-500" />;
-    case 'shopping':
-    case 'compras':
-      return <ShoppingBagIcon className="h-5 w-5 text-pink-500" />;
-    case 'entertainment':
-    case 'entretenimiento':
-      return <TicketIcon className="h-5 w-5 text-yellow-500" />;
-    case 'health':
-    case 'salud':
-      return <HeartIcon className="h-5 w-5 text-red-500" />;
-    default:
-      return <CreditCardIcon className="h-5 w-5 text-gray-500" />;
-  }
-};
-
-const getCategoryName = (category: string) => {
-  const categories: Record<string, string> = {
-    food: 'Comida',
-    transport: 'Transporte',
-    accommodation: 'Alojamiento',
-    shopping: 'Compras',
-    entertainment: 'Entretenimiento',
-    health: 'Salud',
-    other: 'Otros'
-  };
-  return categories[category?.toLowerCase()] || category || 'Gasto';
-};
 
 const dateRanges = [
   { value: "all", label: "Todo el tiempo" },
@@ -168,42 +114,18 @@ export default function DashboardPage() {
 
   const {
     trips,
-    recentExpenses,
     currencyExpenses,
-    totalSpent,
-    totalBudget,
     totalTrips,
     mostVisitedDestination,
-    monthlyTrend,
     activeTrips,
     upcomingTrips,
   } = useMemo(() => {
     const tripsData = data?.trips ?? [];
     const expensesData = data?.expenses ?? [];
-    const budgetsData = data?.budgets ?? [];
 
-    // Join en memoria de los gastos recientes con el titulo de su viaje.
-    const tripMap = new Map(tripsData.map((trip) => [trip.id, trip.title]));
-    const enrichedExpenses: ExpenseWithTrip[] = expensesData.map((expense) => ({
-      ...expense,
-      trips: expense.trip_id
-        ? { title: tripMap.get(expense.trip_id) || "Viaje desconocido" }
-        : undefined,
-    }));
-
-    // Los totales y las graficas respetan la moneda elegida en el filtro.
+    // El informe exportado respeta la moneda elegida en el filtro.
     const currencyExpenses = expensesData.filter(
       (expense) => expense.currency === selectedCurrency,
-    );
-
-    const totalSpent = currencyExpenses.reduce(
-      (sum, expense) => sum + expense.amount,
-      0,
-    );
-    const totalBudget = budgetsData.reduce(
-      (sum, budget) =>
-        budget.currency === selectedCurrency ? sum + budget.total_amount : sum,
-      0,
     );
 
     // Destino mas visitado.
@@ -219,28 +141,6 @@ export default function DashboardPage() {
       Object.entries(destinationCounts).sort(([, a], [, b]) => b - a)[0]?.[0] ||
       "N/A";
 
-    // Tendencia: ultimo mes frente al anterior.
-    const now = new Date();
-    const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const twoMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 2, 1);
-
-    const lastMonthExpenses = currencyExpenses
-      .filter((expense) => new Date(expense.date) >= lastMonth)
-      .reduce((sum, expense) => sum + expense.amount, 0);
-    const twoMonthsAgoExpenses = currencyExpenses
-      .filter((expense) => {
-        const expenseDate = new Date(expense.date);
-        return expenseDate >= twoMonthsAgo && expenseDate < lastMonth;
-      })
-      .reduce((sum, expense) => sum + expense.amount, 0);
-
-    let monthlyTrend: "up" | "down" | "stable" = "stable";
-    if (lastMonthExpenses > twoMonthsAgoExpenses * 1.1) {
-      monthlyTrend = "up";
-    } else if (lastMonthExpenses < twoMonthsAgoExpenses * 0.9) {
-      monthlyTrend = "down";
-    }
-
     const activeTrips = tripsData.filter(
       (trip) =>
         trip.status === "confirmed" ||
@@ -253,13 +153,9 @@ export default function DashboardPage() {
 
     return {
       trips: tripsData,
-      recentExpenses: enrichedExpenses,
       currencyExpenses,
-      totalSpent,
-      totalBudget,
       totalTrips: tripsData.length,
       mostVisitedDestination,
-      monthlyTrend,
       activeTrips,
       upcomingTrips,
     };
@@ -388,7 +284,7 @@ export default function DashboardPage() {
         {/* Cabecera: bienvenida y menu de exportacion */}
         <PageTitle
           title={`Bienvenido, ${user?.full_name?.split(" ")[0] || "Viajero"}`}
-          subtitle="Resumen de tus viajes y gastos. Filtra y exporta el informe."
+          subtitle="Resumen de tus viajes. Filtra y exporta el informe."
           action={
             <Menu
               as="div"
@@ -499,48 +395,8 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Resumen: metricas del panel y del analisis, sin repetir bloques */}
+        {/* Resumen: solo lo que me toca del viaje */}
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
-          <motion.div variants={item}>
-            <Card className="h-full">
-              <div className="p-5">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0 rounded-lg p-3 bg-success/10">
-                    <CurrencyDollarIcon className="h-6 w-6 text-success" />
-                  </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <div className="text-sm font-medium text-muted truncate">
-                      Total Gastado
-                    </div>
-                    <div className="text-lg font-bold text-ink mt-1">
-                      {formatCurrency(totalSpent, selectedCurrency)}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </Card>
-          </motion.div>
-
-          <motion.div variants={item}>
-            <Card className="h-full">
-              <div className="p-5">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0 rounded-lg p-3 bg-accent-soft">
-                    <ChartBarIcon className="h-6 w-6 text-accent" />
-                  </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <div className="text-sm font-medium text-muted truncate">
-                      Presupuesto Total
-                    </div>
-                    <div className="text-lg font-bold text-ink mt-1">
-                      {formatCurrency(totalBudget, selectedCurrency)}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </Card>
-          </motion.div>
-
           <motion.div variants={item}>
             <Card className="h-full">
               <div className="p-5">
@@ -577,36 +433,6 @@ export default function DashboardPage() {
                       title={mostVisitedDestination}
                     >
                       {mostVisitedDestination}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </Card>
-          </motion.div>
-
-          <motion.div variants={item}>
-            <Card className="h-full">
-              <div className="p-5">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0 rounded-lg p-3 bg-surface-strong">
-                    {monthlyTrend === "up" ? (
-                      <ArrowTrendingUpIcon className="h-6 w-6 text-danger" />
-                    ) : monthlyTrend === "down" ? (
-                      <ArrowTrendingDownIcon className="h-6 w-6 text-success" />
-                    ) : (
-                      <CalendarIcon className="h-6 w-6 text-muted" />
-                    )}
-                  </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <div className="text-sm font-medium text-muted truncate">
-                      Tendencia de Gastos
-                    </div>
-                    <div className="text-lg font-bold text-ink mt-1">
-                      {monthlyTrend === "up"
-                        ? "Aumentando"
-                        : monthlyTrend === "down"
-                          ? "Disminuyendo"
-                          : "Estable"}
                     </div>
                   </div>
                 </div>
@@ -661,26 +487,13 @@ export default function DashboardPage() {
             <div className="p-6">
               <h3 className="text-lg font-semibold mb-6 text-ink flex items-center">
                 <span className="w-1 h-6 bg-accent rounded-full mr-3"></span>
-                Gastos por Categoría
-              </h3>
-              <ExpenseChart
-                expenses={currencyExpenses}
-                currency={selectedCurrency}
-                height={350}
-              />
-            </div>
-          </Card>
-          <Card className="overflow-hidden">
-            <div className="p-6">
-              <h3 className="text-lg font-semibold mb-6 text-ink flex items-center">
-                <span className="w-1 h-6 bg-accent rounded-full mr-3"></span>
                 Estado de Viajes
               </h3>
               <TripChart trips={trips} height={350} />
             </div>
           </Card>
 
-          <Card className="overflow-hidden lg:col-span-2">
+          <Card className="overflow-hidden">
             <div className="p-6">
               <h3 className="text-lg font-semibold mb-6 text-ink flex items-center">
                 <span className="w-1 h-6 bg-success rounded-full mr-3"></span>
@@ -691,7 +504,7 @@ export default function DashboardPage() {
           </Card>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <div className="grid grid-cols-1 gap-6">
           {/* Viajes Recientes */}
           <motion.div
             variants={item}
@@ -768,71 +581,6 @@ export default function DashboardPage() {
                 <li className="px-6 py-12 text-center text-muted text-sm flex flex-col items-center">
                   <PaperAirplaneIcon className="h-10 w-10 text-muted mb-2" />
                   No tienes viajes recientes
-                </li>
-              )}
-            </ul>
-          </motion.div>
-
-          {/* Gastos Recientes */}
-          <motion.div
-            variants={item}
-            className="bg-surface shadow rounded-xl transition-all duration-200 border border-line"
-          >
-            <div className="px-6 py-5 flex justify-between items-center border-b border-line">
-              <h2 className="text-lg font-semibold leading-6 text-ink flex items-center gap-2">
-                <CreditCardIcon className="h-5 w-5 text-accent" />
-                Gastos Recientes
-              </h2>
-              <Link
-                href="/expenses"
-                className="text-sm font-medium text-accent hover:text-accent-hover transition-colors hover:underline"
-              >
-                Ver todos
-              </Link>
-            </div>
-            <ul
-              role="list"
-              className="divide-y divide-line"
-            >
-              {recentExpenses.slice(0, 5).map((expense) => (
-                <li
-                  key={expense.id}
-                  className="px-6 py-4 hover:bg-surface-strong transition-colors group"
-                >
-                  <div className="flex items-center space-x-4">
-                    <div className="flex-shrink-0 p-2 bg-surface-strong rounded-lg group-hover:bg-surface transition-colors">
-                      {getCategoryIcon(expense.category)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-ink truncate">
-                        {expense.description || getCategoryName(expense.category)}
-                      </p>
-                      <p className="text-xs text-muted truncate flex items-center gap-1">
-                        {expense.trips ? (
-                          <>
-                            <span className="w-1.5 h-1.5 bg-accent rounded-full inline-block" />
-                            {expense.trips.title}
-                          </>
-                        ) : (
-                          getCategoryName(expense.category)
-                        )}
-                      </p>
-                    </div>
-                    <div className="text-right flex-shrink-0">
-                      <p className="text-sm font-bold text-ink">
-                        {formatCurrency(expense.amount, expense.currency)}
-                      </p>
-                      <p className="text-xs text-muted">
-                        {new Date(expense.date).toLocaleDateString()}
-                      </p>
-                    </div>
-                  </div>
-                </li>
-              ))}
-              {recentExpenses.length === 0 && (
-                <li className="px-6 py-12 text-center text-muted text-sm flex flex-col items-center">
-                  <CreditCardIcon className="h-10 w-10 text-muted mb-2" />
-                  No tienes gastos recientes
                 </li>
               )}
             </ul>

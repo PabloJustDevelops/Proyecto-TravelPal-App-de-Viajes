@@ -2,6 +2,8 @@
 
 import { useState, useRef, KeyboardEvent } from "react";
 import { PaperAirplaneIcon } from "@heroicons/react/24/outline";
+import { fieldClassName } from "@/components/ui/fieldStyles";
+import { cn } from "@/lib/utils";
 
 interface ChatbotInputProps {
   onSendMessage: (message: string) => void;
@@ -50,7 +52,7 @@ export default function ChatbotInput({ onSendMessage, disabled = false }: Chatbo
         placeholder="Escribe tu mensaje..."
         disabled={disabled}
         rows={1}
-        className="flex-1 resize-none rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
+        className={cn(fieldClassName, 'flex-1 h-auto resize-none rounded-lg px-4 py-3')}
         style={{ minHeight: "48px", maxHeight: "120px" }}
       />
       <button

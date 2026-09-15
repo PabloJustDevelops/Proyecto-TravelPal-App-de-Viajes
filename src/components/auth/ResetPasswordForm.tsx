@@ -8,6 +8,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { authService } from "@/lib/auth";
 import Button from "@/components/ui/Button";
+import { fieldClassName } from "@/components/ui/fieldStyles";
+import { cn } from "@/lib/utils";
 
 const resetPasswordSchema = z
   .object({
@@ -109,7 +111,7 @@ export default function ResetPasswordForm() {
               type={showPassword ? "text" : "password"}
               autoComplete="new-password"
               required
-              className="appearance-none rounded-md relative block w-full px-3 py-2 pr-10 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+              className={cn(fieldClassName, 'pr-10')}
               placeholder="Nueva contraseña"
             />
             <button
@@ -171,7 +173,7 @@ export default function ResetPasswordForm() {
               type={showConfirmPassword ? "text" : "password"}
               autoComplete="new-password"
               required
-              className="appearance-none rounded-md relative block w-full px-3 py-2 pr-10 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+              className={cn(fieldClassName, 'pr-10')}
               placeholder="Confirmar contraseña"
             />
             <button

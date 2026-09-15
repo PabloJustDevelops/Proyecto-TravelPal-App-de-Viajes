@@ -9,6 +9,8 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
+import { fieldClassName } from '@/components/ui/fieldStyles'
+import { cn } from '@/lib/utils'
 
 const registerSchema = z.object({
   fullName: z.string().min(2, 'El nombre debe tener al menos 2 caracteres'),
@@ -169,7 +171,7 @@ export default function RegisterForm() {
                 {...register('fullName')}
                 type="text"
                 autoComplete="name"
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                className={cn(fieldClassName, 'mt-1')}
                 placeholder="Tu nombre completo"
               />
               {errors.fullName && (
@@ -185,7 +187,7 @@ export default function RegisterForm() {
                 {...register('email')}
                 type="email"
                 autoComplete="email"
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                className={cn(fieldClassName, 'mt-1')}
                 placeholder="tu@email.com"
               />
               {errors.email && (
@@ -202,7 +204,7 @@ export default function RegisterForm() {
                   {...register('password')}
                   type={showPassword ? 'text' : 'password'}
                   autoComplete="new-password"
-                  className="appearance-none relative block w-full px-3 py-2 pr-10 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                  className={cn(fieldClassName, 'pr-10')}
                   placeholder="Tu contraseña"
                 />
                 {isClient && (
@@ -262,7 +264,7 @@ export default function RegisterForm() {
                   {...register('confirmPassword')}
                   type={showConfirmPassword ? 'text' : 'password'}
                   autoComplete="new-password"
-                  className="appearance-none relative block w-full px-3 py-2 pr-10 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                  className={cn(fieldClassName, 'pr-10')}
                   placeholder="Confirma tu contraseña"
                 />
                 {isClient && (

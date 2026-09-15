@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import Input from "../ui/Input";
+import { selectClassName } from "../ui/fieldStyles";
 import Button from "../ui/Button";
 import { Booking } from "@/lib/insforge";
 import { useAuth } from "@/contexts/AuthContext";
@@ -267,7 +268,7 @@ export default function NewBookingForm({
                   name="trip_id"
                   value={formData.trip_id}
                   onChange={handleChange}
-                  className="w-full h-10 px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className={selectClassName}
                   required
               >
                   <option value="">Selecciona un viaje</option>
@@ -291,7 +292,7 @@ export default function NewBookingForm({
             name="type"
             value={formData.type}
             onChange={handleChange}
-            className="w-full h-10 px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className={selectClassName}
           >
             <option value="flight">Vuelo</option>
             <option value="hotel">Hotel</option>
@@ -401,7 +402,7 @@ export default function NewBookingForm({
               name="currency"
               value={formData.currency}
               onChange={handleChange}
-              className="w-full h-10 px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={selectClassName}
             >
               <option value="EUR">EUR</option>
               <option value="USD">USD</option>

@@ -12,6 +12,7 @@ import Input from "@/components/ui/Input";
 import Modal from "@/components/ui/Modal";
 import PageSkeleton from "@/components/ui/PageSkeleton";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import { selectClassName, textareaClassName } from "@/components/ui/fieldStyles";
 import { logger } from "@/lib/logger";
 import {
   PlusIcon,
@@ -563,7 +564,7 @@ export default function BudgetPage() {
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-700"
+              className={selectClassName}
             >
               <option value="">Todas las categorías</option>
               {categories.map((category) => (
@@ -576,7 +577,7 @@ export default function BudgetPage() {
             <select
               value={selectedTrip}
               onChange={(e) => setSelectedTrip(e.target.value)}
-              className="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-700"
+              className={selectClassName}
             >
               <option value="">Todos los viajes</option>
               {trips.map((trip) => (
@@ -677,7 +678,7 @@ export default function BudgetPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, currency: e.target.value })
                   }
-                  className="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-700"
+                  className={selectClassName}
                 >
                   {currencies.map((currency) => (
                     <option key={currency.value} value={currency.value}>
@@ -698,7 +699,7 @@ export default function BudgetPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, category: e.target.value })
                   }
-                  className="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-700"
+                  className={selectClassName}
                 >
                   <option value="">Seleccionar categoría</option>
                   {categories.map((category) => (
@@ -723,7 +724,7 @@ export default function BudgetPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, trip_id: e.target.value })
                   }
-                  className="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-700"
+                  className={selectClassName}
                 >
                   <option value="">Sin viaje específico</option>
                   {trips.map((trip) => (
@@ -777,7 +778,7 @@ export default function BudgetPage() {
                   setFormData({ ...formData, description: e.target.value })
                 }
                 rows={3}
-                className="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-700 placeholder:text-gray-400"
+                className={textareaClassName}
                 placeholder="Descripción opcional del presupuesto..."
               />
             </div>

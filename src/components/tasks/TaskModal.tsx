@@ -3,6 +3,7 @@ import { Dialog, Transition } from '@headlessui/react';
 import { useForm } from 'react-hook-form';
 import { Task } from '@/lib/insforge';
 import { XMarkIcon } from '@heroicons/react/24/outline';
+import { fieldClassName, textareaClassName } from '@/components/ui/fieldStyles';
 
 interface TaskModalProps {
   isOpen: boolean;
@@ -111,7 +112,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                     <input
                       type="text"
                       {...register('title', { required: true })}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
+                      className={fieldClassName}
                       placeholder="Ej: Revisar presupuesto"
                     />
                   </div>
@@ -123,7 +124,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                     <textarea
                       {...register('description')}
                       rows={3}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
+                      className={textareaClassName}
                       placeholder="Detalles adicionales..."
                     />
                   </div>
@@ -135,7 +136,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                       </label>
                       <select
                         {...register('status')}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
+                        className={fieldClassName}
                       >
                         <option value="pending">Pendiente</option>
                         <option value="in_progress">En Progreso</option>
@@ -149,7 +150,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                       </label>
                       <select
                         {...register('priority')}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
+                        className={fieldClassName}
                       >
                         <option value="low">Baja</option>
                         <option value="medium">Media</option>
@@ -165,7 +166,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                     <input
                       type="date"
                       {...register('due_date')}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border p-2"
+                      className={fieldClassName}
                     />
                   </div>
 

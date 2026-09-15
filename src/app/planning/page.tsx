@@ -24,13 +24,14 @@ import { ItineraryPlanner } from "../../components/planning/ItineraryPlanner";
 import { BookingCard } from "../../components/planning/BookingCard";
 import Button from "../../components/ui/Button";
 import Input from "../../components/ui/Input";
+import { fieldClassName } from "../../components/ui/fieldStyles";
 import { Card } from "../../components/ui/Card";
 import Modal from "../../components/ui/Modal";
 
 import NewBookingForm from "../../components/planning/NewBookingForm";
 import { useAuth } from "../../contexts/AuthContext";
 import { createInsforgeClient, Booking } from "../../lib/insforge";
-import { formatDate } from "../../lib/utils";
+import { formatDate, cn } from "../../lib/utils";
 import { logger } from "@/lib/logger";
 import PageSkeleton from "@/components/ui/PageSkeleton";
 import { useApiResource } from "@/hooks/use-api-resource";
@@ -753,7 +754,7 @@ export default function PlanningPage() {
                   onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
                     setFilterStatus(e.target.value)
                   }
-                  className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className={cn(fieldClassName, 'w-auto')}
                 >
                   <option value="all">Todos los estados</option>
                   <option value="confirmed">Confirmado</option>

@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
+import { selectClassName } from "@/components/ui/fieldStyles";
 import { useAuth } from "@/contexts/AuthContext";
 import { Trip } from "@/lib/insforge";
 import {
@@ -137,7 +138,7 @@ export default function TripsPage() {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full h-10 px-3 py-2 text-sm border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white"
+                className={selectClassName}
               >
                 <option value="all">Todos los estados</option>
                 <option value="planned">Planificado</option>

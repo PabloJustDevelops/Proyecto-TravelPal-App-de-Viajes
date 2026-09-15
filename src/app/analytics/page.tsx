@@ -8,6 +8,7 @@ import ExpenseChart from "@/components/charts/ExpenseChart";
 import TripChart from "@/components/charts/TripChart";
 import { Card } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
+import { fieldClassName } from "@/components/ui/fieldStyles";
 import PageSkeleton from "@/components/ui/PageSkeleton";
 import {
   ChartBarIcon,
@@ -21,7 +22,7 @@ import {
   DocumentTextIcon,
   TableCellsIcon,
 } from "@heroicons/react/24/outline";
-import { formatCurrency, getLoadErrorMessage } from "@/lib/utils";
+import { formatCurrency, getLoadErrorMessage, cn } from "@/lib/utils";
 import { logger } from "@/lib/logger";
 import { useApiResource } from "@/hooks/use-api-resource";
 import { Menu, Transition } from "@headlessui/react";
@@ -427,7 +428,7 @@ export default function AnalyticsPage() {
               <select
                 value={selectedCurrency}
                 onChange={(e) => setSelectedCurrency(e.target.value)}
-                className="text-sm border rounded p-1 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                className={cn(fieldClassName, 'h-auto w-auto')}
               >
                 {currencies.map((c) => (
                   <option key={c} value={c}>
@@ -443,7 +444,7 @@ export default function AnalyticsPage() {
               <select
                 value={dateRange}
                 onChange={(e) => setDateRange(e.target.value)}
-                className="text-sm border rounded p-1 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                className={cn(fieldClassName, 'h-auto w-auto')}
               >
                 {dateRanges.map((r) => (
                   <option key={r.value} value={r.value}>

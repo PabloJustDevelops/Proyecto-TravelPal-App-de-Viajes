@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { Note } from '@/lib/insforge'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
+import { selectClassName, textareaClassName } from '@/components/ui/fieldStyles'
+import { cn } from '@/lib/utils'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import {
   EyeIcon,
@@ -180,7 +182,7 @@ export default function NoteEditor({ note, tripId, trips = [], onSave, onCancel,
                           name="trip_id"
                           value={formData.trip_id}
                           onChange={handleInputChange}
-                          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className={selectClassName}
                       >
                           <option value="">Sin viaje asociado</option>
                           {trips.map(trip => (
@@ -200,7 +202,7 @@ export default function NoteEditor({ note, tripId, trips = [], onSave, onCancel,
                   value={formData.content}
                   onChange={handleInputChange}
                   rows={12}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono"
+                  className={cn(textareaClassName, 'font-mono')}
                   placeholder="Escribe tu nota aquí... Puedes usar Markdown:
 
 # Título Principal

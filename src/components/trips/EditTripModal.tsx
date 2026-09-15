@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import Modal from "../ui/Modal";
 import Input from "../ui/Input";
+import { selectClassName, textareaClassName } from "../ui/fieldStyles";
 import Button from "../ui/Button";
 import { createInsforgeClient, Trip } from "@/lib/insforge";
 import { logger } from "@/lib/logger";
@@ -193,7 +194,7 @@ export default function EditTripModal({
               name="status"
               value={formData.status}
               onChange={handleInputChange}
-              className="w-full h-10 px-3 py-2 text-sm border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className={selectClassName}
             >
               <option value="planned">Planeado</option>
               <option value="confirmed">Confirmado</option>
@@ -245,7 +246,7 @@ export default function EditTripModal({
             value={formData.notes}
             onChange={handleInputChange}
             rows={4}
-            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className={textareaClassName}
             placeholder="Añade cualquier información adicional sobre el viaje..."
           />
         </div>

@@ -9,6 +9,7 @@ import { Trip, Expense } from '@/lib/insforge'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
+import { selectClassName, textareaClassName } from '@/components/ui/fieldStyles'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { logger } from '@/lib/logger'
@@ -254,7 +255,7 @@ export default function EditExpensePage() {
                       name="currency"
                       value={formData.currency}
                       onChange={handleInputChange}
-                      className="w-full h-10 px-3 py-2 text-sm border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className={selectClassName}
                       required
                     >
                       {currencies.map((currency) => (
@@ -314,7 +315,7 @@ export default function EditExpensePage() {
                     name="trip_id"
                     value={formData.trip_id}
                     onChange={handleInputChange}
-                    className="w-full h-10 px-3 py-2 text-sm border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className={selectClassName}
                   >
                     <option value="">Sin viaje asociado</option>
                     {trips.map((trip) => (
@@ -334,7 +335,7 @@ export default function EditExpensePage() {
                     value={formData.notes}
                     onChange={handleInputChange}
                     rows={3}
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className={textareaClassName}
                     placeholder="Añade detalles adicionales sobre este gasto..."
                   />
                 </div>

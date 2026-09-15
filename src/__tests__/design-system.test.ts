@@ -44,3 +44,26 @@ describe("sistema de diseno: un solo spinner", () => {
     expect(offenders).toEqual(["src/components/ui/LoadingSpinner.tsx"]);
   });
 });
+
+describe("sistema de diseno: una sola clase de campo", () => {
+  it("la clase canonica de los campos solo se declara en fieldStyles", () => {
+    const offenders = sourceFiles
+      .filter((file) =>
+        /focus:ring-blue-500 focus:border-blue-500/.test(
+          readFileSync(file, "utf8"),
+        ),
+      )
+      .map(relative);
+
+    expect(offenders).toEqual(["src/components/ui/fieldStyles.ts"]);
+  });
+
+  it("el componente Input se apoya en la clase compartida", () => {
+    const input = readFileSync(
+      path.join(SRC, "components", "ui", "Input.tsx"),
+      "utf8",
+    );
+
+    expect(input).toContain("fieldClassName");
+  });
+});

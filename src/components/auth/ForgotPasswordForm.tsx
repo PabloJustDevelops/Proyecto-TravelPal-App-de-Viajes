@@ -7,6 +7,8 @@ import { z } from 'zod'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import Button from '@/components/ui/Button'
+import { fieldClassName } from '@/components/ui/fieldStyles'
+import { cn } from '@/lib/utils'
 import { EnvelopeIcon } from '@heroicons/react/24/outline'
 
 const forgotPasswordSchema = z.object({
@@ -102,7 +104,7 @@ export default function ForgotPasswordForm() {
               type="email"
               autoComplete="email"
               required
-              className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md py-2.5"
+              className={cn(fieldClassName, 'pl-10')}
               placeholder="tu@email.com"
             />
           </div>

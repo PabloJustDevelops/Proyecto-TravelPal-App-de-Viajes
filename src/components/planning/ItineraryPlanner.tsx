@@ -12,8 +12,9 @@ import {
 } from '@heroicons/react/24/outline';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
+import { textareaClassName, selectClassName } from '../ui/fieldStyles';
 import { Card } from '../ui/Card';
-import { formatDate } from '../../lib/utils';
+import { formatDate, cn } from '../../lib/utils';
 
 interface Activity {
   id: string;
@@ -402,7 +403,7 @@ export const ItineraryPlanner: React.FC<ItineraryPlannerProps> = ({
                       value={dayItinerary.notes || ''}
                       onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => updateDayNotes(date, e.target.value)}
                       placeholder="Agregar notas, recordatorios o información adicional..."
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                      className={cn(textareaClassName, 'resize-none')}
                       rows={2}
                     />
                   </div>
@@ -508,7 +509,7 @@ const ActivityModal: React.FC<ActivityModalProps> = ({
                 value={formData.description}
                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                 placeholder="Descripción opcional"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                className={cn(textareaClassName, 'resize-none')}
                 rows={2}
               />
             </div>
@@ -554,7 +555,7 @@ const ActivityModal: React.FC<ActivityModalProps> = ({
               <select
                 value={formData.category}
                 onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData(prev => ({ ...prev, category: e.target.value as Activity['category'] }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className={selectClassName}
               >
                 {ACTIVITY_CATEGORIES.map(category => (
                   <option key={category.value} value={category.value}>
@@ -584,7 +585,7 @@ const ActivityModal: React.FC<ActivityModalProps> = ({
                 <select
                   value={formData.currency}
                   onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData(prev => ({ ...prev, currency: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className={selectClassName}
                 >
                   <option value="USD">USD</option>
                   <option value="EUR">EUR</option>

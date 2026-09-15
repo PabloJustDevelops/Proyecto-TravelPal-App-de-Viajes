@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
+import { selectClassName, textareaClassName } from "@/components/ui/fieldStyles";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { useAuth } from "@/contexts/AuthContext";
 import { logger } from "@/lib/logger";
@@ -307,7 +308,7 @@ export default function NewTripPage() {
                     name="status"
                     value={formData.status}
                     onChange={handleInputChange}
-                    className="w-full h-10 px-3 py-2 text-sm border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className={selectClassName}
                   >
                     <option value="planned">Planeado</option>
                     <option value="confirmed">Confirmado</option>
@@ -357,7 +358,7 @@ export default function NewTripPage() {
                   value={formData.notes}
                   onChange={handleInputChange}
                   rows={4}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className={textareaClassName}
                   placeholder="Añade cualquier información adicional sobre el viaje..."
                 />
               </div>

@@ -14,7 +14,6 @@ arquitectura, [ARCHITECTURE.md](./ARCHITECTURE.md). Para las decisiones, [DECISI
 | Node.js | 22+ | Runtime (Cloudflare y CI usan Node 22) |
 | npm | 10+ | Gestor de paquetes (repo con `package-lock.json`) |
 | Proyecto InsForge | - | Postgres + Auth + Storage |
-| Amadeus API | - | API de viajes (opcional) |
 
 ---
 
@@ -74,10 +73,6 @@ NEXT_PUBLIC_LOG_LEVEL=info
 
 # Proveedores LLM (opcional)
 OPENROUTER_API_KEY=
-
-# Amadeus (opcional)
-AMADEUS_CLIENT_ID=
-AMADEUS_CLIENT_SECRET=
 ```
 
 `NEXT_PUBLIC_*` se inlinean en el bundle del cliente. `INSFORGE_API_KEY` es un secreto de

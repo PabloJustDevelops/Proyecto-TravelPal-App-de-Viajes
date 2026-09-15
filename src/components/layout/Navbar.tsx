@@ -12,7 +12,6 @@ import {
   Cog6ToothIcon,
 } from "@heroicons/react/24/outline";
 import NotificationSystem from "@/components/notifications/NotificationSystem";
-import TravelSearch from "@/components/search/TravelSearch";
 interface NavigationItem {
   name: string;
   href: string;
@@ -87,11 +86,6 @@ export default function Navbar({ navigation }: NavbarProps) {
           {/* Right Actions Section */}{" "}
           <div className="hidden lg:flex items-center space-x-1 shrink-0">
             {" "}
-            {/* Ancho reducido drásticamente para mover los iconos a la izquierda */}{" "}
-            <div className="w-16 lg:w-24 xl:w-32 transition-all duration-300 focus-within:w-28 lg:focus-within:w-40 xl:focus-within:w-56">
-              {" "}
-              <TravelSearch />{" "}
-            </div>{" "}
             <div className="h-6 w-px bg-gray-200 dark:bg-gray-700 mx-0.5"></div>{" "}
             <NotificationSystem className="shrink-0" />{" "}
             <div className="relative shrink-0">
@@ -194,11 +188,6 @@ export default function Navbar({ navigation }: NavbarProps) {
           </div>{" "}
           <div className="lg:hidden flex items-center gap-2">
             {" "}
-            {/* Search Icon Mobile */}{" "}
-            <div className="text-gray-500">
-              {" "}
-              <TravelSearch />{" "}
-            </div>{" "}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 transition-colors"

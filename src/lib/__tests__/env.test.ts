@@ -50,20 +50,9 @@ describe("parseServerEnv", () => {
     const env = parseServerEnv({
       ...validServerEnv,
       OPENROUTER_API_KEY: "",
-      AMADEUS_API_HOST: "   ",
     });
 
     expect(env.OPENROUTER_API_KEY).toBeUndefined();
-    expect(env.AMADEUS_API_HOST).toBeUndefined();
-  });
-
-  it("acepta un AMADEUS_API_HOST válido", () => {
-    const env = parseServerEnv({
-      ...validServerEnv,
-      AMADEUS_API_HOST: "https://test.api.amadeus.com",
-    });
-
-    expect(env.AMADEUS_API_HOST).toBe("https://test.api.amadeus.com");
   });
 });
 

@@ -161,3 +161,13 @@ Atacar la deuda que sí detecta la auditoría, manteniendo Next:
 - Cambios de backend (RLS, migraciones, secretos) y del workflow de CI.
 - Seguridad de las rutas no protegidas por el middleware (`/tasks`, `/settings`, `/profile` no están en
   `protectedRoutes`): hallazgo aparte, no evaluado aquí.
+
+## Actualización (posterior a la auditoría)
+
+- El endpoint `flights/search` deja de contar: se **eliminó** junto con su cliente. Además de ser un
+  proxy sin sesión (lo que ya señalaba esta auditoría), su proveedor (Amadeus self-service) fue
+  retirado, así que no había nada que conservar. Ver
+  [ADR-006](../DECISIONS/ADR-006-vuelos-de-amadeus-a-entrada-manual.md). Las referencias a
+  `flights/search` de las tablas C2/C5 y del coste se leen como historia; el único endpoint con
+  secreto que sobrevive es `chat`.
+- La protección de `/tasks`, `/settings` y `/profile` (último punto del alcance) ya está hecha.

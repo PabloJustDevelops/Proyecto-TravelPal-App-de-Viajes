@@ -36,10 +36,11 @@ Key patterns:
 ## Hosting
 
 La app corre en Cloudflare Workers con `@opennextjs/cloudflare` (build, preview y deploy via
-`opennextjs-cloudflare`). Vercel queda retirado del repo.
+`opennextjs-cloudflare`). Vercel queda retirado del repo y ya esta desconectado de este
+repositorio: no hay ninguna integracion de Vercel pendiente.
 
-Pendiente: desconectar la integracion de Vercel con este repositorio desde la cuenta de Vercel
-de Pablo (requiere su login). El repo ya no la necesita.
+Los triggers de Cloudflare Workers Builds se retiraron a proposito: el unico camino de deploy es
+el trabajo `deploy` de `.github/workflows/ci.yml`, no los vuelvas a crear.
 
 ### Despliegue automatico (GitHub Actions)
 

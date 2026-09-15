@@ -16,7 +16,6 @@ describe("parseServerEnv", () => {
     );
     expect(env.INSFORGE_API_KEY).toBe("test-insforge-api-key");
     expect(env.NEXT_PUBLIC_LOG_LEVEL).toBeUndefined();
-    expect(env.OPENROUTER_API_KEY).toBeUndefined();
   });
 
   it("falla indicando la variable que falta y cómo arreglarlo", () => {
@@ -49,10 +48,10 @@ describe("parseServerEnv", () => {
   it("trata las variables opcionales vacías como ausentes", () => {
     const env = parseServerEnv({
       ...validServerEnv,
-      OPENROUTER_API_KEY: "",
+      NEXT_PUBLIC_LOG_LEVEL: "",
     });
 
-    expect(env.OPENROUTER_API_KEY).toBeUndefined();
+    expect(env.NEXT_PUBLIC_LOG_LEVEL).toBeUndefined();
   });
 });
 

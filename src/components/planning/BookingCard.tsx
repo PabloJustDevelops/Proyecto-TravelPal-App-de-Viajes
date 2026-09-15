@@ -92,9 +92,6 @@ export const BookingCard: React.FC<BookingCardProps> = ({
     return booking.start_time;
   };
 
-  // Reminders logic removed as it's a separate table now and not joined by default in simple fetch
-  // TODO: Add support for reminders if fetched with join
-
   return (
     <Card
       className={`overflow-hidden hover:shadow-md transition-shadow ${className}`}

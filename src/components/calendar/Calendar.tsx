@@ -209,7 +209,7 @@ const DroppableDay = ({
   return (
     <div
       ref={setNodeRef}
-      className={`${className} ${isOver ? 'bg-blue-100 ring-2 ring-inset ring-blue-400' : ''}`}
+      className={`${className} ${isOver ? 'bg-accent-soft ring-2 ring-inset ring-accent' : ''}`}
       onClick={onClick}
       onDoubleClick={onDoubleClick}
     >
@@ -345,7 +345,7 @@ export const Calendar: React.FC<CalendarProps> = ({
   };
 
   const renderMonthView = () => (
-    <div className="grid grid-cols-7 border-l border-t border-gray-200 bg-white">
+    <div className="grid grid-cols-7 border-l border-t border-line bg-surface">
       {days.map((day, idx) => {
         const dayEvents = getEventsForDay(day);
         const isSelected = selectedDate && isSameDay(day, selectedDate);
@@ -357,10 +357,10 @@ export const Calendar: React.FC<CalendarProps> = ({
             key={day.toISOString()}
             day={day}
             className={`
-              min-h-[120px] p-2 border-r border-b border-gray-200 cursor-pointer 
-              transition-colors relative hover:bg-gray-50
-              ${!isCurrentMonth ? 'bg-gray-50/50 text-gray-400' : 'text-gray-900'}
-              ${isSelected ? 'bg-blue-50/50' : ''}
+              min-h-[120px] p-2 border-r border-b border-line cursor-pointer 
+              transition-colors relative hover:bg-surface-strong
+              ${!isCurrentMonth ? 'bg-surface-strong/50 text-muted' : 'text-ink'}
+              ${isSelected ? 'bg-accent-soft/50' : ''}
             `}
             onClick={() => onDateSelect?.(day)}
             onDoubleClick={(e) => {
@@ -372,7 +372,7 @@ export const Calendar: React.FC<CalendarProps> = ({
               <span
                 className={`
                   text-sm font-medium w-7 h-7 flex items-center justify-center rounded-full
-                  ${isTodayDay ? 'bg-blue-600 text-white shadow-sm' : ''}
+                  ${isTodayDay ? 'bg-accent text-on-accent shadow-sm' : ''}
                 `}
               >
                 {format(day, 'd')}
@@ -401,7 +401,7 @@ export const Calendar: React.FC<CalendarProps> = ({
   );
 
   const renderWeekView = () => (
-    <div className="grid grid-cols-7 border-l border-t border-gray-200 bg-white h-[600px]">
+    <div className="grid grid-cols-7 border-l border-t border-line bg-surface h-[600px]">
       {days.map((day) => {
         const dayEvents = getEventsForDay(day);
         const isTodayDay = isToday(day);
@@ -411,8 +411,8 @@ export const Calendar: React.FC<CalendarProps> = ({
             key={day.toISOString()}
             day={day}
             className={`
-              border-r border-b border-gray-200 p-2 overflow-y-auto
-              ${isTodayDay ? 'bg-blue-50/30' : ''}
+              border-r border-b border-line p-2 overflow-y-auto
+              ${isTodayDay ? 'bg-accent-soft/30' : ''}
             `}
             onClick={() => onDateSelect?.(day)}
             onDoubleClick={(e) => {
@@ -420,13 +420,13 @@ export const Calendar: React.FC<CalendarProps> = ({
               onAddEvent?.(day);
             }}
           >
-             <div className="text-center mb-4 sticky top-0 bg-inherit pb-2 border-b border-gray-100">
-               <span className="text-xs text-gray-500 uppercase block mb-1">
+             <div className="text-center mb-4 sticky top-0 bg-inherit pb-2 border-b border-line">
+               <span className="text-xs text-muted uppercase block mb-1">
                  {format(day, 'EEE', { locale: es })}
                </span>
                <span className={`
                  inline-flex items-center justify-center w-8 h-8 rounded-full text-lg font-semibold
-                 ${isTodayDay ? 'bg-blue-600 text-white' : 'text-gray-900'}
+                 ${isTodayDay ? 'bg-accent text-on-accent' : 'text-ink'}
                `}>
                  {format(day, 'd')}
                </span>
@@ -461,43 +461,43 @@ export const Calendar: React.FC<CalendarProps> = ({
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className={`bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden ${className}`}>
+      <div className={`bg-surface rounded-xl shadow-sm border border-line overflow-hidden ${className}`}>
         {/* Header */}
-        <div className="flex flex-col gap-3 p-4 border-b border-gray-200 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 p-4 border-b border-line sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-wrap items-center gap-3 sm:gap-4">
-            <h2 className="text-lg font-bold text-gray-900 capitalize sm:text-xl sm:min-w-[200px]">
+            <h2 className="text-lg font-bold text-ink capitalize sm:text-xl sm:min-w-[200px]">
               {format(currentDate, 'MMMM yyyy', { locale: es })}
             </h2>
-            <div className="flex items-center rounded-md border border-gray-200 bg-white shadow-sm">
+            <div className="flex items-center rounded-md border border-line bg-surface shadow-sm">
               <button
                 onClick={prev}
-                className="p-1.5 hover:bg-gray-50 text-gray-600 border-r border-gray-200"
+                className="p-1.5 hover:bg-surface-strong text-muted border-r border-line"
               >
                 <ChevronLeftIcon className="h-5 w-5" />
               </button>
               <button
                 onClick={goToToday}
-                className="px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                className="px-3 py-1.5 text-sm font-medium text-muted hover:bg-surface-strong"
               >
                 Hoy
               </button>
               <button
                 onClick={next}
-                className="p-1.5 hover:bg-gray-50 text-gray-600 border-l border-gray-200"
+                className="p-1.5 hover:bg-surface-strong text-muted border-l border-line"
               >
                 <ChevronRightIcon className="h-5 w-5" />
               </button>
             </div>
           </div>
 
-          <div className="flex rounded-lg border border-gray-200 p-1 bg-gray-50">
+          <div className="flex rounded-lg border border-line p-1 bg-surface-strong">
             <button
               onClick={() => setViewMode('month')}
               className={`
                 flex-1 sm:flex-none px-4 py-1.5 text-sm font-medium rounded-md transition-all
                 ${viewMode === 'month' 
-                  ? 'bg-white text-blue-600 shadow-sm' 
-                  : 'text-gray-600 hover:text-gray-900'}
+                  ? 'bg-surface text-accent shadow-sm' 
+                  : 'text-muted hover:text-ink'}
               `}
             >
               Mes
@@ -507,8 +507,8 @@ export const Calendar: React.FC<CalendarProps> = ({
               className={`
                 flex-1 sm:flex-none px-4 py-1.5 text-sm font-medium rounded-md transition-all
                 ${viewMode === 'week' 
-                  ? 'bg-white text-blue-600 shadow-sm' 
-                  : 'text-gray-600 hover:text-gray-900'}
+                  ? 'bg-surface text-accent shadow-sm' 
+                  : 'text-muted hover:text-ink'}
               `}
             >
               Semana
@@ -522,11 +522,11 @@ export const Calendar: React.FC<CalendarProps> = ({
         <div className="overflow-x-auto">
           <div className="min-w-[640px]">
             {/* Días de la semana (Header) */}
-            <div className="grid grid-cols-7 border-b border-gray-200 bg-gray-50/50">
+            <div className="grid grid-cols-7 border-b border-line bg-surface-strong/50">
               {weekDays.map(day => (
                 <div
                   key={day}
-                  className="py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider"
+                  className="py-3 text-center text-xs font-semibold text-muted uppercase tracking-wider"
                 >
                   {day}
                 </div>
@@ -539,7 +539,7 @@ export const Calendar: React.FC<CalendarProps> = ({
         </div>
         
         {/* Footer Leyenda */}
-        <div className="px-6 py-4 border-t border-gray-200 bg-gray-50/30 flex flex-wrap gap-6 text-xs">
+        <div className="px-6 py-4 border-t border-line bg-surface-strong/30 flex flex-wrap gap-6 text-xs">
           {[
             { label: 'Viajes', color: 'bg-blue-500' },
             { label: 'Reservas', color: 'bg-green-500' },
@@ -548,8 +548,8 @@ export const Calendar: React.FC<CalendarProps> = ({
             { label: 'Tareas', color: 'bg-emerald-500' },
           ].map((item) => (
             <div key={item.label} className="flex items-center gap-2">
-              <span className={`w-3 h-3 rounded-full ${item.color} ring-2 ring-white shadow-sm`} />
-              <span className="font-medium text-gray-600">{item.label}</span>
+              <span className={`w-3 h-3 rounded-full ${item.color} ring-2 ring-surface shadow-sm`} />
+              <span className="font-medium text-muted">{item.label}</span>
             </div>
           ))}
         </div>
@@ -559,7 +559,7 @@ export const Calendar: React.FC<CalendarProps> = ({
           <div
             role="menu"
             aria-label={`Acciones de ${contextMenu.event.title}`}
-            className="fixed w-40 bg-white border border-gray-200 shadow-lg rounded-md py-1 z-50"
+            className="fixed w-40 bg-surface border border-line shadow-lg rounded-md py-1 z-50"
             style={{ top: contextMenu.y, left: contextMenu.x }}
             onKeyDown={(e) => {
               if (e.key === 'Escape') {
@@ -571,7 +571,7 @@ export const Calendar: React.FC<CalendarProps> = ({
             <button
               ref={menuButtonRef}
               role="menuitem"
-              className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+              className="w-full text-left px-4 py-2 text-sm text-danger hover:bg-danger/10 flex items-center gap-2"
               onClick={(e) => {
                 e.stopPropagation();
                 onDeleteEvent?.(contextMenu.event);

@@ -214,3 +214,8 @@ Riesgos, por gravedad:
 son reproducibles sobre `main`; las etiquetas y las fusiones son la recomendación que se somete a
 decisión en el issue #44. La primera decisión (qué se va) es de producto y necesita firma humana
 antes de que nadie implemente el rework.
+
+> Nota posterior (ver [ADR-008](../DECISIONS/ADR-008-retirada-del-asistente.md)): el asistente
+> (`chatbot/*`, `/api/chat`, `src/lib/llmService.ts`) se ha **retirado por completo**. Era la
+> superficie descrita aquí como "útil pero secundaria"; su coste (endpoint de servidor y secreto de
+> servidor que rotar) no se sostiene sin presupuesto para un LLM detrás.

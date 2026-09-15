@@ -15,6 +15,9 @@ jest.mock('next/navigation', () => ({
   usePathname: () => '/dashboard',
   useSearchParams: () => new URLSearchParams(),
 }));
+// jsPDF es ESM puro y no se puede cargar bajo Jest; el menu de exportacion no se
+// ejercita en este test, asi que basta con aislar el modulo.
+jest.mock('jspdf', () => ({ __esModule: true, default: jest.fn() }));
 
 describe('DashboardPage Navigation', () => {
   const mockUser = { id: 'user-123', full_name: 'Test User' };
@@ -26,13 +29,57 @@ describe('DashboardPage Navigation', () => {
     json: async () => data,
   });
 
+  // Forma de respuesta del endpoint unico /api/dashboard?range=: trips y expenses
+  // completos y budgets con sus filas completas (no solo total_amount).
+  const dashboardPayload = {
+    trips: [
+      {
+        id: 'trip-1',
+        user_id: 'user-123',
+        title: 'Escapada a Roma',
+        origin: 'Madrid',
+        destination: 'Roma',
+        departure_date: '2026-05-01',
+        return_date: '2026-05-07',
+        status: 'confirmed',
+        created_at: '2026-01-01T00:00:00.000Z',
+        updated_at: '2026-01-01T00:00:00.000Z',
+      },
+    ],
+    expenses: [
+      {
+        id: 'expense-1',
+        user_id: 'user-123',
+        trip_id: 'trip-1',
+        title: 'Cena',
+        description: 'Cena en Trastevere',
+        amount: 42,
+        currency: 'USD',
+        category: 'food',
+        date: '2026-05-02',
+        created_at: '2026-01-01T00:00:00.000Z',
+        updated_at: '2026-01-01T00:00:00.000Z',
+      },
+    ],
+    budgets: [
+      {
+        id: 'budget-1',
+        name: 'Presupuesto Roma',
+        total_amount: 1500,
+        spent_amount: 420,
+        currency: 'USD',
+        category: 'travel',
+        start_date: '2026-05-01',
+        end_date: '2026-05-07',
+      },
+    ],
+  };
+
   beforeEach(() => {
     jest.clearAllMocks();
     (useAuth as jest.Mock).mockReturnValue({ user: mockUser, loading: false });
 
-    fetchMock = jest.fn().mockResolvedValue(
-      jsonResponse({ trips: [], expenses: [], budgets: [] }),
-    );
+    fetchMock = jest.fn().mockResolvedValue(jsonResponse(dashboardPayload));
     global.fetch = fetchMock as unknown as typeof fetch;
   });
 
@@ -43,6 +90,12 @@ describe('DashboardPage Navigation', () => {
     await waitFor(() => {
       expect(screen.getByText(/Bienvenido, Test/)).toBeInTheDocument();
     });
+
+    // Un unico camino de datos: el panel carga del endpoint /api/dashboard con rango.
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/dashboard?range=all',
+      expect.anything(),
+    );
   });
 
   it('handles timeout gracefully', async () => {

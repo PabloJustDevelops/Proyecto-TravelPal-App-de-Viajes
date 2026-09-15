@@ -52,20 +52,20 @@ export default function SettingsPage() {
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between py-2">
               <div>
-                <p className="font-medium text-gray-900 dark:text-white">Modo Oscuro</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
+                <p className="font-medium text-ink">Modo Oscuro</p>
+                <p className="text-sm text-muted">
                   Cambia entre tema claro y oscuro. 
-                  {theme === 'system' && <span className="ml-1 text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full dark:bg-blue-900 dark:text-blue-200">Automático</span>}
+                  {theme === 'system' && <span className="ml-1 text-xs bg-accent-soft text-accent px-2 py-0.5 rounded-full">Automático</span>}
                 </p>
               </div>
               <button
                 onClick={() => setTheme(isDark ? 'light' : 'dark')}
-                className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                  isDark ? 'bg-blue-600' : 'bg-gray-200'
+                className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 ${
+                  isDark ? 'bg-accent' : 'bg-line'
                 }`}
               >
                 <span
-                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-on-accent shadow ring-0 transition duration-200 ease-in-out ${
                     isDark ? 'translate-x-5' : 'translate-x-0'
                   }`}
                 />
@@ -84,14 +84,14 @@ export default function SettingsPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-sm text-muted">
                 Gestiona la seguridad de tu cuenta, contraseña y sesiones activas.
               </p>
               <Button
                 variant="ghost"
                 onClick={handleChangePassword}
                 loading={sendingReset}
-                className="px-0 text-sm font-medium text-blue-600 hover:bg-transparent hover:text-blue-800 dark:text-blue-400 dark:hover:bg-transparent dark:hover:text-blue-300"
+                className="px-0 text-sm font-medium text-accent hover:bg-transparent hover:text-accent-hover"
               >
                 Cambiar Contraseña
               </Button>

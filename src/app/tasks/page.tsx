@@ -158,13 +158,13 @@ export default function TasksPage() {
           />
 
           <div className="flex items-center gap-3">
-            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-1 flex">
+            <div className="bg-surface rounded-lg border border-line p-1 flex">
               <button
                 onClick={() => setViewMode("board")}
                 className={`p-2 rounded-md transition-colors ${
                   viewMode === "board"
-                    ? "bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
-                    : "text-gray-500 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700"
+                    ? "bg-accent-soft text-accent"
+                    : "text-muted hover:bg-surface-strong"
                 }`}
                 title="Vista Tablero"
               >
@@ -174,8 +174,8 @@ export default function TasksPage() {
                 onClick={() => setViewMode("calendar")}
                 className={`p-2 rounded-md transition-colors ${
                   viewMode === "calendar"
-                    ? "bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
-                    : "text-gray-500 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700"
+                    ? "bg-accent-soft text-accent"
+                    : "text-muted hover:bg-surface-strong"
                 }`}
                 title="Vista Calendario"
               >

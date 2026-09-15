@@ -98,6 +98,20 @@ export interface JournalEntry {
   updated_at: string;
 }
 
+export interface JournalPhoto {
+  id: string;
+  user_id: string;
+  trip_id: string;
+  url: string;
+  key: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// Bucket de Storage para las fotos del diario. La url sirve para pintar la
+// foto y la key es lo que hace falta para borrar el objeto.
+export const JOURNAL_PHOTOS_BUCKET = "journal-photos";
+
 export interface Booking {
   id: string;
   user_id: string;
@@ -145,39 +159,6 @@ export interface ItineraryActivity {
   notes?: string;
   completed: boolean;
   order_index: number;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface Reminder {
-  id: string;
-  user_id: string;
-  booking_id?: string;
-  trip_id?: string;
-  title: string;
-  message: string;
-  reminder_datetime: string;
-  type: "booking" | "activity" | "general" | "document" | "payment";
-  status: "pending" | "sent" | "dismissed";
-  sent_at?: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface CalendarEvent {
-  id: string;
-  user_id: string;
-  trip_id?: string;
-  booking_id?: string;
-  activity_id?: string;
-  title: string;
-  description?: string;
-  event_date: string;
-  start_time?: string;
-  end_time?: string;
-  type: "trip" | "booking" | "activity" | "reminder" | "custom";
-  color?: string;
-  all_day: boolean;
   created_at: string;
   updated_at: string;
 }

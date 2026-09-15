@@ -78,7 +78,7 @@ export default function ExpenseCard({ expense, showTripTitle = false }: ExpenseC
           <CardTitle className="text-lg flex items-center space-x-2">
             <CategoryIcon
               category={expense.category}
-              className="h-5 w-5 text-gray-500"
+              className="h-5 w-5 text-muted"
             />
             <span>{expense.title || expense.description}</span>
           </CardTitle>
@@ -88,11 +88,11 @@ export default function ExpenseCard({ expense, showTripTitle = false }: ExpenseC
                  <PencilSquareIcon className="h-4 w-4" />
                </Button>
              </Link>
-            <div className="text-lg font-bold text-gray-900">
+            <div className="text-lg font-bold text-ink">
               {formatCurrency(expense.amount, expense.currency)}
             </div>
             {showTripTitle && (expense as ExpenseWithTrip).trip && (
-               <div className="text-xs text-gray-500 mt-1">
+               <div className="text-xs text-muted mt-1">
                  {(expense as ExpenseWithTrip).trip.title}
                </div>
              )}
@@ -103,7 +103,7 @@ export default function ExpenseCard({ expense, showTripTitle = false }: ExpenseC
         {/* Category */}
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <TagIcon className="h-4 w-4 text-gray-400" />
+            <TagIcon className="h-4 w-4 text-muted" />
             <span
               className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getCategoryColor(
                 expense.category
@@ -115,14 +115,14 @@ export default function ExpenseCard({ expense, showTripTitle = false }: ExpenseC
         </div>
 
         {/* Date */}
-        <div className="flex items-center space-x-2 text-gray-600">
+        <div className="flex items-center space-x-2 text-muted">
           <CalendarIcon className="h-4 w-4" />
           <span className="text-sm">{formatDate(expense.date)}</span>
         </div>
 
         {/* Notes */}
          {(expense as ExpenseWithNotes).notes && (
-           <div className="flex items-start space-x-2 text-gray-600">
+           <div className="flex items-start space-x-2 text-muted">
              <DocumentTextIcon className="h-4 w-4 mt-0.5 flex-shrink-0" />
              <span className="text-sm line-clamp-2">{(expense as ExpenseWithNotes).notes}</span>
            </div>
@@ -130,8 +130,8 @@ export default function ExpenseCard({ expense, showTripTitle = false }: ExpenseC
 
         {/* Receipt indicator */}
         {expense.receipt_url && (
-          <div className="flex items-center space-x-2 text-green-600">
-            <div className="w-2 h-2 bg-green-600 rounded-full"></div>
+          <div className="flex items-center space-x-2 text-success">
+            <div className="w-2 h-2 bg-success rounded-full"></div>
             <span className="text-xs font-medium">Recibo adjunto</span>
           </div>
         )}

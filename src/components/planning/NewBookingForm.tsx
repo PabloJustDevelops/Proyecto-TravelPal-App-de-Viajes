@@ -261,7 +261,7 @@ export default function NewBookingForm({
 
       {!initialData && (
           <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-muted mb-1">
                   Viaje Asociado *
               </label>
               <select
@@ -283,7 +283,7 @@ export default function NewBookingForm({
         <div>
           <label
             htmlFor="type-select"
-            className="block text-sm font-medium text-gray-700 mb-1"
+            className="block text-sm font-medium text-muted mb-1"
           >
             Tipo
           </label>
@@ -340,8 +340,8 @@ export default function NewBookingForm({
       </div>
 
       {formData.type === "flight" && (
-        <div className="space-y-4 rounded-md border border-gray-200 p-4 dark:border-gray-700">
-          <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+        <div className="space-y-4 rounded-md border border-line p-4">
+          <h4 className="text-sm font-semibold text-ink">
             Datos del vuelo
           </h4>
 
@@ -393,7 +393,7 @@ export default function NewBookingForm({
           <div>
             <label
               htmlFor="currency-select"
-              className="block text-sm font-medium text-gray-700 mb-1"
+              className="block text-sm font-medium text-muted mb-1"
             >
               Moneda
             </label>
@@ -413,7 +413,7 @@ export default function NewBookingForm({
       )}
 
       {error && (
-        <div className="text-red-600 text-sm bg-red-50 p-2 rounded">
+        <div className="text-danger text-sm bg-danger/10 p-2 rounded">
           {error}
         </div>
       )}

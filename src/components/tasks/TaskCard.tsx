@@ -21,9 +21,9 @@ interface TaskCardProps {
 }
 
 const priorityConfig = {
-  low: { color: 'bg-green-100 text-green-800 border-green-200', label: 'Baja' },
-  medium: { color: 'bg-yellow-100 text-yellow-800 border-yellow-200', label: 'Media' },
-  high: { color: 'bg-red-100 text-red-800 border-red-200', label: 'Alta' },
+  low: { color: 'bg-success/10 text-success border-success', label: 'Baja' },
+  medium: { color: 'bg-warning/10 text-warning border-warning', label: 'Media' },
+  high: { color: 'bg-danger/10 text-danger border-danger', label: 'Alta' },
 };
 
 const statusOptions: { value: Task['status']; label: string }[] = [
@@ -49,7 +49,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
   return (
     <div
       className={`
-        bg-white p-4 rounded-xl shadow-sm border border-gray-200 
+        bg-surface p-4 rounded-xl shadow-sm border border-line 
         hover:shadow-md transition-all duration-200 group relative
         ${className}
       `}
@@ -63,7 +63,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
           {priority.label}
         </span>
         
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity absolute top-3 right-3 bg-white/80 backdrop-blur-sm rounded-lg p-1">
+        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity absolute top-3 right-3 bg-surface/80 backdrop-blur-sm rounded-lg p-1">
           <Button
             variant="ghost"
             size="sm"
@@ -77,7 +77,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
             variant="ghost"
             size="sm"
             onClick={(e) => { e.stopPropagation(); onDelete(task); }}
-            className="h-7 w-7 p-0 text-red-500 hover:text-red-600 hover:bg-red-50"
+            className="h-7 w-7 p-0 text-danger hover:text-danger hover:bg-danger/10"
             title="Eliminar tarea"
           >
             <TrashIcon className="w-4 h-4" />
@@ -85,20 +85,20 @@ export const TaskCard: React.FC<TaskCardProps> = ({
         </div>
       </div>
       
-      <h3 className="font-semibold text-gray-900 mb-1.5 leading-snug pr-8">
+      <h3 className="font-semibold text-ink mb-1.5 leading-snug pr-8">
         {task.title}
       </h3>
       
       {task.description && (
-        <p className="text-sm text-gray-500 mb-3 line-clamp-2 leading-relaxed">
+        <p className="text-sm text-muted mb-3 line-clamp-2 leading-relaxed">
           {task.description}
         </p>
       )}
       
-      <div className="flex items-center justify-between gap-2 mt-auto pt-2 border-t border-gray-50">
+      <div className="flex items-center justify-between gap-2 mt-auto pt-2 border-t border-line">
         {task.due_date ? (
-          <div className="flex items-center text-xs font-medium text-gray-500">
-            <CalendarIcon className="w-4 h-4 mr-1.5 text-gray-400" aria-hidden="true" />
+          <div className="flex items-center text-xs font-medium text-muted">
+            <CalendarIcon className="w-4 h-4 mr-1.5 text-muted" aria-hidden="true" />
             {format(new Date(task.due_date), "d 'de' MMM", { locale: es })}
           </div>
         ) : (

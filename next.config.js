@@ -151,14 +151,6 @@ const nextConfig = {
   // Configuración de variables de entorno públicas
   env: {
     CUSTOM_KEY: process.env.CUSTOM_KEY,
-
-    // Configuración del LLM para el Chatbot
-    NEXT_PUBLIC_LLM_PROVIDER: process.env.NEXT_PUBLIC_LLM_PROVIDER || "groq",
-    NEXT_PUBLIC_LLM_MODEL: process.env.NEXT_PUBLIC_LLM_MODEL || "mixtral-8x7b",
-    NEXT_PUBLIC_LLM_TEMPERATURE:
-      process.env.NEXT_PUBLIC_LLM_TEMPERATURE || "0.7",
-    NEXT_PUBLIC_LLM_MAX_TOKENS:
-      process.env.NEXT_PUBLIC_LLM_MAX_TOKENS || "1000",
   },
 
   // Configuración de análisis de bundle (desarrollo)

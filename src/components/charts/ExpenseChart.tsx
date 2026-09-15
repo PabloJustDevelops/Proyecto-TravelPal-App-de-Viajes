@@ -57,13 +57,13 @@ const CustomTooltip = ({ active, payload, currency }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     return (
-      <div className="bg-white dark:bg-gray-800 p-3 border border-gray-100 dark:border-gray-700 shadow-lg rounded-lg">
-        <p className="text-sm font-semibold text-gray-900 dark:text-white mb-1">
+      <div className="bg-surface p-3 border border-line shadow-lg rounded-lg">
+        <p className="text-sm font-semibold text-ink mb-1">
           {data.name}
         </p>
-        <p className="text-sm text-gray-600 dark:text-gray-300">
+        <p className="text-sm text-muted">
           {formatCurrency(data.value, currency)}
-          {data.percentage && <span className="text-xs text-gray-400 ml-2">({data.percentage.toFixed(1)}%)</span>}
+          {data.percentage && <span className="text-xs text-muted ml-2">({data.percentage.toFixed(1)}%)</span>}
         </p>
       </div>
     );
@@ -126,8 +126,8 @@ export default function ExpenseChart({
 
   if (data.length === 0) {
     return (
-      <div className="h-[320px] flex items-center justify-center bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-dashed border-gray-200 dark:border-gray-700">
-        <p className="text-gray-400 text-sm">No hay datos suficientes</p>
+      <div className="h-[320px] flex items-center justify-center bg-surface-strong rounded-lg border border-dashed border-line">
+        <p className="text-muted text-sm">No hay datos suficientes</p>
       </div>
     )
   }
@@ -157,7 +157,7 @@ export default function ExpenseChart({
               layout="vertical"
               iconType="circle"
               formatter={(value, entry: any) => (
-                <span className="text-sm text-gray-600 dark:text-gray-300 ml-2">
+                <span className="text-sm text-muted ml-2">
                   {value}
                 </span>
               )}

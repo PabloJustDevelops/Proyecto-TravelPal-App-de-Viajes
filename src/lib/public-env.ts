@@ -37,11 +37,6 @@ export const publicEnvSchema = z.object({
     .string({ error: "es obligatoria (falta en .env.local)" })
     .min(1, "no puede estar vacía"),
   NEXT_PUBLIC_LOG_LEVEL: optionalLogLevel,
-  NEXT_PUBLIC_APP_URL: optionalUrl,
-  NEXT_PUBLIC_LLM_MODEL: optionalNonEmpty,
-  NEXT_PUBLIC_LLM_TEMPERATURE: optionalNonEmpty,
-  NEXT_PUBLIC_LLM_MAX_TOKENS: optionalNonEmpty,
-  NEXT_PUBLIC_LLM_TIMEOUT: optionalNonEmpty,
 });
 
 export type PublicEnv = z.infer<typeof publicEnvSchema>;
@@ -87,11 +82,6 @@ const publicEnvSource: Record<string, string | undefined> = {
   NEXT_PUBLIC_INSFORGE_URL: process.env.NEXT_PUBLIC_INSFORGE_URL,
   NEXT_PUBLIC_INSFORGE_ANON_KEY: process.env.NEXT_PUBLIC_INSFORGE_ANON_KEY,
   NEXT_PUBLIC_LOG_LEVEL: process.env.NEXT_PUBLIC_LOG_LEVEL,
-  NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
-  NEXT_PUBLIC_LLM_MODEL: process.env.NEXT_PUBLIC_LLM_MODEL,
-  NEXT_PUBLIC_LLM_TEMPERATURE: process.env.NEXT_PUBLIC_LLM_TEMPERATURE,
-  NEXT_PUBLIC_LLM_MAX_TOKENS: process.env.NEXT_PUBLIC_LLM_MAX_TOKENS,
-  NEXT_PUBLIC_LLM_TIMEOUT: process.env.NEXT_PUBLIC_LLM_TIMEOUT,
 };
 
 export const publicEnv = parsePublicEnv(publicEnvSource);

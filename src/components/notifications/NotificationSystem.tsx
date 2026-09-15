@@ -10,7 +10,13 @@ import {
   InformationCircleIcon,
 } from "@heroicons/react/24/outline";
 import { useAuth } from "../../contexts/AuthContext";
-import { createInsforgeClient } from "../../lib/insforge";
+import {
+  createInsforgeClient,
+  type Booking,
+  type Expense,
+  type Task,
+} from "../../lib/insforge";
+import { deriveAlerts, type AlertBudget } from "../../lib/alerts";
 import { formatDate, getErrorMessage } from "../../lib/utils";
 import { logger } from "@/lib/logger";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
@@ -42,6 +48,96 @@ interface NotificationSystemProps {
   className?: string;
 }
 
+type InsforgeClient = ReturnType<typeof createInsforgeClient>;
+
+// Lee las alertas NO leidas del usuario (mismo query que usa la campana).
+async function loadUnreadAlerts(
+  insforge: InsforgeClient,
+  userId: string,
+  signal?: AbortSignal
+): Promise<Alert[]> {
+  const query = insforge
+    .database.from("alerts")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("is_read", false)
+    .order("created_at", { ascending: false });
+
+  const { data, error } = await (signal ? query.abortSignal(signal) : query);
+  if (error) throw error;
+
+  return (data || []) as Alert[];
+}
+
+/**
+ * Da fuente a la campana a partir de datos que ya existen y ya tienen RLS: las
+ * alertas derivadas se insertan en `alerts` (el modelo de datos NO cambia) para
+ * que "marcar como leida"/descartar sigan funcionando sobre una fila real. Se
+ * deduplica por title+message contra TODAS las alertas del usuario (leidas o no),
+ * asi que no se reinserta lo que ya tiene. Devuelve true si inserto algo.
+ */
+async function ensureDerivedAlerts(
+  insforge: InsforgeClient,
+  userId: string,
+  signal?: AbortSignal
+): Promise<boolean> {
+  // Dedupe: alertas ya presentes del usuario, leidas o no.
+  const existingQuery = insforge
+    .database.from("alerts")
+    .select("title, message")
+    .eq("user_id", userId);
+
+  const { data: existingData, error: existingError } = await (signal
+    ? existingQuery.abortSignal(signal)
+    : existingQuery);
+  if (existingError) throw existingError;
+
+  const existingKeys = new Set(
+    ((existingData || []) as { title: string; message: string }[]).map(
+      (alert) => `${alert.title}\u0000${alert.message}`
+    )
+  );
+
+  const [tasksRes, bookingsRes, budgetsRes, expensesRes] = await Promise.all([
+    insforge.database.from("tasks").select("*").eq("user_id", userId),
+    insforge.database.from("bookings").select("*").eq("user_id", userId),
+    insforge.database.from("budgets").select("*").eq("user_id", userId),
+    insforge.database.from("expenses").select("*").eq("user_id", userId),
+  ]);
+
+  if (tasksRes.error) throw tasksRes.error;
+  if (bookingsRes.error) throw bookingsRes.error;
+  if (budgetsRes.error) throw budgetsRes.error;
+  if (expensesRes.error) throw expensesRes.error;
+
+  const derived = deriveAlerts({
+    tasks: (tasksRes.data || []) as Task[],
+    bookings: (bookingsRes.data || []) as Booking[],
+    budgets: (budgetsRes.data || []) as AlertBudget[],
+    expenses: (expensesRes.data || []) as Expense[],
+  });
+
+  const toInsert = derived
+    .filter((alert) => !existingKeys.has(`${alert.title}\u0000${alert.message}`))
+    .map((alert) => ({
+      user_id: userId,
+      title: alert.title,
+      message: alert.message,
+      type: alert.type,
+      alert_date: alert.alert_date,
+      is_read: false,
+    }));
+
+  if (toInsert.length === 0) return false;
+
+  const { error: insertError } = await insforge
+    .database.from("alerts")
+    .insert(toInsert);
+  if (insertError) throw insertError;
+
+  return true;
+}
+
 export const NotificationSystem: React.FC<NotificationSystemProps> = ({
   className = "",
 }) => {
@@ -63,21 +159,28 @@ export const NotificationSystem: React.FC<NotificationSystemProps> = ({
         setIsLoading(true);
         const insforge = createInsforgeClient();
 
-        const query = insforge
-          .database.from("alerts")
-          .select("*")
-          .eq("user_id", user.id)
-          .eq("is_read", false)
-          .order("created_at", { ascending: false });
+        const rows = await loadUnreadAlerts(insforge, user.id, signal);
 
-        const { data, error } = await (signal
-          ? query.abortSignal(signal)
-          : query);
+        // Enriquecimiento best-effort: da fuente a la campana insertando las
+        // alertas derivadas que falten. Un fallo aqui NO debe romper la campana:
+        // se registra y se sigue mostrando lo que ya hubiera.
+        let inserted = false;
+        try {
+          inserted = await ensureDerivedAlerts(insforge, user.id, signal);
+        } catch (enrichErr: unknown) {
+          logger.error("NotificationSystem: Error deriving alerts", {
+            error: getErrorMessage(enrichErr),
+          });
+        }
 
-        if (error) throw error;
+        if (signal?.aborted) return;
 
-        const rows: Alert[] = (data || []) as Alert[];
-        const pendingAlerts = rows.filter((a) =>
+        // Si se insertaron alertas nuevas, recarga para mostrarlas.
+        const finalRows = inserted
+          ? await loadUnreadAlerts(insforge, user.id, signal)
+          : rows;
+
+        const pendingAlerts = finalRows.filter((a) =>
           ["reminder", "warning", "info"].includes(a.type)
         );
 
@@ -225,15 +328,15 @@ export const NotificationSystem: React.FC<NotificationSystemProps> = ({
   const getNotificationIcon = (type: Notification["type"]) => {
     switch (type) {
       case "reminder":
-        return <ClockIcon className="h-5 w-5 text-blue-500" />;
+        return <ClockIcon className="h-5 w-5 text-accent" />;
       case "warning":
-        return <ExclamationTriangleIcon className="h-5 w-5 text-yellow-500" />;
+        return <ExclamationTriangleIcon className="h-5 w-5 text-warning" />;
       case "error":
-        return <XMarkIcon className="h-5 w-5 text-red-500" />;
+        return <XMarkIcon className="h-5 w-5 text-danger" />;
       case "success":
-        return <CheckIcon className="h-5 w-5 text-green-500" />;
+        return <CheckIcon className="h-5 w-5 text-success" />;
       default:
-        return <InformationCircleIcon className="h-5 w-5 text-gray-500" />;
+        return <InformationCircleIcon className="h-5 w-5 text-muted" />;
     }
   };
 
@@ -242,15 +345,15 @@ export const NotificationSystem: React.FC<NotificationSystemProps> = ({
     const opacity = read ? "bg-opacity-50" : "bg-opacity-100";
     switch (type) {
       case "reminder":
-        return `bg-blue-50 ${opacity}`;
+        return `bg-accent-soft ${opacity}`;
       case "warning":
-        return `bg-yellow-50 ${opacity}`;
+        return `bg-warning/10 ${opacity}`;
       case "error":
-        return `bg-red-50 ${opacity}`;
+        return `bg-danger/10 ${opacity}`;
       case "success":
-        return `bg-green-50 ${opacity}`;
+        return `bg-success/10 ${opacity}`;
       default:
-        return `bg-gray-50 ${opacity}`;
+        return `bg-surface-strong ${opacity}`;
     }
   };
 
@@ -259,7 +362,7 @@ export const NotificationSystem: React.FC<NotificationSystemProps> = ({
       {/* Botón de notificaciones */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 text-gray-600 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-lg"
+        className="relative p-2 text-muted hover:text-ink focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 rounded-lg"
         aria-label={
           unreadCount > 0
             ? `Notificaciones, ${unreadCount} sin leer`
@@ -272,7 +375,7 @@ export const NotificationSystem: React.FC<NotificationSystemProps> = ({
         <BellIcon className="h-6 w-6" aria-hidden="true" />
         {unreadCount > 0 && (
           <span
-            className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center"
+            className="absolute -top-1 -right-1 bg-danger text-on-accent text-xs rounded-full h-5 w-5 flex items-center justify-center"
             aria-hidden="true"
           >
             {unreadCount > 99 ? "99+" : unreadCount}
@@ -288,13 +391,13 @@ export const NotificationSystem: React.FC<NotificationSystemProps> = ({
           id={panelId}
           role="region"
           aria-labelledby={`${panelId}-titulo`}
-          className="absolute right-0 mt-2 w-96 max-w-[calc(100vw-5rem)] bg-white rounded-lg shadow-lg border border-gray-200 z-50 max-h-96 overflow-hidden"
+          className="absolute right-0 mt-2 w-96 max-w-[calc(100vw-5rem)] bg-surface rounded-lg shadow-lg border border-line z-50 max-h-96 overflow-hidden"
         >
           {/* Header */}
-          <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
+          <div className="px-4 py-3 border-b border-line flex items-center justify-between">
             <h3
               id={`${panelId}-titulo`}
-              className="text-lg font-semibold text-gray-900"
+              className="text-lg font-semibold text-ink"
             >
               Notificaciones
             </h3>
@@ -302,14 +405,14 @@ export const NotificationSystem: React.FC<NotificationSystemProps> = ({
               {unreadCount > 0 && (
                 <button
                   onClick={markAllAsRead}
-                  className="text-sm text-blue-600 hover:text-blue-800"
+                  className="text-sm text-accent hover:text-accent-hover"
                 >
                   Marcar todas
                 </button>
               )}
               <button
                 onClick={() => setIsOpen(false)}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-muted hover:text-ink"
                 aria-label="Cerrar notificaciones"
               >
                 <XMarkIcon className="h-5 w-5" aria-hidden="true" />
@@ -322,21 +425,21 @@ export const NotificationSystem: React.FC<NotificationSystemProps> = ({
             {isLoading ? (
               <div className="p-4 text-center">
                 <LoadingSpinner size="sm" />
-                <p className="text-sm text-gray-500 mt-2">
+                <p className="text-sm text-muted mt-2">
                   Cargando notificaciones...
                 </p>
               </div>
             ) : notifications.length === 0 ? (
               <div className="p-8 text-center">
-                <BellIcon className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500">No hay notificaciones</p>
+                <BellIcon className="h-12 w-12 text-muted mx-auto mb-4" />
+                <p className="text-muted">No hay notificaciones</p>
               </div>
             ) : (
-              <div className="divide-y divide-gray-100">
+              <div className="divide-y divide-line">
                 {notifications.map((notification) => (
                   <div
                     key={notification.id}
-                    className={`p-4 hover:bg-gray-50 transition-colors ${getNotificationBg(
+                    className={`p-4 hover:bg-surface-strong transition-colors ${getNotificationBg(
                       notification.type,
                       notification.read
                     )}`}
@@ -352,8 +455,8 @@ export const NotificationSystem: React.FC<NotificationSystemProps> = ({
                             <p
                               className={`text-sm font-medium ${
                                 notification.read
-                                  ? "text-gray-600"
-                                  : "text-gray-900"
+                                  ? "text-muted"
+                                  : "text-ink"
                               }`}
                             >
                               {notification.title}
@@ -361,13 +464,13 @@ export const NotificationSystem: React.FC<NotificationSystemProps> = ({
                             <p
                               className={`text-sm mt-1 ${
                                 notification.read
-                                  ? "text-gray-500"
-                                  : "text-gray-700"
+                                  ? "text-muted"
+                                  : "text-muted"
                               }`}
                             >
                               {notification.message}
                             </p>
-                            <p className="text-xs text-gray-400 mt-2">
+                            <p className="text-xs text-muted mt-2">
                               {formatDate(new Date(notification.timestamp))} a
                               las{" "}
                               {new Date(
@@ -380,7 +483,7 @@ export const NotificationSystem: React.FC<NotificationSystemProps> = ({
                             {!notification.read && (
                               <button
                                 onClick={() => markAsRead(notification.id)}
-                                className="text-blue-600 hover:text-blue-800 text-xs"
+                                className="text-accent hover:text-accent-hover text-xs"
                                 title="Marcar como leída"
                                 aria-label={`Marcar como leída: ${notification.title}`}
                               >
@@ -391,7 +494,7 @@ export const NotificationSystem: React.FC<NotificationSystemProps> = ({
                               onClick={() =>
                                 dismissNotification(notification.id)
                               }
-                              className="text-gray-400 hover:text-gray-600 text-xs"
+                              className="text-muted hover:text-ink text-xs"
                               title="Descartar"
                               aria-label={`Descartar: ${notification.title}`}
                             >
@@ -404,7 +507,7 @@ export const NotificationSystem: React.FC<NotificationSystemProps> = ({
                           <div className="mt-3">
                             <a
                               href={notification.actionUrl}
-                              className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                              className="text-sm text-accent hover:text-accent-hover font-medium"
                             >
                               {notification.actionLabel}
                             </a>
@@ -420,10 +523,10 @@ export const NotificationSystem: React.FC<NotificationSystemProps> = ({
 
           {/* Footer */}
           {notifications.length > 0 && (
-            <div className="px-4 py-3 border-t border-gray-200 bg-gray-50">
+            <div className="px-4 py-3 border-t border-line bg-surface-strong">
               <button
                 onClick={clearAll}
-                className="text-sm text-gray-600 hover:text-gray-800 w-full text-center"
+                className="text-sm text-muted hover:text-ink w-full text-center"
               >
                 Limpiar todas las notificaciones
               </button>

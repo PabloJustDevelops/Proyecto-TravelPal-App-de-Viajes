@@ -99,8 +99,10 @@ const nextConfig = {
     return config;
   },
 
-  // Configuración de compresión
-  compress: true,
+  // Compresión desactivada: los flujos brotli/zstd que genera la compresión propia de
+  // Next no se pueden decodificar en el runtime de Cloudflare Workers y el navegador
+  // aborta la carga. Que comprima el borde de Cloudflare con gzip, que sí funciona.
+  compress: false,
 
   // Configuración de PWA (opcional)
   // Descomenta si quieres habilitar PWA

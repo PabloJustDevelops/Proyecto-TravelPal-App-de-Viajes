@@ -1,7 +1,8 @@
 # 🎨 Rumbos visuales
 
-> Tres direcciones para la piel de TravelPal. **Documento de decisión: no hay nada implementado.**
-> El sistema de diseño (componentes y guardia) ya está cerrado; esto decide hacia dónde se mueve.
+> Tres direcciones para la piel de TravelPal. **Documento histórico: la dirección elegida es la A,
+> Cuaderno de viaje, y vive en [ADR-007](DECISIONS/ADR-007-rumbo-cuaderno-de-viaje.md).**
+> El sistema de diseño (componentes y guardia) ya está cerrado; esto comparó hacia dónde moverse.
 
 ## De dónde partimos
 
@@ -152,7 +153,11 @@ En las tres, el orden sensato es el de la guardia: **tokens → átomos (`Button
 
 ## Estado
 
-**Pendiente de decisión.** Este documento no decide: propone. Cuando Pablo elija dirección, la elegida pasa a ADR en `docs/DECISIONS/` con el formato `Contexto` / `Decisión` / `Consecuencias` / `Estado` y el resto de este documento se convierte en histórico.
+**Decidido.** La dirección elegida es la **A, Cuaderno de viaje**, registrada en
+[ADR-007](DECISIONS/ADR-007-rumbo-cuaderno-de-viaje.md), que fija la paleta, la tipografía, los
+componentes compartidos, el armazón y el comportamiento del modo oscuro. Este documento queda como
+histórico: conserva las tres propuestas y su comparación, pero no se redecide. La recomendación de
+la C que aparece arriba se descartó a favor de la diferenciación de marca.
 
 ## Referencias
 

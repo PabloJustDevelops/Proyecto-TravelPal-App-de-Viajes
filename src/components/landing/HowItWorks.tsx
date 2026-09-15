@@ -27,33 +27,37 @@ const steps = [
 
 export default function HowItWorks() {
   return (
-    <div className="bg-gray-50 py-24 sm:py-32" id="how-it-works">
+    <div className="bg-surface py-section-lg" id="how-it-works">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
-        <div className="mx-auto max-w-2xl lg:text-center">
-          <h2 className="text-base font-semibold leading-7 text-blue-600">Simplicidad</h2>
-          <p className="mt-2 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+        <div className="max-w-2xl">
+          <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-accent">
+            Simplicidad
+          </h2>
+          <p className="mt-3 font-serif text-title text-ink sm:text-display">
             Cómo funciona TravelPal
           </p>
-          <p className="mt-6 text-lg leading-8 text-gray-600">
+          <p className="mt-6 max-w-prose text-lg leading-reading text-muted">
             En solo unos pocos pasos estarás listo para despegar.
           </p>
         </div>
-        <div className="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-none">
-          <div className="grid grid-cols-1 gap-y-16 lg:grid-cols-4 lg:gap-x-8">
+        <div className="mt-16 sm:mt-20">
+          <div className="grid grid-cols-1 gap-y-12 lg:grid-cols-4 lg:gap-x-8">
             {steps.map((step, index) => (
-              <motion.div 
-                key={step.id} 
-                className="flex flex-col items-center text-center"
+              <motion.div
+                key={step.id}
+                className="border-t border-line pt-6"
                 initial={{ opacity: 0, scale: 0.9 }}
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
               >
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-blue-100 text-2xl font-bold text-blue-600 mb-6">
-                  {step.id}
-                </div>
-                <h3 className="text-lg font-semibold leading-8 text-gray-900">{step.title}</h3>
-                <p className="mt-2 text-base leading-7 text-gray-600">{step.description}</p>
+                <div className="font-serif text-2xl text-accent">{step.id}</div>
+                <h3 className="mt-4 font-serif text-heading leading-snug text-ink">
+                  {step.title}
+                </h3>
+                <p className="mt-2 max-w-prose leading-reading text-muted">
+                  {step.description}
+                </p>
               </motion.div>
             ))}
           </div>

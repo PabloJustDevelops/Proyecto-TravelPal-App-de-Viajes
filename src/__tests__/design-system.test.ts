@@ -69,7 +69,7 @@ describe("sistema de diseno: una sola clase de campo", () => {
 });
 
 describe("sistema de diseno: un solo boton primario", () => {
-  it("la combinacion de color del primario solo se declara en Button", () => {
+  it("la combinacion de color del primario solo se declara en la clase compartida", () => {
     const offenders = sourceFiles
       .filter((file) =>
         readFileSync(file, "utf8")
@@ -81,7 +81,25 @@ describe("sistema de diseno: un solo boton primario", () => {
       )
       .map(relative);
 
-    expect(offenders).toEqual(["src/components/ui/Button.tsx"]);
+    expect(offenders).toEqual(["src/components/ui/actionStyles.ts"]);
+  });
+
+  it("el boton del sistema y los enlaces de accion se apoyan en esa clase", () => {
+    const button = readFileSync(
+      path.join(SRC, "components", "ui", "Button.tsx"),
+      "utf8",
+    );
+    expect(button).toContain("accentActionClassName");
+
+    // Los enlaces que hacen de boton no reescriben el acento a mano.
+    for (const file of [
+      "src/components/landing/Hero.tsx",
+      "src/components/landing/Navbar.tsx",
+    ]) {
+      expect(readFileSync(path.join(process.cwd(), file), "utf8")).toContain(
+        "accentLinkClassName",
+      );
+    }
   });
 
   // Un <button> nativo sigue siendo lo correcto cuando el control no es un boton del sistema:
@@ -173,6 +191,7 @@ describe("sistema de diseno: el rumbo en tokens", () => {
   const layout = readFileSync(path.join(SRC, "app", "layout.tsx"), "utf8");
 
   const TOKEN_FILES = [
+    "src/components/ui/actionStyles.ts",
     "src/components/ui/Button.tsx",
     "src/components/ui/Card.tsx",
     "src/components/ui/EmptyState.tsx",

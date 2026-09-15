@@ -1,6 +1,7 @@
 import { ButtonHTMLAttributes, forwardRef } from 'react'
 import { cn } from '@/lib/utils'
 import LoadingSpinner from './LoadingSpinner'
+import { accentActionClassName } from './actionStyles'
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger'
@@ -14,7 +15,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     const baseClasses = 'inline-flex items-center justify-center rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-50 disabled:pointer-events-none'
 
     const variants = {
-      primary: 'bg-accent text-on-accent hover:bg-accent-hover',
+      primary: accentActionClassName,
       secondary: 'bg-ink text-paper hover:bg-muted',
       outline: 'border border-line bg-transparent text-ink hover:bg-surface',
       ghost: 'text-ink hover:bg-surface',

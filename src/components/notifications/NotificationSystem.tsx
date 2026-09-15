@@ -10,7 +10,13 @@ import {
   InformationCircleIcon,
 } from "@heroicons/react/24/outline";
 import { useAuth } from "../../contexts/AuthContext";
-import { createInsforgeClient } from "../../lib/insforge";
+import {
+  createInsforgeClient,
+  type Booking,
+  type Expense,
+  type Task,
+} from "../../lib/insforge";
+import { deriveAlerts, type AlertBudget } from "../../lib/alerts";
 import { formatDate, getErrorMessage } from "../../lib/utils";
 import { logger } from "@/lib/logger";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
@@ -42,6 +48,96 @@ interface NotificationSystemProps {
   className?: string;
 }
 
+type InsforgeClient = ReturnType<typeof createInsforgeClient>;
+
+// Lee las alertas NO leidas del usuario (mismo query que usa la campana).
+async function loadUnreadAlerts(
+  insforge: InsforgeClient,
+  userId: string,
+  signal?: AbortSignal
+): Promise<Alert[]> {
+  const query = insforge
+    .database.from("alerts")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("is_read", false)
+    .order("created_at", { ascending: false });
+
+  const { data, error } = await (signal ? query.abortSignal(signal) : query);
+  if (error) throw error;
+
+  return (data || []) as Alert[];
+}
+
+/**
+ * Da fuente a la campana a partir de datos que ya existen y ya tienen RLS: las
+ * alertas derivadas se insertan en `alerts` (el modelo de datos NO cambia) para
+ * que "marcar como leida"/descartar sigan funcionando sobre una fila real. Se
+ * deduplica por title+message contra TODAS las alertas del usuario (leidas o no),
+ * asi que no se reinserta lo que ya tiene. Devuelve true si inserto algo.
+ */
+async function ensureDerivedAlerts(
+  insforge: InsforgeClient,
+  userId: string,
+  signal?: AbortSignal
+): Promise<boolean> {
+  // Dedupe: alertas ya presentes del usuario, leidas o no.
+  const existingQuery = insforge
+    .database.from("alerts")
+    .select("title, message")
+    .eq("user_id", userId);
+
+  const { data: existingData, error: existingError } = await (signal
+    ? existingQuery.abortSignal(signal)
+    : existingQuery);
+  if (existingError) throw existingError;
+
+  const existingKeys = new Set(
+    ((existingData || []) as { title: string; message: string }[]).map(
+      (alert) => `${alert.title}\u0000${alert.message}`
+    )
+  );
+
+  const [tasksRes, bookingsRes, budgetsRes, expensesRes] = await Promise.all([
+    insforge.database.from("tasks").select("*").eq("user_id", userId),
+    insforge.database.from("bookings").select("*").eq("user_id", userId),
+    insforge.database.from("budgets").select("*").eq("user_id", userId),
+    insforge.database.from("expenses").select("*").eq("user_id", userId),
+  ]);
+
+  if (tasksRes.error) throw tasksRes.error;
+  if (bookingsRes.error) throw bookingsRes.error;
+  if (budgetsRes.error) throw budgetsRes.error;
+  if (expensesRes.error) throw expensesRes.error;
+
+  const derived = deriveAlerts({
+    tasks: (tasksRes.data || []) as Task[],
+    bookings: (bookingsRes.data || []) as Booking[],
+    budgets: (budgetsRes.data || []) as AlertBudget[],
+    expenses: (expensesRes.data || []) as Expense[],
+  });
+
+  const toInsert = derived
+    .filter((alert) => !existingKeys.has(`${alert.title}\u0000${alert.message}`))
+    .map((alert) => ({
+      user_id: userId,
+      title: alert.title,
+      message: alert.message,
+      type: alert.type,
+      alert_date: alert.alert_date,
+      is_read: false,
+    }));
+
+  if (toInsert.length === 0) return false;
+
+  const { error: insertError } = await insforge
+    .database.from("alerts")
+    .insert(toInsert);
+  if (insertError) throw insertError;
+
+  return true;
+}
+
 export const NotificationSystem: React.FC<NotificationSystemProps> = ({
   className = "",
 }) => {
@@ -63,21 +159,28 @@ export const NotificationSystem: React.FC<NotificationSystemProps> = ({
         setIsLoading(true);
         const insforge = createInsforgeClient();
 
-        const query = insforge
-          .database.from("alerts")
-          .select("*")
-          .eq("user_id", user.id)
-          .eq("is_read", false)
-          .order("created_at", { ascending: false });
+        const rows = await loadUnreadAlerts(insforge, user.id, signal);
 
-        const { data, error } = await (signal
-          ? query.abortSignal(signal)
-          : query);
+        // Enriquecimiento best-effort: da fuente a la campana insertando las
+        // alertas derivadas que falten. Un fallo aqui NO debe romper la campana:
+        // se registra y se sigue mostrando lo que ya hubiera.
+        let inserted = false;
+        try {
+          inserted = await ensureDerivedAlerts(insforge, user.id, signal);
+        } catch (enrichErr: unknown) {
+          logger.error("NotificationSystem: Error deriving alerts", {
+            error: getErrorMessage(enrichErr),
+          });
+        }
 
-        if (error) throw error;
+        if (signal?.aborted) return;
 
-        const rows: Alert[] = (data || []) as Alert[];
-        const pendingAlerts = rows.filter((a) =>
+        // Si se insertaron alertas nuevas, recarga para mostrarlas.
+        const finalRows = inserted
+          ? await loadUnreadAlerts(insforge, user.id, signal)
+          : rows;
+
+        const pendingAlerts = finalRows.filter((a) =>
           ["reminder", "warning", "info"].includes(a.type)
         );
 

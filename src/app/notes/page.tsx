@@ -15,6 +15,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { createInsforgeClient, Note, Trip } from "@/lib/insforge";
 import { logger } from "@/lib/logger";
 import { getErrorMessage } from "@/lib/utils";
+import { showToast } from "@/lib/toast";
 import {
   PlusIcon,
   MagnifyingGlassIcon,
@@ -128,8 +129,11 @@ export default function NotesPage() {
     } catch (err: unknown) {
       const message = getErrorMessage(err, "Error al guardar la nota");
       logger.error("NotesPage: Error saving note", { error: message });
-      // Show error to user?
-      alert(message); // Simple alert for now or use a toast if available
+      showToast({
+        type: "error",
+        title: "Error al guardar la nota",
+        message,
+      });
     } finally {
       setEditorLoading(false);
     }

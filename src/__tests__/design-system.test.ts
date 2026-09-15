@@ -112,7 +112,6 @@ describe("sistema de diseno: un solo boton primario", () => {
     "src/app/profile/page.tsx",
     "src/app/settings/page.tsx",
     "src/app/tasks/page.tsx",
-    "src/components/alerts/AlertCard.tsx",
     "src/components/auth/ForgotPasswordForm.tsx",
     "src/components/auth/LoginForm.tsx",
     "src/components/auth/RegisterForm.tsx",

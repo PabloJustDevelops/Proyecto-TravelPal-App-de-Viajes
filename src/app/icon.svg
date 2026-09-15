@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <title>TravelPal</title>
+  <rect width="64" height="64" rx="12" fill="#155dfc" />
+  <path fill="#ffffff" d="M10 12L55 32L10 52L10 42L42 32L10 22Z" />
+</svg>

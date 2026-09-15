@@ -1,0 +1,110 @@
+import { NextRequest } from 'next/server'
+import { middleware } from '@/middleware'
+import { updateSession } from '@insforge/sdk/ssr/middleware'
+
+jest.mock('@insforge/sdk/ssr/middleware', () => ({
+  updateSession: jest.fn(),
+}))
+
+const updateSessionMock = updateSession as jest.Mock
+
+const protectedPaths = [
+  '/dashboard',
+  '/trips',
+  '/trips/abc',
+  '/tasks',
+  '/tasks/abc',
+  '/planning',
+  '/expenses',
+  '/expenses/new',
+  '/budget',
+  '/analytics',
+  '/alerts',
+  '/notes',
+  '/notes/abc',
+  '/settings',
+  '/profile',
+]
+
+async function runMiddleware(
+  path: string,
+  accessToken: string | null,
+  search = '',
+) {
+  updateSessionMock.mockResolvedValue({ accessToken })
+  const request = new NextRequest(
+    new URL(`${path}${search}`, 'https://travelpal.test'),
+  )
+  return middleware(request)
+}
+
+function passesThrough(res: Response) {
+  return res.headers.get('x-middleware-next') === '1'
+}
+
+function redirectTarget(res: Response) {
+  const location = res.headers.get('location')
+  return location ? new URL(location) : null
+}
+
+describe('middleware - protección de rutas', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+  })
+
+  it.each(protectedPaths)(
+    'sin sesión redirige %s a /signin con redirectTo',
+    async (path) => {
+      const res = await runMiddleware(path, null)
+
+      expect(res.status).toBe(307)
+      const target = redirectTarget(res)
+      expect(target?.pathname).toBe('/signin')
+      expect(target?.searchParams.get('redirectTo')).toBe(path)
+    },
+  )
+
+  it.each(protectedPaths)('con sesión deja pasar %s', async (path) => {
+    const res = await runMiddleware(path, 'access-token')
+
+    expect(passesThrough(res)).toBe(true)
+  })
+
+  it.each(['/', '/signin', '/signup', '/forgot-password', '/reset-password'])(
+    'sin sesión deja pasar la ruta pública %s',
+    async (path) => {
+      const res = await runMiddleware(path, null)
+
+      expect(passesThrough(res)).toBe(true)
+    },
+  )
+
+  it('con sesión redirige /signin a /dashboard', async () => {
+    const res = await runMiddleware('/signin', 'access-token')
+
+    expect(res.status).toBe(307)
+    expect(redirectTarget(res)?.pathname).toBe('/dashboard')
+  })
+
+  it('con sesión respeta el redirectTo al volver de una ruta protegida', async () => {
+    const res = await runMiddleware(
+      '/signin',
+      'access-token',
+      '?redirectTo=%2Ftasks',
+    )
+
+    expect(res.status).toBe(307)
+    expect(redirectTarget(res)?.pathname).toBe('/tasks')
+  })
+
+  it('con sesión ignora un redirectTo externo', async () => {
+    const res = await runMiddleware(
+      '/signin',
+      'access-token',
+      '?redirectTo=https%3A%2F%2Fevil.test',
+    )
+
+    expect(res.status).toBe(307)
+    expect(redirectTarget(res)?.pathname).toBe('/dashboard')
+  })
+})

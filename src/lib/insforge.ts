@@ -95,6 +95,10 @@ export interface Booking {
   title: string;
   description?: string;
   confirmation_number?: string;
+  airline?: string;
+  flight_number?: string;
+  origin?: string;
+  destination?: string;
   status: "confirmed" | "pending" | "cancelled";
   start_date: string;
   end_date?: string;

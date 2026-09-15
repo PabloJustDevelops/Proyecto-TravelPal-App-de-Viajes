@@ -135,6 +135,7 @@ export const TaskBoard: React.FC<TaskBoardProps> = ({
                       task={task}
                       onEdit={onEditTask}
                       onDelete={onDeleteTask}
+                      onStatusChange={onStatusChange}
                     />
                   </div>
                 ))}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   ChevronLeftIcon, 
   ChevronRightIcon, 
@@ -29,6 +29,7 @@ import {
   useSensor,
   useSensors,
   PointerSensor,
+  KeyboardSensor,
   DragOverlay,
   DragStartEvent
 } from '@dnd-kit/core';
@@ -58,19 +59,83 @@ interface CalendarProps {
   className?: string;
 }
 
-const DraggableEvent = ({ event, onClick, onContextMenu, isDragging = false }: { event: CalendarEvent; onClick?: (e: any) => void; onContextMenu?: (e: any) => void; isDragging?: boolean }) => {
+const LONG_PRESS_MS = 500;
+
+const DraggableEvent = ({
+  event,
+  onClick,
+  onContextMenu,
+  onOpenMenu,
+  isDragging = false
+}: {
+  event: CalendarEvent;
+  onClick?: (e: React.MouseEvent<HTMLDivElement>) => void;
+  onContextMenu?: (e: React.MouseEvent<HTMLDivElement>) => void;
+  onOpenMenu?: (event: CalendarEvent, x: number, y: number) => void;
+  isDragging?: boolean;
+}) => {
   const { attributes, listeners, setNodeRef } = useDraggable({
     id: event.id,
     data: event
   });
+  const nodeRef = useRef<HTMLDivElement | null>(null);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const longPressAt = useRef(0);
+
+  const setRefs = (node: HTMLDivElement | null) => {
+    nodeRef.current = node;
+    setNodeRef(node);
+  };
+
+  const cancelLongPress = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  };
+
+  useEffect(() => cancelLongPress, []);
+
+  // El menu de borrado solo se abria con el clic derecho, que no existe ni en tactil ni con
+  // teclado: se le dan sus dos equivalentes, Mayus+F10 / tecla de menu y pulsacion larga.
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if ((e.shiftKey && e.key === 'F10') || e.key === 'ContextMenu') {
+      e.preventDefault();
+      e.stopPropagation();
+      const rect = nodeRef.current?.getBoundingClientRect();
+      if (rect) onOpenMenu?.(event, rect.left, rect.bottom);
+    }
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const { clientX, clientY } = e.touches[0];
+    longPressTimer.current = setTimeout(() => {
+      longPressAt.current = Date.now();
+      onOpenMenu?.(event, clientX, clientY);
+    }, LONG_PRESS_MS);
+  };
+
+  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    // Despues de la pulsacion larga el navegador emite un clic: no debe abrir el evento.
+    if (Date.now() - longPressAt.current < 800) {
+      e.stopPropagation();
+      return;
+    }
+    onClick?.(e);
+  };
 
   return (
     <div
-      ref={setNodeRef}
+      ref={setRefs}
       {...listeners}
       {...attributes}
-      onClick={onClick}
+      onClick={handleClick}
       onContextMenu={onContextMenu}
+      onKeyDown={handleKeyDown}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={cancelLongPress}
+      onTouchMove={cancelLongPress}
+      onTouchCancel={cancelLongPress}
       className={`
         group flex items-center gap-1 p-1 rounded cursor-grab active:cursor-grabbing
         hover:opacity-90 transition-all shadow-sm mb-1
@@ -167,13 +232,17 @@ export const Calendar: React.FC<CalendarProps> = ({
   const [viewMode, setViewMode] = useState<'month' | 'week'>('month');
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number, event: CalendarEvent } | null>(null);
   const [activeEvent, setActiveEvent] = useState<CalendarEvent | null>(null);
+  const menuButtonRef = useRef<HTMLButtonElement | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
         distance: 8,
       },
-    })
+    }),
+    // Sin este sensor el teclado no puede mover eventos: con el, Espacio/Enter coge el evento,
+    // las flechas lo desplazan y Esc cancela.
+    useSensor(KeyboardSensor)
   );
 
   useEffect(() => {
@@ -182,14 +251,27 @@ export const Calendar: React.FC<CalendarProps> = ({
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
 
+  // El menu se abre desde el final del calendario, asi que sin llevar el foco a su primera
+  // accion no habria forma de alcanzarlo con Tab cuando se abre con el teclado.
+  useEffect(() => {
+    if (contextMenu) menuButtonRef.current?.focus();
+  }, [contextMenu]);
+
+  // El menu se coloca con coordenadas del puntero. A 360px un clic cerca del borde derecho o
+  // inferior lo dejaba fuera de la pantalla, asi que se limita al viewport.
+  const openEventMenu = (event: CalendarEvent, x: number, y: number) => {
+    const menu = { width: 160, height: 44 };
+    setContextMenu({
+      x: Math.max(8, Math.min(x, window.innerWidth - menu.width - 8)),
+      y: Math.max(8, Math.min(y, window.innerHeight - menu.height - 8)),
+      event,
+    });
+  };
+
   const handleContextMenu = (e: React.MouseEvent, event: CalendarEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setContextMenu({
-      x: e.clientX,
-      y: e.clientY,
-      event
-    });
+    openEventMenu(event, e.clientX, e.clientY);
   };
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -308,6 +390,7 @@ export const Calendar: React.FC<CalendarProps> = ({
                     onEventClick?.(event);
                   }}
                   onContextMenu={(e) => handleContextMenu(e, event)}
+                  onOpenMenu={openEventMenu}
                 />
               ))}
             </div>
@@ -362,6 +445,7 @@ export const Calendar: React.FC<CalendarProps> = ({
                        onEventClick?.(event);
                      }}
                      onContextMenu={(e) => handleContextMenu(e, event)}
+                     onOpenMenu={openEventMenu}
                    />
                  ))}
              </div>
@@ -473,10 +557,20 @@ export const Calendar: React.FC<CalendarProps> = ({
         {/* Context Menu */}
         {contextMenu && (
           <div
-            className="fixed bg-white border border-gray-200 shadow-lg rounded-md py-1 z-50 min-w-[120px]"
+            role="menu"
+            aria-label={`Acciones de ${contextMenu.event.title}`}
+            className="fixed w-40 bg-white border border-gray-200 shadow-lg rounded-md py-1 z-50"
             style={{ top: contextMenu.y, left: contextMenu.x }}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') {
+                e.stopPropagation();
+                setContextMenu(null);
+              }
+            }}
           >
             <button
+              ref={menuButtonRef}
+              role="menuitem"
               className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
               onClick={(e) => {
                 e.stopPropagation();
@@ -484,7 +578,7 @@ export const Calendar: React.FC<CalendarProps> = ({
                 setContextMenu(null);
               }}
             >
-              <TrashIcon className="h-4 w-4" />
+              <TrashIcon className="h-4 w-4" aria-hidden="true" />
               Eliminar
             </button>
           </div>

@@ -9,11 +9,14 @@ import {
   TrashIcon 
 } from '@heroicons/react/24/outline';
 import Button from '@/components/ui/Button';
+import { selectClassName } from '@/components/ui/fieldStyles';
+import { cn } from '@/lib/utils';
 
 interface TaskCardProps {
   task: Task;
   onEdit: (task: Task) => void;
   onDelete: (task: Task) => void;
+  onStatusChange: (taskId: string, newStatus: Task['status']) => void;
   className?: string;
 }
 
@@ -23,13 +26,25 @@ const priorityConfig = {
   high: { color: 'bg-red-100 text-red-800 border-red-200', label: 'Alta' },
 };
 
+const statusOptions: { value: Task['status']; label: string }[] = [
+  { value: 'pending', label: 'Pendiente' },
+  { value: 'in_progress', label: 'En Progreso' },
+  { value: 'completed', label: 'Completada' },
+];
+
 export const TaskCard: React.FC<TaskCardProps> = ({ 
   task, 
   onEdit, 
   onDelete,
+  onStatusChange,
   className = ''
 }) => {
   const priority = priorityConfig[task.priority] || priorityConfig.medium;
+
+  const handleStatusChange = (value: string) => {
+    const option = statusOptions.find((candidate) => candidate.value === value);
+    if (option) onStatusChange(task.id, option.value);
+  };
 
   return (
     <div
@@ -80,12 +95,32 @@ export const TaskCard: React.FC<TaskCardProps> = ({
         </p>
       )}
       
-      {task.due_date && (
-        <div className="flex items-center text-xs font-medium text-gray-500 mt-auto pt-2 border-t border-gray-50">
-          <CalendarIcon className="w-4 h-4 mr-1.5 text-gray-400" />
-          {format(new Date(task.due_date), "d 'de' MMM", { locale: es })}
-        </div>
-      )}
+      <div className="flex items-center justify-between gap-2 mt-auto pt-2 border-t border-gray-50">
+        {task.due_date ? (
+          <div className="flex items-center text-xs font-medium text-gray-500">
+            <CalendarIcon className="w-4 h-4 mr-1.5 text-gray-400" aria-hidden="true" />
+            {format(new Date(task.due_date), "d 'de' MMM", { locale: es })}
+          </div>
+        ) : (
+          <span />
+        )}
+
+        {/* El tablero mueve las tareas por arrastre, que no existe ni con teclado ni en tactil:
+            este selector es la via alternativa, y usa la clase de campo compartida. */}
+        <select
+          value={task.status}
+          onChange={(e) => handleStatusChange(e.target.value)}
+          draggable={false}
+          aria-label={`Mover la tarea ${task.title}`}
+          className={cn(selectClassName, 'h-7 w-auto px-2 py-0 text-xs')}
+        >
+          {statusOptions.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </div>
     </div>
   );
 };

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useId } from "react";
 import {
   BellIcon,
   XMarkIcon,
@@ -46,6 +46,9 @@ export const NotificationSystem: React.FC<NotificationSystemProps> = ({
   className = "",
 }) => {
   const { user } = useAuth();
+  // La campana se monta a la vez en la barra de escritorio y en la de movil (una de las dos
+  // oculta por CSS), asi que los identificadores del panel tienen que ser unicos por instancia.
+  const panelId = useId();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -257,10 +260,21 @@ export const NotificationSystem: React.FC<NotificationSystemProps> = ({
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="relative p-2 text-gray-600 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-lg"
+        aria-label={
+          unreadCount > 0
+            ? `Notificaciones, ${unreadCount} sin leer`
+            : "Notificaciones"
+        }
+        aria-haspopup="true"
+        aria-expanded={isOpen}
+        aria-controls={panelId}
       >
-        <BellIcon className="h-6 w-6" />
+        <BellIcon className="h-6 w-6" aria-hidden="true" />
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+          <span
+            className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center"
+            aria-hidden="true"
+          >
             {unreadCount > 99 ? "99+" : unreadCount}
           </span>
         )}
@@ -270,10 +284,18 @@ export const NotificationSystem: React.FC<NotificationSystemProps> = ({
           el boton de menu (2.5rem) y con el padding del contenedor (1rem), asi que el panel nunca
           debe medir mas que la pantalla menos ese hueco; en escritorio el tope no se aplica. */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-96 max-w-[calc(100vw-5rem)] bg-white rounded-lg shadow-lg border border-gray-200 z-50 max-h-96 overflow-hidden">
+        <div
+          id={panelId}
+          role="region"
+          aria-labelledby={`${panelId}-titulo`}
+          className="absolute right-0 mt-2 w-96 max-w-[calc(100vw-5rem)] bg-white rounded-lg shadow-lg border border-gray-200 z-50 max-h-96 overflow-hidden"
+        >
           {/* Header */}
           <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900">
+            <h3
+              id={`${panelId}-titulo`}
+              className="text-lg font-semibold text-gray-900"
+            >
               Notificaciones
             </h3>
             <div className="flex items-center space-x-2">
@@ -288,8 +310,9 @@ export const NotificationSystem: React.FC<NotificationSystemProps> = ({
               <button
                 onClick={() => setIsOpen(false)}
                 className="text-gray-400 hover:text-gray-600"
+                aria-label="Cerrar notificaciones"
               >
-                <XMarkIcon className="h-5 w-5" />
+                <XMarkIcon className="h-5 w-5" aria-hidden="true" />
               </button>
             </div>
           </div>
@@ -359,8 +382,9 @@ export const NotificationSystem: React.FC<NotificationSystemProps> = ({
                                 onClick={() => markAsRead(notification.id)}
                                 className="text-blue-600 hover:text-blue-800 text-xs"
                                 title="Marcar como leída"
+                                aria-label={`Marcar como leída: ${notification.title}`}
                               >
-                                <CheckIcon className="h-4 w-4" />
+                                <CheckIcon className="h-4 w-4" aria-hidden="true" />
                               </button>
                             )}
                             <button
@@ -369,8 +393,9 @@ export const NotificationSystem: React.FC<NotificationSystemProps> = ({
                               }
                               className="text-gray-400 hover:text-gray-600 text-xs"
                               title="Descartar"
+                              aria-label={`Descartar: ${notification.title}`}
                             >
-                              <XMarkIcon className="h-4 w-4" />
+                              <XMarkIcon className="h-4 w-4" aria-hidden="true" />
                             </button>
                           </div>
                         </div>

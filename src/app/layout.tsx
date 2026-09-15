@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next'
-import { Inter } from 'next/font/google'
+import { Inter, Fraunces } from 'next/font/google'
 import './globals.css'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { ThemeProvider } from '@/contexts/ThemeContext'
@@ -8,6 +8,11 @@ import { ToastProvider } from '@/components/ui/Toast'
 import MotionProvider from '@/components/common/MotionProvider'
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
+
+// Una sola importacion de next/font para todo el contrato de tipografia: el texto va en Inter y
+// los titulares en la serif del rumbo. La familia de titulares se expone como variable para que
+// `font-serif` la resuelva desde globals.css, sin declarar un segundo import.
+const fraunces = Fraunces({ subsets: ['latin'], variable: '--font-fraunces', display: 'swap' })
 
 export const metadata: Metadata = {
   title: 'Gestión de Viajes',
@@ -34,7 +39,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
-      <body className={inter.className} suppressHydrationWarning>
+      <body className={`${inter.className} ${fraunces.variable}`} suppressHydrationWarning>
         <ErrorBoundary>
           <MotionProvider>
             <ToastProvider>

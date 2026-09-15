@@ -9,6 +9,7 @@ import { Trip, Expense } from '@/lib/insforge'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
+import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { logger } from '@/lib/logger'
 
@@ -181,7 +182,7 @@ export default function EditExpensePage() {
     return (
       <DashboardLayout>
         <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+          <LoadingSpinner size="lg" />
         </div>
       </DashboardLayout>
     )

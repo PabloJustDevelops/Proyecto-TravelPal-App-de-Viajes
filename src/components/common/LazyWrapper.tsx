@@ -1,7 +1,7 @@
 'use client'
 
 import { Suspense, lazy, ComponentType } from 'react'
-import LoadingSpinner from './LoadingSpinner'
+import LoadingSpinner from '@/components/ui/LoadingSpinner'
 
 interface LazyWrapperProps {
   children: React.ReactNode

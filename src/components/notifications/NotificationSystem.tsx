@@ -13,6 +13,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import { createInsforgeClient } from "../../lib/insforge";
 import { formatDate, getErrorMessage } from "../../lib/utils";
 import { logger } from "@/lib/logger";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
 interface Notification {
   id: string;
@@ -295,7 +296,7 @@ export const NotificationSystem: React.FC<NotificationSystemProps> = ({
           <div className="max-h-80 overflow-y-auto">
             {isLoading ? (
               <div className="p-4 text-center">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
+                <LoadingSpinner size="sm" />
                 <p className="text-sm text-gray-500 mt-2">
                   Cargando notificaciones...
                 </p>

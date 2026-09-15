@@ -17,7 +17,6 @@ server actions) y acceso a datos (SDK de InsForge).
 | Estilos | Tailwind CSS | Diseño responsive |
 | Backend | InsForge (`@insforge/sdk`) | Postgres + Auth + Storage |
 | Hosting | Cloudflare Workers (`@opennextjs/cloudflare`) | Runtime y deploy |
-| API externa | Amadeus API | Datos de vuelos |
 
 ### Estructura
 
@@ -49,7 +48,6 @@ graph TB
     D --> E[AuthService / API routes]
     E --> F[SDK InsForge]
     F --> G[InsForge: Postgres + Auth]
-    E --> H[Amadeus API]
 ```
 
 En cliente, el acceso a datos va por `createInsforgeClient().database.from(...)`. En servidor, los

@@ -69,6 +69,10 @@ export async function POST(request: Request) {
       end_time,
       location,
       confirmation_number,
+      airline,
+      flight_number,
+      origin,
+      destination,
       cost,
       currency,
       status,
@@ -94,6 +98,10 @@ export async function POST(request: Request) {
       end_time: end_time || null,
       location: location || null,
       confirmation_number: confirmation_number || null,
+      airline: airline || null,
+      flight_number: flight_number || null,
+      origin: origin || null,
+      destination: destination || null,
       cost: cost || 0,
       currency: currency || 'EUR',
       status: status || 'pending',
@@ -133,7 +141,6 @@ export async function PUT(request: Request) {
     const body = await request.json();
     const { 
       id,
-      trip_id,
       type,
       title,
       description,
@@ -143,6 +150,10 @@ export async function PUT(request: Request) {
       end_time,
       location,
       confirmation_number,
+      airline,
+      flight_number,
+      origin,
+      destination,
       cost,
       currency,
       status,
@@ -156,7 +167,7 @@ export async function PUT(request: Request) {
       );
     }
 
-    const updatedBooking = {
+    const updatedBooking: Record<string, unknown> = {
       type,
       title,
       description: description || null,
@@ -166,6 +177,10 @@ export async function PUT(request: Request) {
       end_time: end_time || null,
       location: location || null,
       confirmation_number: confirmation_number || null,
+      airline: airline || null,
+      flight_number: flight_number || null,
+      origin: origin || null,
+      destination: destination || null,
       cost: cost || 0,
       currency: currency || 'EUR',
       status: status || 'pending',
@@ -173,10 +188,10 @@ export async function PUT(request: Request) {
       updated_at: new Date().toISOString()
     };
 
-    // Remove undefined keys
-    Object.keys(updatedBooking).forEach(key => 
-      (updatedBooking as any)[key] === undefined && delete (updatedBooking as any)[key]
-    );
+    // Quita las claves sin valor para no pisar columnas con null/undefined.
+    Object.entries(updatedBooking).forEach(([key, value]) => {
+      if (value === undefined) delete updatedBooking[key];
+    });
 
     const { data, error } = await client
       .database.from("bookings")

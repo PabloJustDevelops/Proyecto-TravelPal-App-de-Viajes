@@ -33,7 +33,6 @@ hosting es **Cloudflare Workers** con `@opennextjs/cloudflare`.
 - 💼 Presupuestos y seguimiento financiero
 - 📊 Dashboard analítico con visualizaciones interactivas
 - 🔐 Autenticación con InsForge (server actions; refresh token httpOnly)
-- 🧭 Integración con Amadeus API para datos de vuelos
 - 🧩 Logger centralizado y notificaciones toast
 - 📱 Diseño responsive y accesible
 
@@ -63,7 +62,6 @@ app-viajes/
 - Node.js 22+
 - npm
 - Un proyecto de InsForge (URL + anon key + API key)
-- API key de Amadeus (opcional)
 
 ### Instalación
 ```bash
@@ -83,8 +81,6 @@ Variables de `.env.local` (nunca se versionan):
 NEXT_PUBLIC_INSFORGE_URL=https://<appkey>.<region>.insforge.app
 NEXT_PUBLIC_INSFORGE_ANON_KEY=<anon key>
 INSFORGE_API_KEY=<api key de proyecto, solo servidor>
-AMADEUS_CLIENT_ID=<opcional>
-AMADEUS_CLIENT_SECRET=<opcional>
 ```
 
 ### Ejecución
@@ -120,7 +116,6 @@ npm run deploy       # Build de OpenNext + deploy a Cloudflare
 - Estilos: Tailwind CSS
 - Backend: InsForge (Postgres, Auth, Storage) vía `@insforge/sdk`
 - Hosting: Cloudflare Workers con `@opennextjs/cloudflare`
-- APIs: Amadeus API
 - Testing: Jest + Testing Library
 - CI/CD: GitHub Actions (lint, type-check, tests, build y build del Worker)
 

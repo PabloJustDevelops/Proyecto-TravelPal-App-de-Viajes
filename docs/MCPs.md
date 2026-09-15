@@ -4,7 +4,7 @@ Este proyecto documenta patrones reutilizables y conectores usados en Trae:
 
 - Logger centralizado (`src/lib/logger.ts`): captura niveles `debug|info|warn|error` y emite toasts.
 - Toasts globales (`src/lib/toast.ts`, `src/components/ui/Toast.tsx`): proveedor en `RootLayout`.
-- Clientes de servicios (`src/lib/insforge.ts`, `src/lib/amadeus.ts`): inicialización y helpers.
+- Clientes de servicios (`src/lib/insforge.ts`): inicialización y ayudantes de datos.
 - Pruebas y auditoría (plan): `Jest` + posibilidad de `testsprite`.
 - UI modular: componentes reusables en `src/components/ui/*` y por dominio.
 

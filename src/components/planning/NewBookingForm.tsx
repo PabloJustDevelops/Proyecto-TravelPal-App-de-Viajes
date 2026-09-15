@@ -56,6 +56,12 @@ export default function NewBookingForm({
     number_of_people: 1,
     description: "",
     trip_id: "",
+    airline: "",
+    flight_number: "",
+    origin: "",
+    destination: "",
+    cost: "",
+    currency: "EUR",
   });
 
   useEffect(() => {
@@ -81,6 +87,15 @@ export default function NewBookingForm({
         number_of_people: people,
         description: desc,
         trip_id: initialData.trip_id || "",
+        airline: initialData.airline || "",
+        flight_number: initialData.flight_number || "",
+        origin: initialData.origin || "",
+        destination: initialData.destination || "",
+        cost:
+          initialData.cost === undefined || initialData.cost === null
+            ? ""
+            : String(initialData.cost),
+        currency: initialData.currency || "EUR",
       });
     }
   }, [initialData]);
@@ -123,6 +138,19 @@ export default function NewBookingForm({
       // mantenemos la lógica existente y asumimos que se llamará desde un contexto con viaje
       // O vamos a hacer fetch a la API sin trip_id y dejar que la API valide.
       
+      // Los campos de vuelo solo se envian cuando la reserva es un vuelo.
+      const flightFields =
+        formData.type === "flight"
+          ? {
+              airline: formData.airline || null,
+              flight_number: formData.flight_number || null,
+              origin: formData.origin || null,
+              destination: formData.destination || null,
+              cost: formData.cost === "" ? 0 : Number(formData.cost),
+              currency: formData.currency || "EUR",
+            }
+          : {};
+
       const bookingData = {
         title: formData.title,
         type: formData.type,
@@ -133,7 +161,8 @@ export default function NewBookingForm({
         // Propiedades adicionales necesarias para la API
         description: formData.description,
         // Si estamos editando, usamos el trip_id existente
-        trip_id: initialData?.trip_id
+        trip_id: initialData?.trip_id,
+        ...flightFields,
       };
 
       logger.debug('Submitting booking data:', {
@@ -308,6 +337,79 @@ export default function NewBookingForm({
           />
         </div>
       </div>
+
+      {formData.type === "flight" && (
+        <div className="space-y-4 rounded-md border border-gray-200 p-4 dark:border-gray-700">
+          <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+            Datos del vuelo
+          </h4>
+
+          <Input
+            label="Aerolínea"
+            name="airline"
+            value={formData.airline}
+            onChange={handleChange}
+            placeholder="ej. Iberia"
+          />
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input
+              label="Nº de vuelo"
+              name="flight_number"
+              value={formData.flight_number}
+              onChange={handleChange}
+              placeholder="ej. IB3201"
+            />
+            <Input
+              label="Precio"
+              type="number"
+              min={0}
+              step="0.01"
+              name="cost"
+              value={formData.cost}
+              onChange={handleChange}
+              placeholder="0.00"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input
+              label="Origen"
+              name="origin"
+              value={formData.origin}
+              onChange={handleChange}
+              placeholder="ej. MAD"
+            />
+            <Input
+              label="Destino"
+              name="destination"
+              value={formData.destination}
+              onChange={handleChange}
+              placeholder="ej. JFK"
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="currency-select"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Moneda
+            </label>
+            <select
+              id="currency-select"
+              name="currency"
+              value={formData.currency}
+              onChange={handleChange}
+              className="w-full h-10 px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="EUR">EUR</option>
+              <option value="USD">USD</option>
+              <option value="GBP">GBP</option>
+            </select>
+          </div>
+        </div>
+      )}
 
       {error && (
         <div className="text-red-600 text-sm bg-red-50 p-2 rounded">

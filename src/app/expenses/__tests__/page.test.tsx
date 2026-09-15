@@ -294,7 +294,7 @@ describe("ExpensesPage con el presupuesto fusionado", () => {
 
     const deleteButton = within(card as HTMLElement)
       .getAllByRole("button")
-      .find((button) => button.className.includes("text-red-600"));
+      .find((button) => button.className.includes("text-danger"));
     expect(deleteButton).toBeDefined();
 
     fireEvent.click(deleteButton as HTMLElement);

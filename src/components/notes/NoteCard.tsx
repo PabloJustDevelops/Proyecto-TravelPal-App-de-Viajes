@@ -82,7 +82,7 @@ export default function NoteCard({ note, showTripTitle = false, onEdit }: NoteCa
           <CardTitle className="text-lg flex items-center space-x-2">
             <CategoryIcon
               category={note.category}
-              className="h-5 w-5 text-gray-500"
+              className="h-5 w-5 text-muted"
             />
             <span className="line-clamp-1">{note.title}</span>
           </CardTitle>
@@ -98,7 +98,7 @@ export default function NoteCard({ note, showTripTitle = false, onEdit }: NoteCa
           )}
         </div>
         {showTripTitle && (note as NoteWithTrip).trip && (
-          <div className="text-sm text-gray-500 mt-1">
+          <div className="text-sm text-muted mt-1">
             {(note as NoteWithTrip).trip?.title}
           </div>
         )}
@@ -106,7 +106,7 @@ export default function NoteCard({ note, showTripTitle = false, onEdit }: NoteCa
       <CardContent className="space-y-3">
         {/* Category */}
         <div className="flex items-center space-x-2">
-          <TagIcon className="h-4 w-4 text-gray-400" />
+          <TagIcon className="h-4 w-4 text-muted" />
           <span
             className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getCategoryColor(
               note.category
@@ -118,13 +118,13 @@ export default function NoteCard({ note, showTripTitle = false, onEdit }: NoteCa
 
         {/* Content Preview */}
         <div className="prose prose-sm max-w-none">
-          <div className="text-gray-700 text-sm leading-relaxed">
+          <div className="text-muted text-sm leading-relaxed">
             {truncateContent(note.content)}
           </div>
         </div>
 
         {/* Date */}
-        <div className="flex items-center space-x-2 text-gray-500 text-sm pt-2 border-t border-gray-100">
+        <div className="flex items-center space-x-2 text-muted text-sm pt-2 border-t border-line">
           <CalendarIcon className="h-4 w-4" />
           <span>Actualizado {formatDate(note.updated_at)}</span>
         </div>

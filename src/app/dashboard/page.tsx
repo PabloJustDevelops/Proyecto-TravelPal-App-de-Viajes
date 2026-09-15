@@ -41,18 +41,18 @@ import { motion } from "framer-motion";
 // Skeleton Component
 const DashboardSkeleton = () => (
   <div className="space-y-6 animate-pulse">
-    <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/3"></div>
+    <div className="h-8 bg-surface-strong rounded w-1/3"></div>
     <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
       {[...Array(8)].map((_, i) => (
         <div
           key={i}
-          className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg p-5"
+          className="bg-surface overflow-hidden shadow rounded-lg p-5"
         >
           <div className="flex items-center">
-            <div className="flex-shrink-0 bg-gray-200 dark:bg-gray-700 rounded-md p-3 h-12 w-12"></div>
+            <div className="flex-shrink-0 bg-surface-strong rounded-md p-3 h-12 w-12"></div>
             <div className="ml-5 w-0 flex-1">
-              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2 mb-2"></div>
-              <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+              <div className="h-4 bg-surface-strong rounded w-1/2 mb-2"></div>
+              <div className="h-6 bg-surface-strong rounded w-3/4"></div>
             </div>
           </div>
         </div>
@@ -62,7 +62,7 @@ const DashboardSkeleton = () => (
       {[...Array(2)].map((_, i) => (
         <div
           key={i}
-          className="bg-white dark:bg-gray-800 shadow rounded-lg h-64"
+          className="bg-surface shadow rounded-lg h-64"
         ></div>
       ))}
     </div>
@@ -416,14 +416,14 @@ export default function DashboardPage() {
                 leaveFrom="transform opacity-100 scale-100"
                 leaveTo="transform opacity-0 scale-95"
               >
-                <Menu.Items className="absolute right-0 mt-2 w-48 origin-top-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                <Menu.Items className="absolute right-0 mt-2 w-48 origin-top-right divide-y divide-line rounded-md bg-surface shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                   <div className="px-1 py-1">
                     <Menu.Item>
                       {({ active }) => (
                         <button
                           onClick={exportToJSON}
                           className={`${
-                            active ? "bg-blue-500 text-white" : "text-gray-900"
+                            active ? "bg-accent text-on-accent" : "text-ink"
                           } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
                         >
                           <TableCellsIcon
@@ -439,7 +439,7 @@ export default function DashboardPage() {
                         <button
                           onClick={exportToPDF}
                           className={`${
-                            active ? "bg-blue-500 text-white" : "text-gray-900"
+                            active ? "bg-accent text-on-accent" : "text-ink"
                           } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
                         >
                           <DocumentTextIcon
@@ -459,13 +459,13 @@ export default function DashboardPage() {
 
         {/* Filtros: moneda y rango de fechas */}
         <div
-          className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700"
+          className="bg-surface p-4 rounded-lg shadow-sm border border-line"
           data-export-exclude="true"
         >
           <div className="flex flex-wrap gap-4 items-center">
             <div className="flex items-center space-x-2">
-              <FunnelIcon className="h-5 w-5 text-gray-500 dark:text-gray-400" />
-              <span className="text-sm text-gray-700 dark:text-gray-300">
+              <FunnelIcon className="h-5 w-5 text-muted" />
+              <span className="text-sm text-muted">
                 Moneda:
               </span>
               <select
@@ -481,7 +481,7 @@ export default function DashboardPage() {
               </select>
             </div>
             <div className="flex items-center space-x-2">
-              <span className="text-sm text-gray-700 dark:text-gray-300">
+              <span className="text-sm text-muted">
                 Rango de fechas:
               </span>
               <select
@@ -505,14 +505,14 @@ export default function DashboardPage() {
             <Card className="h-full">
               <div className="p-5">
                 <div className="flex items-center">
-                  <div className="flex-shrink-0 rounded-lg p-3 bg-green-100 dark:bg-green-900/30">
-                    <CurrencyDollarIcon className="h-6 w-6 text-green-600 dark:text-green-400" />
+                  <div className="flex-shrink-0 rounded-lg p-3 bg-success/10">
+                    <CurrencyDollarIcon className="h-6 w-6 text-success" />
                   </div>
                   <div className="ml-5 w-0 flex-1">
-                    <div className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
+                    <div className="text-sm font-medium text-muted truncate">
                       Total Gastado
                     </div>
-                    <div className="text-lg font-bold text-gray-900 dark:text-white mt-1">
+                    <div className="text-lg font-bold text-ink mt-1">
                       {formatCurrency(totalSpent, selectedCurrency)}
                     </div>
                   </div>
@@ -525,14 +525,14 @@ export default function DashboardPage() {
             <Card className="h-full">
               <div className="p-5">
                 <div className="flex items-center">
-                  <div className="flex-shrink-0 rounded-lg p-3 bg-blue-100 dark:bg-blue-900/30">
-                    <ChartBarIcon className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                  <div className="flex-shrink-0 rounded-lg p-3 bg-accent-soft">
+                    <ChartBarIcon className="h-6 w-6 text-accent" />
                   </div>
                   <div className="ml-5 w-0 flex-1">
-                    <div className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
+                    <div className="text-sm font-medium text-muted truncate">
                       Presupuesto Total
                     </div>
-                    <div className="text-lg font-bold text-gray-900 dark:text-white mt-1">
+                    <div className="text-lg font-bold text-ink mt-1">
                       {formatCurrency(totalBudget, selectedCurrency)}
                     </div>
                   </div>
@@ -545,14 +545,14 @@ export default function DashboardPage() {
             <Card className="h-full">
               <div className="p-5">
                 <div className="flex items-center">
-                  <div className="flex-shrink-0 rounded-lg p-3 bg-blue-100 dark:bg-blue-900/30">
-                    <PaperAirplaneIcon className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                  <div className="flex-shrink-0 rounded-lg p-3 bg-accent-soft">
+                    <PaperAirplaneIcon className="h-6 w-6 text-accent" />
                   </div>
                   <div className="ml-5 w-0 flex-1">
-                    <div className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
+                    <div className="text-sm font-medium text-muted truncate">
                       Total Viajes
                     </div>
-                    <div className="text-lg font-bold text-gray-900 dark:text-white mt-1">
+                    <div className="text-lg font-bold text-ink mt-1">
                       {totalTrips}
                     </div>
                   </div>
@@ -565,15 +565,15 @@ export default function DashboardPage() {
             <Card className="h-full">
               <div className="p-5">
                 <div className="flex items-center">
-                  <div className="flex-shrink-0 rounded-lg p-3 bg-purple-100 dark:bg-purple-900/30">
-                    <MapPinIcon className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                  <div className="flex-shrink-0 rounded-lg p-3 bg-accent-soft">
+                    <MapPinIcon className="h-6 w-6 text-accent" />
                   </div>
                   <div className="ml-5 w-0 flex-1">
-                    <div className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
+                    <div className="text-sm font-medium text-muted truncate">
                       Destino más visitado
                     </div>
                     <div
-                      className="text-lg font-bold text-gray-900 dark:text-white mt-1 truncate"
+                      className="text-lg font-bold text-ink mt-1 truncate"
                       title={mostVisitedDestination}
                     >
                       {mostVisitedDestination}
@@ -588,20 +588,20 @@ export default function DashboardPage() {
             <Card className="h-full">
               <div className="p-5">
                 <div className="flex items-center">
-                  <div className="flex-shrink-0 rounded-lg p-3 bg-gray-100 dark:bg-gray-900/30">
+                  <div className="flex-shrink-0 rounded-lg p-3 bg-surface-strong">
                     {monthlyTrend === "up" ? (
-                      <ArrowTrendingUpIcon className="h-6 w-6 text-red-600" />
+                      <ArrowTrendingUpIcon className="h-6 w-6 text-danger" />
                     ) : monthlyTrend === "down" ? (
-                      <ArrowTrendingDownIcon className="h-6 w-6 text-green-600" />
+                      <ArrowTrendingDownIcon className="h-6 w-6 text-success" />
                     ) : (
-                      <CalendarIcon className="h-6 w-6 text-gray-600 dark:text-gray-400" />
+                      <CalendarIcon className="h-6 w-6 text-muted" />
                     )}
                   </div>
                   <div className="ml-5 w-0 flex-1">
-                    <div className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
+                    <div className="text-sm font-medium text-muted truncate">
                       Tendencia de Gastos
                     </div>
-                    <div className="text-lg font-bold text-gray-900 dark:text-white mt-1">
+                    <div className="text-lg font-bold text-ink mt-1">
                       {monthlyTrend === "up"
                         ? "Aumentando"
                         : monthlyTrend === "down"
@@ -618,14 +618,14 @@ export default function DashboardPage() {
             <Card className="h-full">
               <div className="p-5">
                 <div className="flex items-center">
-                  <div className="flex-shrink-0 rounded-lg p-3 bg-amber-100 dark:bg-amber-900/30">
-                    <CalendarIcon className="h-6 w-6 text-amber-600 dark:text-amber-400" />
+                  <div className="flex-shrink-0 rounded-lg p-3 bg-warning/10">
+                    <CalendarIcon className="h-6 w-6 text-warning" />
                   </div>
                   <div className="ml-5 w-0 flex-1">
-                    <div className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
+                    <div className="text-sm font-medium text-muted truncate">
                       Viajes Activos
                     </div>
-                    <div className="text-lg font-bold text-gray-900 dark:text-white mt-1">
+                    <div className="text-lg font-bold text-ink mt-1">
                       {activeTrips}
                     </div>
                   </div>
@@ -638,14 +638,14 @@ export default function DashboardPage() {
             <Card className="h-full">
               <div className="p-5">
                 <div className="flex items-center">
-                  <div className="flex-shrink-0 rounded-lg p-3 bg-sky-100 dark:bg-sky-900/30">
-                    <CalendarIcon className="h-6 w-6 text-sky-600 dark:text-sky-400" />
+                  <div className="flex-shrink-0 rounded-lg p-3 bg-accent-soft">
+                    <CalendarIcon className="h-6 w-6 text-accent" />
                   </div>
                   <div className="ml-5 w-0 flex-1">
-                    <div className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
+                    <div className="text-sm font-medium text-muted truncate">
                       Próximos Viajes
                     </div>
-                    <div className="text-lg font-bold text-gray-900 dark:text-white mt-1">
+                    <div className="text-lg font-bold text-ink mt-1">
                       {upcomingTrips}
                     </div>
                   </div>
@@ -659,8 +659,8 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card className="overflow-hidden">
             <div className="p-6">
-              <h3 className="text-lg font-semibold mb-6 text-gray-900 dark:text-white flex items-center">
-                <span className="w-1 h-6 bg-blue-500 rounded-full mr-3"></span>
+              <h3 className="text-lg font-semibold mb-6 text-ink flex items-center">
+                <span className="w-1 h-6 bg-accent rounded-full mr-3"></span>
                 Gastos por Categoría
               </h3>
               <ExpenseChart
@@ -672,8 +672,8 @@ export default function DashboardPage() {
           </Card>
           <Card className="overflow-hidden">
             <div className="p-6">
-              <h3 className="text-lg font-semibold mb-6 text-gray-900 dark:text-white flex items-center">
-                <span className="w-1 h-6 bg-purple-500 rounded-full mr-3"></span>
+              <h3 className="text-lg font-semibold mb-6 text-ink flex items-center">
+                <span className="w-1 h-6 bg-accent rounded-full mr-3"></span>
                 Estado de Viajes
               </h3>
               <TripChart trips={trips} height={350} />
@@ -682,8 +682,8 @@ export default function DashboardPage() {
 
           <Card className="overflow-hidden lg:col-span-2">
             <div className="p-6">
-              <h3 className="text-lg font-semibold mb-6 text-gray-900 dark:text-white flex items-center">
-                <span className="w-1 h-6 bg-green-500 rounded-full mr-3"></span>
+              <h3 className="text-lg font-semibold mb-6 text-ink flex items-center">
+                <span className="w-1 h-6 bg-success rounded-full mr-3"></span>
                 Destinos más Populares
               </h3>
               <TripChart trips={trips} type="destinations" height={300} />
@@ -695,45 +695,45 @@ export default function DashboardPage() {
           {/* Viajes Recientes */}
           <motion.div
             variants={item}
-            className="bg-white dark:bg-gray-800 shadow rounded-xl transition-all duration-200 border border-gray-100 dark:border-gray-700"
+            className="bg-surface shadow rounded-xl transition-all duration-200 border border-line"
           >
-            <div className="px-6 py-5 flex justify-between items-center border-b border-gray-200 dark:border-gray-700">
-              <h2 className="text-lg font-semibold leading-6 text-gray-900 dark:text-white flex items-center gap-2">
-                <MapPinIcon className="h-5 w-5 text-blue-500" />
+            <div className="px-6 py-5 flex justify-between items-center border-b border-line">
+              <h2 className="text-lg font-semibold leading-6 text-ink flex items-center gap-2">
+                <MapPinIcon className="h-5 w-5 text-accent" />
                 Viajes Recientes
               </h2>
               <Link
                 href="/trips"
-                className="text-sm font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 transition-colors hover:underline"
+                className="text-sm font-medium text-accent hover:text-accent-hover transition-colors hover:underline"
               >
                 Ver todos
               </Link>
             </div>
             <ul
               role="list"
-              className="divide-y divide-gray-200 dark:divide-gray-700"
+              className="divide-y divide-line"
             >
               {trips.slice(0, 3).map((trip) => (
                 <li key={trip.id}>
                   <Link
                     href={`/trips/${trip.id}`}
-                    className="block hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors group"
+                    className="block hover:bg-surface-strong transition-colors group"
                   >
                     <div className="px-6 py-4">
                       <div className="flex items-center justify-between">
-                        <p className="text-sm font-medium text-blue-600 dark:text-blue-400 truncate group-hover:text-blue-700 dark:group-hover:text-blue-300">
+                        <p className="text-sm font-medium text-accent truncate group-hover:text-accent-hover">
                           {trip.title}
                         </p>
                         <div className="ml-2 flex-shrink-0 flex">
                           <span
                             className={`px-2.5 py-0.5 inline-flex text-xs font-medium rounded-full ${
                               trip.status === "confirmed"
-                                ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
+                                ? "bg-success/10 text-success"
                                 : trip.status === "planned"
-                                  ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300"
+                                  ? "bg-warning/10 text-warning"
                                   : trip.status === "cancelled"
-                                    ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300"
-                                    : "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300"
+                                    ? "bg-danger/10 text-danger"
+                                    : "bg-surface-strong text-muted"
                             }`}
                           >
                             {trip.status === "confirmed"
@@ -748,13 +748,13 @@ export default function DashboardPage() {
                       </div>
                       <div className="mt-2 sm:flex sm:justify-between">
                         <div className="sm:flex">
-                          <p className="flex items-center text-sm text-gray-500 dark:text-gray-400">
-                            <MapPinIcon className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400 dark:text-gray-500" />
+                          <p className="flex items-center text-sm text-muted">
+                            <MapPinIcon className="flex-shrink-0 mr-1.5 h-4 w-4 text-muted" />
                             {trip.destination}
                           </p>
                         </div>
-                        <div className="mt-2 flex items-center text-sm text-gray-500 dark:text-gray-400 sm:mt-0">
-                          <CalendarIcon className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400 dark:text-gray-500" />
+                        <div className="mt-2 flex items-center text-sm text-muted sm:mt-0">
+                          <CalendarIcon className="flex-shrink-0 mr-1.5 h-4 w-4 text-muted" />
                           <p>
                             {new Date(trip.departure_date).toLocaleDateString()}
                           </p>
@@ -765,8 +765,8 @@ export default function DashboardPage() {
                 </li>
               ))}
               {trips.length === 0 && (
-                <li className="px-6 py-12 text-center text-gray-500 dark:text-gray-400 text-sm flex flex-col items-center">
-                  <PaperAirplaneIcon className="h-10 w-10 text-gray-300 mb-2" />
+                <li className="px-6 py-12 text-center text-muted text-sm flex flex-col items-center">
+                  <PaperAirplaneIcon className="h-10 w-10 text-muted mb-2" />
                   No tienes viajes recientes
                 </li>
               )}
@@ -776,41 +776,41 @@ export default function DashboardPage() {
           {/* Gastos Recientes */}
           <motion.div
             variants={item}
-            className="bg-white dark:bg-gray-800 shadow rounded-xl transition-all duration-200 border border-gray-100 dark:border-gray-700"
+            className="bg-surface shadow rounded-xl transition-all duration-200 border border-line"
           >
-            <div className="px-6 py-5 flex justify-between items-center border-b border-gray-200 dark:border-gray-700">
-              <h2 className="text-lg font-semibold leading-6 text-gray-900 dark:text-white flex items-center gap-2">
-                <CreditCardIcon className="h-5 w-5 text-purple-500" />
+            <div className="px-6 py-5 flex justify-between items-center border-b border-line">
+              <h2 className="text-lg font-semibold leading-6 text-ink flex items-center gap-2">
+                <CreditCardIcon className="h-5 w-5 text-accent" />
                 Gastos Recientes
               </h2>
               <Link
                 href="/expenses"
-                className="text-sm font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 transition-colors hover:underline"
+                className="text-sm font-medium text-accent hover:text-accent-hover transition-colors hover:underline"
               >
                 Ver todos
               </Link>
             </div>
             <ul
               role="list"
-              className="divide-y divide-gray-200 dark:divide-gray-700"
+              className="divide-y divide-line"
             >
               {recentExpenses.slice(0, 5).map((expense) => (
                 <li
                   key={expense.id}
-                  className="px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors group"
+                  className="px-6 py-4 hover:bg-surface-strong transition-colors group"
                 >
                   <div className="flex items-center space-x-4">
-                    <div className="flex-shrink-0 p-2 bg-gray-100 dark:bg-gray-700 rounded-lg group-hover:bg-white dark:group-hover:bg-gray-600 transition-colors">
+                    <div className="flex-shrink-0 p-2 bg-surface-strong rounded-lg group-hover:bg-surface transition-colors">
                       {getCategoryIcon(expense.category)}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                      <p className="text-sm font-medium text-ink truncate">
                         {expense.description || getCategoryName(expense.category)}
                       </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate flex items-center gap-1">
+                      <p className="text-xs text-muted truncate flex items-center gap-1">
                         {expense.trips ? (
                           <>
-                            <span className="w-1.5 h-1.5 bg-blue-400 rounded-full inline-block" />
+                            <span className="w-1.5 h-1.5 bg-accent rounded-full inline-block" />
                             {expense.trips.title}
                           </>
                         ) : (
@@ -819,10 +819,10 @@ export default function DashboardPage() {
                       </p>
                     </div>
                     <div className="text-right flex-shrink-0">
-                      <p className="text-sm font-bold text-gray-900 dark:text-white">
+                      <p className="text-sm font-bold text-ink">
                         {formatCurrency(expense.amount, expense.currency)}
                       </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                      <p className="text-xs text-muted">
                         {new Date(expense.date).toLocaleDateString()}
                       </p>
                     </div>
@@ -830,8 +830,8 @@ export default function DashboardPage() {
                 </li>
               ))}
               {recentExpenses.length === 0 && (
-                <li className="px-6 py-12 text-center text-gray-500 dark:text-gray-400 text-sm flex flex-col items-center">
-                  <CreditCardIcon className="h-10 w-10 text-gray-300 mb-2" />
+                <li className="px-6 py-12 text-center text-muted text-sm flex flex-col items-center">
+                  <CreditCardIcon className="h-10 w-10 text-muted mb-2" />
                   No tienes gastos recientes
                 </li>
               )}

@@ -11,9 +11,9 @@ interface TaskBoardProps {
 }
 
 const columns: { id: Task['status']; title: string; color: string; bg: string }[] = [
-  { id: 'pending', title: 'Pendiente', color: 'border-gray-200', bg: 'bg-gray-50' },
-  { id: 'in_progress', title: 'En Progreso', color: 'border-blue-200', bg: 'bg-blue-50' },
-  { id: 'completed', title: 'Completada', color: 'border-green-200', bg: 'bg-green-50' },
+  { id: 'pending', title: 'Pendiente', color: 'border-line', bg: 'bg-surface-strong' },
+  { id: 'in_progress', title: 'En Progreso', color: 'border-accent', bg: 'bg-accent-soft' },
+  { id: 'completed', title: 'Completada', color: 'border-success', bg: 'bg-success/10' },
 ];
 
 export const TaskBoard: React.FC<TaskBoardProps> = ({
@@ -89,8 +89,8 @@ export const TaskBoard: React.FC<TaskBoardProps> = ({
           flex items-center gap-3 px-8 py-4 rounded-full shadow-lg border-2
           backdrop-blur-sm transition-colors
           ${dragOverTrash 
-            ? 'bg-red-100 border-red-500 text-red-600 scale-110' 
-            : 'bg-white/90 border-red-200 text-gray-500 hover:border-red-400 hover:text-red-500'
+            ? 'bg-danger/10 border-danger text-danger scale-110' 
+            : 'bg-surface/90 border-danger/40 text-muted hover:border-danger hover:text-danger'
           }
         `}>
           <TrashIcon className={`w-8 h-8 ${dragOverTrash ? 'animate-bounce' : ''}`} />
@@ -112,12 +112,12 @@ export const TaskBoard: React.FC<TaskBoardProps> = ({
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <div className={`w-3 h-3 rounded-full ${
-                    col.id === 'pending' ? 'bg-gray-400' : 
-                    col.id === 'in_progress' ? 'bg-blue-500' : 'bg-green-500'
+                    col.id === 'pending' ? 'bg-muted' : 
+                    col.id === 'in_progress' ? 'bg-accent' : 'bg-success'
                   }`} />
-                  <h3 className="font-semibold text-gray-700">{col.title}</h3>
+                  <h3 className="font-semibold text-ink">{col.title}</h3>
                 </div>
-                <span className="bg-white px-2.5 py-0.5 rounded-full text-xs font-medium text-gray-500 shadow-sm border border-gray-100">
+                <span className="bg-surface px-2.5 py-0.5 rounded-full text-xs font-medium text-muted shadow-sm border border-line">
                   {colTasks.length}
                 </span>
               </div>
@@ -140,7 +140,7 @@ export const TaskBoard: React.FC<TaskBoardProps> = ({
                   </div>
                 ))}
                 {colTasks.length === 0 && (
-                  <div className="h-32 border-2 border-dashed border-gray-300/50 rounded-lg flex flex-col items-center justify-center text-gray-400 gap-2">
+                  <div className="h-32 border-2 border-dashed border-line/50 rounded-lg flex flex-col items-center justify-center text-muted gap-2">
                     <span className="text-sm">Vacío</span>
                   </div>
                 )}

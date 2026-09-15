@@ -333,22 +333,22 @@ export default function ExpensesPage() {
     {
       label: "Presupuesto total",
       value: formatCurrency(totalBudgetAmount, displayCurrency),
-      tone: "text-gray-900 dark:text-white",
+      tone: "text-ink",
     },
     {
       label: "Gastado",
       value: formatCurrency(totalSpentAmount, displayCurrency),
-      tone: "text-gray-900 dark:text-white",
+      tone: "text-ink",
     },
     {
       label: "Superados",
       value: String(overBudgetCount),
-      tone: "text-red-600 dark:text-red-400",
+      tone: "text-danger",
     },
     {
       label: "Cerca del límite",
       value: String(nearLimitCount),
-      tone: "text-yellow-600 dark:text-yellow-500",
+      tone: "text-warning",
     },
   ];
 
@@ -502,10 +502,10 @@ export default function ExpensesPage() {
     return (
       <DashboardLayout>
         <div className="text-center py-12">
-          <h3 className="text-lg font-semibold text-gray-900">
+          <h3 className="text-lg font-semibold text-ink">
             Inicia sesión para ver tus gastos
           </h3>
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-sm text-muted">
             La sección de gastos requiere autenticación.
           </p>
           <Link href="/signin">
@@ -545,13 +545,13 @@ export default function ExpensesPage() {
             <CardContent className="p-6">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <CurrencyDollarIcon className="h-8 w-8 text-green-600" />
+                  <CurrencyDollarIcon className="h-8 w-8 text-success" />
                 </div>
                 <div className="ml-4">
-                  <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                  <div className="text-sm font-medium text-muted">
                     Total Gastado
                   </div>
-                  <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                  <div className="text-2xl font-bold text-ink">
                     {formatCurrency(stats.total, "EUR")}
                   </div>
                 </div>
@@ -563,13 +563,13 @@ export default function ExpensesPage() {
             <CardContent className="p-6">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <ChartBarIcon className="h-8 w-8 text-blue-600" />
+                  <ChartBarIcon className="h-8 w-8 text-accent" />
                 </div>
                 <div className="ml-4">
-                  <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                  <div className="text-sm font-medium text-muted">
                     Total Gastos
                   </div>
-                  <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                  <div className="text-2xl font-bold text-ink">
                     {stats.count}
                   </div>
                 </div>
@@ -581,13 +581,13 @@ export default function ExpensesPage() {
             <CardContent className="p-6">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <CalendarIcon className="h-8 w-8 text-purple-600" />
+                  <CalendarIcon className="h-8 w-8 text-accent" />
                 </div>
                 <div className="ml-4">
-                  <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                  <div className="text-sm font-medium text-muted">
                     Promedio por Gasto
                   </div>
-                  <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                  <div className="text-2xl font-bold text-ink">
                     {formatCurrency(stats.avgPerExpense, "EUR")}
                   </div>
                 </div>
@@ -599,13 +599,13 @@ export default function ExpensesPage() {
             <CardContent className="p-6">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <TrophyIcon className="h-8 w-8 text-yellow-500" />
+                  <TrophyIcon className="h-8 w-8 text-warning" />
                 </div>
                 <div className="ml-4">
-                  <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                  <div className="text-sm font-medium text-muted">
                     Categoría Principal
                   </div>
-                  <div className="text-lg font-bold text-gray-900 dark:text-white">
+                  <div className="text-lg font-bold text-ink">
                     {stats.topCategory
                       ? getCategoryName(stats.topCategory)
                       : "N/A"}
@@ -617,12 +617,12 @@ export default function ExpensesPage() {
         </div>
 
         {/* Filters: un unico bloque para gastos y presupuestos */}
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="bg-surface p-4 rounded-lg shadow-sm border border-line">
           <div className="flex flex-col lg:flex-row gap-4">
             {/* Search */}
             <div className="flex-1">
               <div className="relative">
-                <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted" />
                 <Input
                   type="text"
                   placeholder="Buscar gastos y presupuestos..."
@@ -669,7 +669,7 @@ export default function ExpensesPage() {
             </div>
           </div>
 
-          <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
+          <p className="mt-3 text-xs text-muted">
             {filteredExpenses.length} de {expenses.length} gastos ·{" "}
             {filteredBudgets.length} de {budgets.length} presupuestos
           </p>
@@ -680,12 +680,12 @@ export default function ExpensesPage() {
           <Card>
             <CardContent className="p-6">
               <div className="flex items-start gap-3">
-                <ChartBarIcon className="h-6 w-6 text-blue-600 flex-shrink-0" />
+                <ChartBarIcon className="h-6 w-6 text-accent flex-shrink-0" />
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  <h2 className="text-lg font-semibold text-ink">
                     Previsto frente a real
                   </h2>
-                  <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                  <p className="mt-1 text-sm text-muted">
                     Compara lo que presupuestaste con lo que llevas gastado.
                   </p>
                 </div>
@@ -694,7 +694,7 @@ export default function ExpensesPage() {
               <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
                 {budgetSummary.map((item) => (
                   <div key={item.label}>
-                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                    <p className="text-sm font-medium text-muted">
                       {item.label}
                     </p>
                     <p className={`mt-1 text-2xl font-bold ${item.tone}`}>
@@ -706,18 +706,18 @@ export default function ExpensesPage() {
 
               {budgets.length > 0 && (
                 <div className="mt-6">
-                  <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                  <div className="flex items-center justify-between text-xs text-muted">
                     <span>Real sobre previsto</span>
                     <span>{overallPercentage.toFixed(1)}%</span>
                   </div>
-                  <div className="mt-2 w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                  <div className="mt-2 w-full bg-surface-strong rounded-full h-2">
                     <div
                       className={`h-2 rounded-full transition-all duration-300 ${
                         overallPercentage > 100
-                          ? "bg-red-500"
+                          ? "bg-danger"
                           : overallPercentage >= 80
-                            ? "bg-yellow-500"
-                            : "bg-green-500"
+                            ? "bg-warning"
+                            : "bg-success"
                       }`}
                       style={{
                         width: `${Math.min(overallPercentage, 100)}%`,
@@ -807,12 +807,12 @@ export default function ExpensesPage() {
         >
           <form onSubmit={handleSubmitBudget} className="space-y-6">
             {submitError && (
-              <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 px-4 py-3 rounded-md text-sm">
+              <div className="bg-danger/10 border border-danger text-danger px-4 py-3 rounded-md text-sm">
                 {submitError}
               </div>
             )}
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-muted mb-2">
                 Nombre del Presupuesto *
               </label>
               <Input
@@ -829,7 +829,7 @@ export default function ExpensesPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-muted mb-2">
                   Monto Total *
                 </label>
                 <Input
@@ -847,7 +847,7 @@ export default function ExpensesPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-muted mb-2">
                   Moneda *
                 </label>
                 <select
@@ -869,7 +869,7 @@ export default function ExpensesPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-muted mb-2">
                   Categoría *
                 </label>
                 <select
@@ -888,14 +888,14 @@ export default function ExpensesPage() {
                   ))}
                 </select>
                 {formErrors.category && (
-                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                  <p className="mt-1 text-sm text-danger">
                     {formErrors.category}
                   </p>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-muted mb-2">
                   Viaje Asociado
                 </label>
                 <select
@@ -918,7 +918,7 @@ export default function ExpensesPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-muted mb-2">
                   Fecha de Inicio *
                 </label>
                 <Input
@@ -933,7 +933,7 @@ export default function ExpensesPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-muted mb-2">
                   Fecha de Fin *
                 </label>
                 <Input
@@ -950,7 +950,7 @@ export default function ExpensesPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-muted mb-2">
                 Descripción
               </label>
               <textarea

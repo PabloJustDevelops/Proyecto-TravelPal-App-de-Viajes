@@ -184,10 +184,10 @@ export default function NotesPage() {
     return (
       <DashboardLayout>
         <div className="text-center py-12">
-          <h3 className="text-lg font-semibold text-gray-900">
+          <h3 className="text-lg font-semibold text-ink">
             Inicia sesión para gestionar tus notas
           </h3>
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-sm text-muted">
             La sección de notas requiere autenticación.
           </p>
           <Button
@@ -218,56 +218,56 @@ export default function NotesPage() {
 
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+          <div className="bg-surface p-4 rounded-lg shadow-sm border border-line">
             <div className="flex items-center">
-              <DocumentTextIcon className="h-8 w-8 text-blue-600" />
+              <DocumentTextIcon className="h-8 w-8 text-accent" />
               <div className="ml-3">
-                <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                <div className="text-sm font-medium text-muted">
                   Total Notas
                 </div>
-                <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                <div className="text-2xl font-bold text-ink">
                   {notes.length}
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+          <div className="bg-surface p-4 rounded-lg shadow-sm border border-line">
             <div className="flex items-center">
-              <CalendarDaysIcon className="h-8 w-8 text-blue-600" />
+              <CalendarDaysIcon className="h-8 w-8 text-accent" />
               <div className="ml-3">
-                <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                <div className="text-sm font-medium text-muted">
                   Itinerarios
                 </div>
-                <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                <div className="text-2xl font-bold text-ink">
                   {categoryCounts.itinerary || 0}
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+          <div className="bg-surface p-4 rounded-lg shadow-sm border border-line">
             <div className="flex items-center">
-              <BuildingOffice2Icon className="h-8 w-8 text-blue-600" />
+              <BuildingOffice2Icon className="h-8 w-8 text-accent" />
               <div className="ml-3">
-                <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                <div className="text-sm font-medium text-muted">
                   Alojamientos
                 </div>
-                <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                <div className="text-2xl font-bold text-ink">
                   {categoryCounts.accommodation || 0}
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+          <div className="bg-surface p-4 rounded-lg shadow-sm border border-line">
             <div className="flex items-center">
-              <ExclamationTriangleIcon className="h-8 w-8 text-blue-600" />
+              <ExclamationTriangleIcon className="h-8 w-8 text-accent" />
               <div className="ml-3">
-                <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                <div className="text-sm font-medium text-muted">
                   Emergencias
                 </div>
-                <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                <div className="text-2xl font-bold text-ink">
                   {categoryCounts.emergency || 0}
                 </div>
               </div>
@@ -276,12 +276,12 @@ export default function NotesPage() {
         </div>
 
         {/* Filters */}
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="bg-surface p-4 rounded-lg shadow-sm border border-line">
           <div className="flex flex-col lg:flex-row gap-4">
             {/* Search */}
             <div className="flex-1">
               <div className="relative">
-                <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted" />
                 <Input
                   type="text"
                   placeholder="Buscar notas..."

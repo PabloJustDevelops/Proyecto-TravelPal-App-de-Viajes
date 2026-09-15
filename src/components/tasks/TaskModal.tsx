@@ -95,11 +95,11 @@ export const TaskModal: React.FC<TaskModalProps> = ({
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+              <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-surface p-6 text-left align-middle shadow-xl transition-all">
                 <div className="flex justify-between items-center mb-4">
                   <Dialog.Title
                     as="h3"
-                    className="text-lg font-medium leading-6 text-gray-900"
+                    className="text-lg font-medium leading-6 text-ink"
                   >
                     {initialData ? 'Editar Tarea' : 'Nueva Tarea'}
                   </Dialog.Title>
@@ -116,7 +116,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
 
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label className="block text-sm font-medium text-muted">
                       Título
                     </label>
                     <input
@@ -129,14 +129,14 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                       aria-invalid={errors.title ? 'true' : 'false'}
                     />
                     {errors.title && (
-                      <p className="mt-1 text-sm text-red-600">
+                      <p className="mt-1 text-sm text-danger">
                         {errors.title.message}
                       </p>
                     )}
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label className="block text-sm font-medium text-muted">
                       Descripción
                     </label>
                     <textarea
@@ -149,7 +149,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">
+                      <label className="block text-sm font-medium text-muted">
                         Estado
                       </label>
                       <select
@@ -163,7 +163,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">
+                      <label className="block text-sm font-medium text-muted">
                         Prioridad
                       </label>
                       <select
@@ -178,7 +178,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label className="block text-sm font-medium text-muted">
                       Fecha Límite
                     </label>
                     <input

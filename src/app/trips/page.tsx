@@ -86,10 +86,10 @@ export default function TripsPage() {
     return (
       <DashboardLayout>
         <div className="text-center py-12">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+          <h3 className="text-lg font-semibold text-ink">
             Inicia sesión para ver tus viajes
           </h3>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          <p className="mt-1 text-sm text-muted">
             La sección de viajes requiere autenticación.
           </p>
           <Link href="/signin">
@@ -118,12 +118,12 @@ export default function TripsPage() {
         />
 
         {/* Filters */}
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="bg-surface p-4 rounded-lg shadow-sm border border-line">
           <div className="flex flex-col lg:flex-row gap-4">
             {/* Search */}
             <div className="flex-1">
               <div className="relative">
-                <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted" />
                 <Input
                   type="text"
                   placeholder="Buscar viajes..."
@@ -154,7 +154,7 @@ export default function TripsPage() {
 
         {/* Error State */}
         {error ? (
-          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 flex flex-col items-center justify-center text-red-700 dark:text-red-400 mb-6">
+          <div className="bg-danger/10 border border-danger rounded-lg p-4 flex flex-col items-center justify-center text-danger mb-6">
             <p className="font-medium mb-2">Hubo un problema al cargar tus viajes</p>
             <p className="text-sm mb-4">{error}</p>
             <Button 
@@ -162,7 +162,7 @@ export default function TripsPage() {
                 refetch();
               }}
               variant="outline"
-              className="bg-white hover:bg-gray-50 text-red-700 border-red-200 dark:bg-transparent dark:border-red-700 dark:text-red-400 dark:hover:bg-red-900/30"
+              className="bg-surface hover:bg-surface-strong text-danger border-danger"
             >
               Reintentar
             </Button>
@@ -172,27 +172,27 @@ export default function TripsPage() {
             {filteredTrips.map((trip) => (
               <div
                 key={trip.id}
-                className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4"
+                className="bg-surface rounded-lg shadow-sm border border-line p-4"
               >
                 <div className="flex items-start justify-between">
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    <h3 className="text-lg font-semibold text-ink">
                       {trip.title}
                     </h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                    <p className="text-sm text-muted">
                       {trip.origin} → {trip.destination}
                     </p>
                   </div>
                   <span className={`text-xs px-2 py-1 rounded-full capitalize ${
-                    trip.status === 'confirmed' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' :
-                    trip.status === 'cancelled' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' :
-                    trip.status === 'completed' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' :
-                    'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
+                    trip.status === 'confirmed' ? 'bg-success/10 text-success' :
+                    trip.status === 'cancelled' ? 'bg-danger/10 text-danger' :
+                    trip.status === 'completed' ? 'bg-accent-soft text-accent' :
+                    'bg-warning/10 text-warning'
                   }`}>
                     {trip.status}
                   </span>
                 </div>
-                <div className="mt-4 text-sm text-gray-600 dark:text-gray-300">
+                <div className="mt-4 text-sm text-muted">
                   <div>
                     Salida: {new Date(trip.departure_date).toLocaleDateString()}
                   </div>
@@ -205,11 +205,11 @@ export default function TripsPage() {
                 <div className="mt-4 flex items-center justify-between">
                   <Link
                     href={`/trips/${trip.id}`}
-                    className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium"
+                    className="text-accent hover:text-accent-hover text-sm font-medium"
                   >
                     Ver detalles
                   </Link>
-                  <div className="flex items-center text-gray-500 dark:text-gray-400">
+                  <div className="flex items-center text-muted">
                     <PlayIcon className="h-5 w-5 mr-1" />
                     {trip.airline || "Sin aerolínea"}
                   </div>

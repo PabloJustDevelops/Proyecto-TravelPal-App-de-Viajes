@@ -433,13 +433,13 @@ export default function PlanningPage() {
           />
 
           <div className="flex items-center space-x-3">
-            <div className="flex rounded-lg shadow-sm bg-white dark:bg-gray-800">
+            <div className="flex rounded-lg shadow-sm bg-surface">
               <button
                 onClick={() => setViewMode("calendar")}
                 className={`px-4 py-2 text-sm font-medium rounded-l-lg border ${
                   viewMode === "calendar"
-                    ? "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800"
-                    : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700"
+                    ? "bg-accent-soft text-accent border-accent"
+                    : "bg-surface text-muted border-line hover:bg-surface-strong"
                 }`}
               >
                 <CalendarIcon className="h-4 w-4 mr-2 inline" />
@@ -449,8 +449,8 @@ export default function PlanningPage() {
                 onClick={() => setViewMode("itinerary")}
                 className={`px-4 py-2 text-sm font-medium border-l-0 border ${
                   viewMode === "itinerary"
-                    ? "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800"
-                    : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700"
+                    ? "bg-accent-soft text-accent border-accent"
+                    : "bg-surface text-muted border-line hover:bg-surface-strong"
                 }`}
               >
                 <MapIcon className="h-4 w-4 mr-2 inline" />
@@ -460,8 +460,8 @@ export default function PlanningPage() {
                 onClick={() => setViewMode("bookings")}
                 className={`px-4 py-2 text-sm font-medium rounded-r-lg border-l-0 border ${
                   viewMode === "bookings"
-                    ? "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800"
-                    : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700"
+                    ? "bg-accent-soft text-accent border-accent"
+                    : "bg-surface text-muted border-line hover:bg-surface-strong"
                 }`}
               >
                 <ClockIcon className="h-4 w-4 mr-2 inline" />
@@ -476,13 +476,13 @@ export default function PlanningPage() {
           <Card className="p-4">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <CalendarIcon className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+                <CalendarIcon className="h-8 w-8 text-accent" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                <p className="text-sm font-medium text-muted">
                   Viajes Activos
                 </p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                <p className="text-2xl font-bold text-ink">
                   {
                     trips.filter(
                       (t) =>
@@ -497,13 +497,13 @@ export default function PlanningPage() {
           <Card className="p-4">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <ClockIcon className="h-8 w-8 text-green-600 dark:text-green-400" />
+                <ClockIcon className="h-8 w-8 text-success" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                <p className="text-sm font-medium text-muted">
                   Reservas Confirmadas
                 </p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                <p className="text-2xl font-bold text-ink">
                   {bookings.filter((b) => b.status === "confirmed").length}
                 </p>
               </div>
@@ -513,13 +513,13 @@ export default function PlanningPage() {
           <Card className="p-4">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <MapIcon className="h-8 w-8 text-purple-600 dark:text-purple-400" />
+                <MapIcon className="h-8 w-8 text-accent" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                <p className="text-sm font-medium text-muted">
                   Próximas Reservas
                 </p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                <p className="text-2xl font-bold text-ink">
                   {upcomingBookings.length}
                 </p>
               </div>
@@ -529,13 +529,13 @@ export default function PlanningPage() {
           <Card className="p-4">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <PlusIcon className="h-8 w-8 text-orange-600 dark:text-orange-400" />
+                <PlusIcon className="h-8 w-8 text-accent" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                <p className="text-sm font-medium text-muted">
                   Eventos Este Mes
                 </p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                <p className="text-2xl font-bold text-ink">
                   {
                     events.filter((e) => {
                       const eventDate = new Date(e.date);
@@ -569,26 +569,26 @@ export default function PlanningPage() {
 
             <div className="space-y-4">
               <Card className="p-4">
-                <h3 className="font-semibold text-gray-900 dark:text-white mb-3">
+                <h3 className="font-semibold text-ink mb-3">
                   Próximas Reservas
                 </h3>
                 <div className="space-y-3">
                   {upcomingBookings.map((booking) => (
                     <div
                       key={booking.id}
-                      className="border-l-4 border-green-500 pl-3 dark:border-green-400"
+                      className="border-l-4 border-success pl-3"
                     >
-                      <p className="font-medium text-sm text-gray-900 dark:text-white">
+                      <p className="font-medium text-sm text-ink">
                         {booking.title}
                       </p>
-                      <p className="text-xs text-gray-600 dark:text-gray-400">
+                      <p className="text-xs text-muted">
                         {formatDate(new Date(booking.start_date))}
                         {booking.start_time && ` - ${booking.start_time}`}
                       </p>
                     </div>
                   ))}
                   {upcomingBookings.length === 0 && (
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                    <p className="text-sm text-muted">
                       No hay reservas próximas
                     </p>
                   )}
@@ -596,7 +596,7 @@ export default function PlanningPage() {
               </Card>
 
               <Card className="p-4">
-                <h3 className="font-semibold text-gray-900 mb-3">
+                <h3 className="font-semibold text-ink mb-3">
                   Viajes Activos
                 </h3>
                 <div className="space-y-3">
@@ -608,16 +608,16 @@ export default function PlanningPage() {
                     .map((trip) => (
                       <div
                         key={trip.id}
-                        className="border-l-4 border-blue-500 pl-3 cursor-pointer hover:bg-gray-50 p-2 rounded"
+                        className="border-l-4 border-accent pl-3 cursor-pointer hover:bg-surface-strong p-2 rounded"
                         onClick={() => router.push(`/trips/${trip.id}`)}
                       >
-                        <p className="font-medium text-sm text-gray-900">
+                        <p className="font-medium text-sm text-ink">
                           {trip.title}
                         </p>
-                        <p className="text-xs text-gray-600">
+                        <p className="text-xs text-muted">
                           {trip.destination}
                         </p>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-muted">
                           {formatDate(new Date(trip.departure_date))} -{" "}
                           {trip.return_date
                             ? formatDate(new Date(trip.return_date))
@@ -629,7 +629,7 @@ export default function PlanningPage() {
                     (t) =>
                       t.status === "confirmed" || t.status === "in_progress",
                   ).length === 0 && (
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-muted">
                       No hay viajes activos
                     </p>
                   )}
@@ -651,10 +651,10 @@ export default function PlanningPage() {
                   >
                     ← Volver al calendario
                   </Button>
-                  <h2 className="text-xl font-semibold text-gray-900">
+                  <h2 className="text-xl font-semibold text-ink">
                     Itinerario: {selectedTrip.title}
                   </h2>
-                  <p className="text-gray-600">{selectedTrip.destination}</p>
+                  <p className="text-muted">{selectedTrip.destination}</p>
                 </div>
 
                 <ItineraryPlanner
@@ -672,11 +672,11 @@ export default function PlanningPage() {
               </div>
             ) : (
               <div className="text-center py-12">
-                <MapIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                <MapIcon className="h-12 w-12 text-muted mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-ink mb-2">
                   Selecciona un viaje
                 </h3>
-                <p className="text-gray-600 mb-4">
+                <p className="text-muted mb-4">
                   Elige un viaje para planificar su itinerario detallado
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-4xl mx-auto">
@@ -686,13 +686,13 @@ export default function PlanningPage() {
                       className="p-4 cursor-pointer hover:shadow-md transition-shadow"
                       onClick={() => setSelectedTrip(trip)}
                     >
-                      <h4 className="font-medium text-gray-900">
+                      <h4 className="font-medium text-ink">
                         {trip.title}
                       </h4>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-muted">
                         {trip.destination}
                       </p>
-                      <p className="text-xs text-gray-500 mt-2">
+                      <p className="text-xs text-muted mt-2">
                         {formatDate(new Date(trip.departure_date))} -{" "}
                         {trip.return_date
                           ? formatDate(new Date(trip.return_date))
@@ -712,7 +712,7 @@ export default function PlanningPage() {
             <div className="flex flex-col sm:flex-row gap-4">
               <div className="flex-1">
                 <div className="relative">
-                  <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted" />
                   <Input
                     placeholder="Buscar reservas..."
                     value={searchTerm}
@@ -725,7 +725,7 @@ export default function PlanningPage() {
               </div>
 
               <div className="flex items-center space-x-2">
-                <FunnelIcon className="h-4 w-4 text-gray-400" />
+                <FunnelIcon className="h-4 w-4 text-muted" />
                 <select
                   value={filterStatus}
                   onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
@@ -765,11 +765,11 @@ export default function PlanningPage() {
 
             {filteredBookings.length === 0 && (
               <div className="text-center py-12">
-                <ClockIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                <ClockIcon className="h-12 w-12 text-muted mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-ink mb-2">
                   No se encontraron reservas
                 </h3>
-                <p className="text-gray-600 mb-4">
+                <p className="text-muted mb-4">
                   {searchTerm || filterStatus !== "all"
                     ? "Intenta ajustar los filtros de búsqueda"
                     : "Comienza agregando tu primera reserva"}

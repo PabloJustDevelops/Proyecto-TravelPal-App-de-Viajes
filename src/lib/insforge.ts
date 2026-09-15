@@ -87,6 +87,17 @@ export interface Alert {
   updated_at: string;
 }
 
+export interface JournalEntry {
+  id: string;
+  user_id: string;
+  trip_id: string;
+  entry_date: string;
+  content: string;
+  rating?: number;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Booking {
   id: string;
   user_id: string;

@@ -118,7 +118,6 @@ describe("sistema de diseno: un solo boton primario", () => {
     "src/components/auth/ResetPasswordForm.tsx",
     "src/components/budget/BudgetCard.tsx",
     "src/components/calendar/Calendar.tsx",
-    "src/components/chatbot/ChatbotWindow.tsx",
     "src/components/landing/Navbar.tsx",
     "src/components/layout/Navbar.tsx",
     "src/components/notifications/NotificationSystem.tsx",

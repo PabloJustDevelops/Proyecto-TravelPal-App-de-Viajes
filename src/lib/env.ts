@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { optionalNonEmpty, parseEnv, publicEnvSchema } from "./public-env";
+import { parseEnv, publicEnvSchema } from "./public-env";
 
 // Módulo de uso exclusivo en servidor: además de las variables públicas,
 // valida los secretos (p. ej. INSFORGE_API_KEY), que Next.js nunca
@@ -12,10 +12,6 @@ export const serverEnvSchema = publicEnvSchema.extend({
   INSFORGE_API_KEY: z
     .string({ error: "es obligatoria (sólo servidor, nunca exponerla al cliente)" })
     .min(1, "no puede estar vacía"),
-
-  OPENROUTER_API_KEY: optionalNonEmpty,
-  GROQ_API_KEY: optionalNonEmpty,
-  OPENROUTER_MODEL: optionalNonEmpty,
 });
 
 export type ServerEnv = z.infer<typeof serverEnvSchema>;

@@ -29,7 +29,13 @@ export const TaskModal: React.FC<TaskModalProps> = ({
   initialData,
   isLoading = false
 }) => {
-  const { register, handleSubmit, reset, setValue } = useForm<FormData>({
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setValue,
+    formState: { errors }
+  } = useForm<FormData>({
     defaultValues: {
       status: 'pending',
       priority: 'medium'
@@ -115,10 +121,18 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                     </label>
                     <input
                       type="text"
-                      {...register('title', { required: true })}
+                      {...register('title', {
+                        required: 'El título es obligatorio'
+                      })}
                       className={fieldClassName}
                       placeholder="Ej: Revisar presupuesto"
+                      aria-invalid={errors.title ? 'true' : 'false'}
                     />
+                    {errors.title && (
+                      <p className="mt-1 text-sm text-red-600">
+                        {errors.title.message}
+                      </p>
+                    )}
                   </div>
 
                   <div>

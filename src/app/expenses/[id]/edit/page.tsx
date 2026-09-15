@@ -12,6 +12,7 @@ import Input from '@/components/ui/Input'
 import { selectClassName, textareaClassName } from '@/components/ui/fieldStyles'
 import CategoryIcon from '@/components/ui/CategoryIcon'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
+import ErrorState from '@/components/ui/ErrorState'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { logger } from '@/lib/logger'
 
@@ -24,6 +25,7 @@ export default function EditExpensePage() {
   const [loading, setLoading] = useState(false)
   const [loadingData, setLoadingData] = useState(true)
   const [error, setError] = useState('')
+  const [loadError, setLoadError] = useState('')
   const [trips, setTrips] = useState<Trip[]>([])
 
   const [formData, setFormData] = useState({
@@ -39,6 +41,7 @@ export default function EditExpensePage() {
   const loadData = useCallback(async () => {
     try {
       setLoadingData(true)
+      setLoadError('')
       
       // Cargar viajes para el selector
       const tripsRes = await fetch('/api/trips')
@@ -71,7 +74,7 @@ export default function EditExpensePage() {
       
     } catch (error) {
       logger.error('Error loading expense data:', error)
-      setError('Error al cargar los datos del gasto')
+      setLoadError('Error al cargar los datos del gasto')
     } finally {
       setLoadingData(false)
     }
@@ -186,6 +189,18 @@ export default function EditExpensePage() {
         <div className="flex justify-center items-center h-64">
           <LoadingSpinner size="lg" />
         </div>
+      </DashboardLayout>
+    )
+  }
+
+  if (loadError) {
+    return (
+      <DashboardLayout>
+        <ErrorState
+          title="No se pudo cargar el gasto"
+          message={loadError}
+          onRetry={() => loadData()}
+        />
       </DashboardLayout>
     )
   }

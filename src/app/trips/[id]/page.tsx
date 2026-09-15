@@ -86,12 +86,23 @@ export default function TripDetailsPage({
         <div className="text-center py-12">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Error</h2>
           <p className="text-gray-600 mb-6">{error || "Viaje no encontrado"}</p>
-          <Link href="/trips">
-            <Button variant="outline">
-              <ArrowLeftIcon className="h-4 w-4 mr-2" />
-              Volver a Mis Viajes
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <Button
+              onClick={() => {
+                setError("");
+                setLoading(true);
+                loadTrip();
+              }}
+            >
+              Reintentar
             </Button>
-          </Link>
+            <Link href="/trips">
+              <Button variant="outline">
+                <ArrowLeftIcon className="h-4 w-4 mr-2" />
+                Volver a Mis Viajes
+              </Button>
+            </Link>
+          </div>
         </div>
       </DashboardLayout>
     );

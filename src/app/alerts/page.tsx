@@ -5,6 +5,7 @@ import DashboardLayout from '@/components/layout/DashboardLayout'
 import AlertCard from '@/components/alerts/AlertCard'
 import Button from '@/components/ui/Button'
 import PageTitle from '@/components/ui/PageTitle'
+import ErrorState from '@/components/ui/ErrorState'
 import { useAuth } from '@/contexts/AuthContext'
 import { createInsforgeClient, Alert } from '@/lib/insforge'
 import { logger } from '@/lib/logger'
@@ -22,6 +23,7 @@ export default function AlertsPage() {
   const [alerts, setAlerts] = useState<Alert[]>([])
   const [filteredAlerts, setFilteredAlerts] = useState<Alert[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
   
   // Filters
@@ -30,6 +32,7 @@ export default function AlertsPage() {
 
   const loadAlerts = useCallback(async (signal?: AbortSignal) => {
     const insforge = createInsforgeClient()
+    setError(null)
 
     try {
       const query = insforge
@@ -45,8 +48,9 @@ export default function AlertsPage() {
       setAlerts(data || [])
     } catch (err: unknown) {
       if (err instanceof Error && err.name === 'AbortError') return
-      const message = getErrorMessage(err)
+      const message = getErrorMessage(err, 'Error al cargar las alertas')
       logger.error('AlertsPage: Error loading alerts', { error: message })
+      setError(message)
     } finally {
       setLoading(false)
     }
@@ -91,6 +95,20 @@ export default function AlertsPage() {
         <div className="flex items-center justify-center py-12">
           <LoadingSpinner />
         </div>
+      </DashboardLayout>
+    )
+  }
+
+  if (error) {
+    return (
+      <DashboardLayout>
+        <ErrorState
+          message={error}
+          onRetry={() => {
+            setLoading(true)
+            loadAlerts()
+          }}
+        />
       </DashboardLayout>
     )
   }

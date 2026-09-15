@@ -6,6 +6,7 @@ import { Expense, Trip } from "@/lib/insforge";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import ExpenseCard from "@/components/expenses/ExpenseCard";
 import BudgetCard from "@/components/budget/BudgetCard";
+import ExpenseChart from "@/components/charts/ExpenseChart";
 import Button from "@/components/ui/Button";
 import PageTitle from "@/components/ui/PageTitle";
 import EmptyState from "@/components/ui/EmptyState";
@@ -612,6 +613,36 @@ export default function ExpensesPage() {
                   </div>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Las graficas del dinero viven en gastos, junto a sus cifras */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card className="overflow-hidden">
+            <CardContent className="p-6">
+              <h2 className="text-lg font-semibold text-ink mb-6">
+                Gastos por Categoría
+              </h2>
+              <ExpenseChart
+                expenses={expenses}
+                type="category"
+                currency={displayCurrency}
+                height={320}
+              />
+            </CardContent>
+          </Card>
+          <Card className="overflow-hidden">
+            <CardContent className="p-6">
+              <h2 className="text-lg font-semibold text-ink mb-6">
+                Tendencia de Gastos
+              </h2>
+              <ExpenseChart
+                expenses={expenses}
+                type="timeline"
+                currency={displayCurrency}
+                height={320}
+              />
             </CardContent>
           </Card>
         </div>

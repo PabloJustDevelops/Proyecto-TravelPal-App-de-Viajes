@@ -7,8 +7,12 @@ import Button from "@/components/ui/Button";
 import { useAuth } from "@/contexts/AuthContext";
 import { createInsforgeClient, Trip } from "@/lib/insforge";
 import { logger } from "@/lib/logger";
+import { showToast } from "@/lib/toast";
+import { getErrorMessage } from "@/lib/utils";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import EditTripModal from "@/components/trips/EditTripModal";
+import TripJournal from "@/components/trips/TripJournal";
+import TripSummary from "@/components/trips/TripSummary";
 import {
   ArrowLeftIcon,
   CalendarIcon,
@@ -30,6 +34,7 @@ export default function TripDetailsPage({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [markingComplete, setMarkingComplete] = useState(false);
 
   const loadTrip = useCallback(async () => {
     try {
@@ -107,6 +112,40 @@ export default function TripDetailsPage({
       </DashboardLayout>
     );
   }
+
+  const tripEnd = trip.return_date
+    ? new Date(trip.return_date).getTime()
+    : new Date(trip.departure_date).getTime();
+  const isPast =
+    trip.status === "completed" || (!Number.isNaN(tripEnd) && tripEnd < Date.now());
+
+  const markCompleted = async () => {
+    setMarkingComplete(true);
+
+    try {
+      const insforge = createInsforgeClient();
+      const { error: updateError } = await insforge.database
+        .from("trips")
+        .update({ status: "completed" })
+        .eq("id", trip.id);
+
+      if (updateError) throw updateError;
+      await loadTrip();
+    } catch (err) {
+      const message = getErrorMessage(
+        err,
+        "No se pudo marcar el viaje como completado",
+      );
+      logger.error("TripDetailsPage: mark completed failed", { error: message });
+      showToast({
+        type: "error",
+        title: "Error al completar el viaje",
+        message,
+      });
+    } finally {
+      setMarkingComplete(false);
+    }
+  };
 
   return (
     <DashboardLayout>
@@ -217,10 +256,31 @@ export default function TripDetailsPage({
                 </div>
               </div>
             )}
+
+            {/* Diario */}
+            {isPast ? (
+              <TripJournal tripId={trip.id} />
+            ) : (
+              <div className="bg-white shadow rounded-lg p-6">
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  Diario del viaje
+                </h3>
+                <p className="text-sm text-gray-500 mb-4">
+                  El diario se abre cuando el viaje haya pasado. Tambien puedes
+                  marcarlo como completado ahora.
+                </p>
+                <Button onClick={markCompleted} disabled={markingComplete}>
+                  {markingComplete ? "Marcando..." : "Marcar como completado"}
+                </Button>
+              </div>
+            )}
           </div>
 
           {/* Sidebar */}
           <div className="space-y-6">
+            {/* Resumen */}
+            <TripSummary tripId={trip.id} />
+
             {/* Flight Info */}
             {(trip.airline ||
               trip.flight_number ||

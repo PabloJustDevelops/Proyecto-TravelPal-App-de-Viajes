@@ -31,7 +31,7 @@ contradecirse (ver ADR-004). El esquema se deriva de las consultas reales; si el
 TypeScript cambia, la migracion debe actualizarse.
 
 Tablas: `trips`, `expenses`, `notes`, `tasks`, `bookings`, `itinerary_activities`,
-`reminders`, `calendar_events`, `alerts`, `budgets`, `profiles`, `users`.
+`reminders`, `calendar_events`, `alerts`, `budgets`, `journal_entries`, `profiles`, `users`.
 
 Reglas: `text + CHECK` en vez de enums; FKs solo si una consulta las usa; RLS de propietario con
 `auth.uid()` en cada tabla con `user_id` (y por `id` en `users`/`profiles`).
@@ -44,6 +44,8 @@ Reglas: `text + CHECK` en vez de enums; FKs solo si una consulta las usa; RLS de
 - **Booking**: reserva de un Trip (vuelo, hotel, coche, actividad, restaurante, otro).
 - **ItineraryActivity**: actividad con fecha dentro de un Trip.
 - **Note**: nota del usuario, opcionalmente ligada a un Trip.
+- **JournalEntry**: entrada del diario de un Trip (fecha, texto libre y valoracion de 1 a 5). Es
+  la memoria post-viaje; distinta de una Note, que es global.
 - **Task**: tarea con estado y prioridad.
 - **Alert**: aviso mostrado en la campana de notificaciones.
 - **Reminder**: recordatorio con fecha/hora de disparo.

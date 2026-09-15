@@ -118,3 +118,28 @@ describe("sistema de diseno: un solo boton primario", () => {
     expect(withNativeButton).toEqual([...NATIVE_BUTTON_FILES].sort());
   });
 });
+
+describe("sistema de diseno: un solo sistema de iconos", () => {
+  it("nadie importa la segunda libreria de iconos", () => {
+    const offenders = sourceFiles
+      .filter((file) => /from ['"]lucide-react['"]/.test(readFileSync(file, "utf8")))
+      .map(relative);
+
+    expect(offenders).toEqual([]);
+  });
+
+  // Unico resto permitido: el prefijo de un mensaje de error por consola en la validacion de
+  // entorno del servidor. No es un icono de interfaz.
+  const EMOJI_ALLOWLIST = ["src/lib/public-env.ts"];
+
+  it("no quedan emoji haciendo de icono", () => {
+    const emoji =
+      /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}]/u;
+
+    const offenders = sourceFiles
+      .filter((file) => emoji.test(readFileSync(file, "utf8")))
+      .map(relative);
+
+    expect(offenders).toEqual(EMOJI_ALLOWLIST);
+  });
+});

@@ -10,6 +10,7 @@ import DashboardLayout from '@/components/layout/DashboardLayout'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import { selectClassName, textareaClassName } from '@/components/ui/fieldStyles'
+import CategoryIcon from '@/components/ui/CategoryIcon'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { logger } from '@/lib/logger'
@@ -162,14 +163,14 @@ export default function EditExpensePage() {
   }
 
   const categories = [
-    { value: 'accommodation', label: 'Alojamiento', icon: '🏨' },
-    { value: 'transport', label: 'Transporte', icon: '🚗' },
-    { value: 'food', label: 'Comida', icon: '🍽️' },
-    { value: 'entertainment', label: 'Entretenimiento', icon: '🎭' },
-    { value: 'shopping', label: 'Compras', icon: '🛍️' },
-    { value: 'health', label: 'Salud', icon: '🏥' },
-    { value: 'insurance', label: 'Seguro', icon: '🛡️' },
-    { value: 'other', label: 'Otros', icon: '💰' },
+    { value: 'accommodation', label: 'Alojamiento' },
+    { value: 'transport', label: 'Transporte' },
+    { value: 'food', label: 'Comida' },
+    { value: 'entertainment', label: 'Entretenimiento' },
+    { value: 'shopping', label: 'Compras' },
+    { value: 'health', label: 'Salud' },
+    { value: 'insurance', label: 'Seguro' },
+    { value: 'other', label: 'Otros' },
   ]
 
   const currencies = [
@@ -289,7 +290,10 @@ export default function EditExpensePage() {
                           onChange={handleInputChange}
                           className="sr-only"
                         />
-                        <span className="text-2xl mb-1">{category.icon}</span>
+                        <CategoryIcon
+                          category={category.value}
+                          className="h-6 w-6 mb-1 text-gray-600"
+                        />
                         <span className="text-xs text-center font-medium">
                           {category.label}
                         </span>

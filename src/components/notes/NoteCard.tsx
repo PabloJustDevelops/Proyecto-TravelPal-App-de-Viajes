@@ -9,6 +9,7 @@ import {
   PencilSquareIcon,
 } from '@heroicons/react/24/outline'
 import Button from '@/components/ui/Button'
+import CategoryIcon from '@/components/ui/CategoryIcon'
 
 interface NoteWithTrip extends Note {
   trip?: {
@@ -23,29 +24,6 @@ interface NoteCardProps {
 }
 
 export default function NoteCard({ note, showTripTitle = false, onEdit }: NoteCardProps) {
-  const getCategoryIcon = (category: Note['category']) => {
-    switch (category) {
-      case 'itinerary':
-        return '📅'
-      case 'accommodation':
-        return '🏨'
-      case 'transport':
-        return '🚗'
-      case 'restaurant':
-        return '🍽️'
-      case 'activity':
-        return '🎯'
-      case 'shopping':
-        return '🛍️'
-      case 'emergency':
-        return '🚨'
-      case 'contact':
-        return '📞'
-      default:
-        return '📝'
-    }
-  }
-
   const getCategoryName = (category: Note['category']) => {
     switch (category) {
       case 'itinerary':
@@ -102,7 +80,10 @@ export default function NoteCard({ note, showTripTitle = false, onEdit }: NoteCa
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <CardTitle className="text-lg flex items-center space-x-2">
-            <span className="text-xl">{getCategoryIcon(note.category)}</span>
+            <CategoryIcon
+              category={note.category}
+              className="h-5 w-5 text-gray-500"
+            />
             <span className="line-clamp-1">{note.title}</span>
           </CardTitle>
           {onEdit && (

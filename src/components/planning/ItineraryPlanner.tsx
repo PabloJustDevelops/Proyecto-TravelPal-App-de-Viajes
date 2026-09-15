@@ -13,6 +13,7 @@ import {
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 import { textareaClassName, selectClassName } from '../ui/fieldStyles';
+import CategoryIcon from '../ui/CategoryIcon';
 import { Card } from '../ui/Card';
 import { formatDate, cn } from '../../lib/utils';
 
@@ -46,12 +47,12 @@ interface ItineraryPlannerProps {
 }
 
 const ACTIVITY_CATEGORIES = [
-  { value: 'transport', label: 'Transporte', color: 'bg-blue-100 text-blue-800', icon: '🚗' },
-  { value: 'accommodation', label: 'Alojamiento', color: 'bg-purple-100 text-purple-800', icon: '🏨' },
-  { value: 'food', label: 'Comida', color: 'bg-orange-100 text-orange-800', icon: '🍽️' },
-  { value: 'activity', label: 'Actividad', color: 'bg-green-100 text-green-800', icon: '🎯' },
-  { value: 'shopping', label: 'Compras', color: 'bg-pink-100 text-pink-800', icon: '🛍️' },
-  { value: 'other', label: 'Otro', color: 'bg-gray-100 text-gray-800', icon: '📝' }
+  { value: 'transport', label: 'Transporte', color: 'bg-blue-100 text-blue-800' },
+  { value: 'accommodation', label: 'Alojamiento', color: 'bg-purple-100 text-purple-800' },
+  { value: 'food', label: 'Comida', color: 'bg-orange-100 text-orange-800' },
+  { value: 'activity', label: 'Actividad', color: 'bg-green-100 text-green-800' },
+  { value: 'shopping', label: 'Compras', color: 'bg-pink-100 text-pink-800' },
+  { value: 'other', label: 'Otro', color: 'bg-gray-100 text-gray-800' }
 ];
 
 export const ItineraryPlanner: React.FC<ItineraryPlannerProps> = ({
@@ -317,7 +318,10 @@ export const ItineraryPlanner: React.FC<ItineraryPlannerProps> = ({
                             className="flex items-start space-x-3 p-3 bg-white border border-gray-200 rounded-lg hover:shadow-sm transition-shadow"
                           >
                             <div className="flex-shrink-0">
-                              <span className="text-lg">{category.icon}</span>
+                              <CategoryIcon
+                                category={category.value}
+                                className="h-5 w-5 text-gray-600"
+                              />
                             </div>
                             
                             <div className="flex-1 min-w-0">
@@ -559,7 +563,7 @@ const ActivityModal: React.FC<ActivityModalProps> = ({
               >
                 {ACTIVITY_CATEGORIES.map(category => (
                   <option key={category.value} value={category.value}>
-                    {category.icon} {category.label}
+                    {category.label}
                   </option>
                 ))}
               </select>

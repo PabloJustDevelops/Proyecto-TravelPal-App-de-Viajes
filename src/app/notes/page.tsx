@@ -16,6 +16,9 @@ import {
   PlusIcon,
   MagnifyingGlassIcon,
   DocumentTextIcon,
+  CalendarDaysIcon,
+  BuildingOffice2Icon,
+  ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
 import PageSkeleton from "@/components/ui/PageSkeleton";
 import { useApiResource } from "@/hooks/use-api-resource";
@@ -249,7 +252,7 @@ export default function NotesPage() {
 
           <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
             <div className="flex items-center">
-              <div className="text-2xl">📅</div>
+              <CalendarDaysIcon className="h-8 w-8 text-blue-600" />
               <div className="ml-3">
                 <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
                   Itinerarios
@@ -263,7 +266,7 @@ export default function NotesPage() {
 
           <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
             <div className="flex items-center">
-              <div className="text-2xl">🏨</div>
+              <BuildingOffice2Icon className="h-8 w-8 text-blue-600" />
               <div className="ml-3">
                 <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
                   Alojamientos
@@ -277,7 +280,7 @@ export default function NotesPage() {
 
           <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
             <div className="flex items-center">
-              <div className="text-2xl">🚨</div>
+              <ExclamationTriangleIcon className="h-8 w-8 text-blue-600" />
               <div className="ml-3">
                 <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
                   Emergencias

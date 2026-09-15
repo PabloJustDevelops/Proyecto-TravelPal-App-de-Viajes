@@ -10,6 +10,7 @@ import {
   ArrowRightOnRectangleIcon,
   PlusIcon,
   Cog6ToothIcon,
+  PaperAirplaneIcon,
 } from "@heroicons/react/24/outline";
 import NotificationSystem from "@/components/notifications/NotificationSystem";
 interface NavigationItem {
@@ -52,7 +53,7 @@ export default function Navbar({ navigation }: NavbarProps) {
               className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent flex items-center gap-2 hover:opacity-80 transition-opacity"
             >
               {" "}
-              <span className="text-2xl">✈️</span>{" "}
+              <PaperAirplaneIcon className="h-6 w-6 text-blue-600" />{" "}
               <span className="hidden md:inline font-extrabold tracking-tight">
                 Gestión de Vuelos
               </span>{" "}

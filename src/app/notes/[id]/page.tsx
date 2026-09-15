@@ -12,10 +12,12 @@ import { formatDate, getErrorMessage } from '@/lib/utils'
 import { logger } from '@/lib/logger'
 import { 
   ArrowLeftIcon,
+  MapPinIcon,
   PencilIcon,
   TrashIcon,
   EyeIcon
 } from '@heroicons/react/24/outline'
+import CategoryIcon from '@/components/ui/CategoryIcon'
 
 export default function NoteDetailPage() {
   const { user } = useAuth()
@@ -132,22 +134,6 @@ export default function NoteDetailPage() {
     } finally {
       setDeleteLoading(false)
     }
-  }
-
-  const getCategoryIcon = (category: string | undefined) => {
-    if (!category) return '📝'
-    const icons: Record<string, string> = {
-      general: '📝',
-      itinerary: '📅',
-      accommodation: '🏨',
-      transport: '🚗',
-      restaurant: '🍽️',
-      activity: '🎯',
-      shopping: '🛍️',
-      emergency: '🚨',
-      contact: '📞',
-    }
-    return icons[category] || '📝'
   }
 
   const getCategoryName = (category: string | undefined) => {
@@ -271,7 +257,10 @@ export default function NoteDetailPage() {
               
               <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
                 <div className="flex items-center">
-                  <span className="mr-2">{getCategoryIcon(note.category)}</span>
+                  <CategoryIcon
+                    category={note.category}
+                    className="h-4 w-4 mr-2 text-gray-500"
+                  />
                   <span
                     className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getCategoryColor(
                       note.category || 'general'
@@ -283,7 +272,7 @@ export default function NoteDetailPage() {
                 
                 {note.trip && (
                   <div className="flex items-center">
-                    <span className="mr-1">📍</span>
+                    <MapPinIcon className="mr-1 h-4 w-4 text-gray-500" />
                     <span>{note.trip.title}</span>
                   </div>
                 )}

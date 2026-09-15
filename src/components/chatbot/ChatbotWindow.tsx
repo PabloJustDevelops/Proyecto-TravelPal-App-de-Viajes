@@ -5,6 +5,7 @@ import {
   MinusIcon,
   ChevronDownIcon,
   ExclamationCircleIcon,
+  PaperAirplaneIcon,
 } from "@heroicons/react/24/outline";
 import ChatbotMessage, { Message } from "./ChatbotMessage";
 import ChatbotInput from "./ChatbotInput";
@@ -19,7 +20,7 @@ export default function ChatbotWindow({ onClose }: ChatbotWindowProps) {
     {
       id: "1",
       content:
-        "¡Hola! 👋 Soy tu asistente de viajes. ¿En qué puedo ayudarte hoy?",
+        "¡Hola! Soy tu asistente de viajes. ¿En qué puedo ayudarte hoy?",
       sender: "bot",
       timestamp: new Date(),
     },
@@ -106,7 +107,7 @@ export default function ChatbotWindow({ onClose }: ChatbotWindowProps) {
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-gradient-to-r from-blue-600 to-blue-700 dark:border-gray-700">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center">
-            <span className="text-lg">✈️</span>
+            <PaperAirplaneIcon className="h-4 w-4 text-blue-600" />
           </div>
           <div>
             <h3 className="text-sm font-semibold text-white">
@@ -158,7 +159,7 @@ export default function ChatbotWindow({ onClose }: ChatbotWindowProps) {
                 <div className="flex flex-row gap-2">
                   <div className="flex-shrink-0">
                     <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center">
-                      <span className="text-white text-sm">✈️</span>
+                      <PaperAirplaneIcon className="h-4 w-4 text-white" />
                     </div>
                   </div>
                   <div className="flex flex-col items-start">

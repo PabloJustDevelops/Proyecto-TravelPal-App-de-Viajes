@@ -15,6 +15,7 @@ import {
   CurrencyDollarIcon,
   ChartBarIcon,
   CalendarIcon,
+  TrophyIcon,
 } from "@heroicons/react/24/outline";
 import { formatCurrency, getLoadErrorMessage } from "@/lib/utils";
 import Link from "next/link";
@@ -266,7 +267,7 @@ export default function ExpensesPage() {
             <CardContent className="p-6">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <div className="h-8 w-8 text-2xl">🏆</div>
+                  <TrophyIcon className="h-8 w-8 text-yellow-500" />
                 </div>
                 <div className="ml-4">
                   <div className="text-sm font-medium text-gray-500 dark:text-gray-400">

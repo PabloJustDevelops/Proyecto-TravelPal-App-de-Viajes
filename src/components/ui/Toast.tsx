@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useMemo, useState, useCallback } from 'react'
 import type { ToastPayload, ToastType } from '@/lib/toast'
+import { XMarkIcon } from '@heroicons/react/24/outline'
 
 type ToastItem = Required<ToastPayload> & { id: string }
 
@@ -84,8 +85,12 @@ export function ToastViewport({ toasts, onClose }: { toasts: ToastItem[]; onClos
             {t.title && <div className="font-medium">{t.title}</div>}
             <div className="text-sm">{t.message}</div>
           </div>
-          <button className="ml-3 text-white/80 hover:text-white" onClick={() => onClose(t.id)}>
-            ✕
+          <button
+            className="ml-3 text-white/80 hover:text-white"
+            onClick={() => onClose(t.id)}
+            aria-label="Cerrar aviso"
+          >
+            <XMarkIcon className="h-4 w-4" />
           </button>
         </div>
       ))}

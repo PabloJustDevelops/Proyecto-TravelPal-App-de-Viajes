@@ -10,6 +10,7 @@ import {
   ArrowRightOnRectangleIcon,
   PlusIcon,
   Cog6ToothIcon,
+  PaperAirplaneIcon,
 } from "@heroicons/react/24/outline";
 import NotificationSystem from "@/components/notifications/NotificationSystem";
 interface NavigationItem {
@@ -52,7 +53,7 @@ export default function Navbar({ navigation }: NavbarProps) {
               className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent flex items-center gap-2 hover:opacity-80 transition-opacity"
             >
               {" "}
-              <span className="text-2xl">✈️</span>{" "}
+              <PaperAirplaneIcon className="h-6 w-6 text-blue-600" />{" "}
               <span className="hidden md:inline font-extrabold tracking-tight">
                 Gestión de Vuelos
               </span>{" "}
@@ -91,9 +92,12 @@ export default function Navbar({ navigation }: NavbarProps) {
             <div className="relative shrink-0">
               {" "}
               <button
+                id="user-menu-button"
                 onClick={() => setProfileMenuOpen(!profileMenuOpen)}
                 className="flex items-center gap-2 rounded-full p-1 pl-2 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                 aria-label="Abrir menú de perfil"
+                aria-haspopup="menu"
+                aria-expanded={profileMenuOpen}
               >
                 {" "}
                 <span className="text-sm font-medium text-gray-700 dark:text-gray-200 max-w-[80px] truncate hidden xl:block">
@@ -188,15 +192,19 @@ export default function Navbar({ navigation }: NavbarProps) {
           </div>{" "}
           <div className="lg:hidden flex items-center gap-2">
             {" "}
+            <NotificationSystem className="shrink-0" />{" "}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 transition-colors"
+              aria-label={mobileMenuOpen ? "Cerrar menú" : "Abrir menú"}
+              aria-expanded={mobileMenuOpen}
+              aria-controls="mobile-menu"
             >
               {" "}
               {mobileMenuOpen ? (
-                <XMarkIcon className="h-6 w-6" />
+                <XMarkIcon className="h-6 w-6" aria-hidden="true" />
               ) : (
-                <Bars3Icon className="h-6 w-6" />
+                <Bars3Icon className="h-6 w-6" aria-hidden="true" />
               )}{" "}
             </button>{" "}
           </div>{" "}
@@ -204,7 +212,7 @@ export default function Navbar({ navigation }: NavbarProps) {
       </div>{" "}
       {/* Mobile menu */}{" "}
       {mobileMenuOpen && (
-        <div className="lg:hidden bg-white dark:bg-gray-900 border-t dark:border-gray-800">
+        <div id="mobile-menu" className="lg:hidden bg-white dark:bg-gray-900 border-t dark:border-gray-800">
           {" "}
           <div className="pt-2 pb-3 space-y-1">
             {" "}

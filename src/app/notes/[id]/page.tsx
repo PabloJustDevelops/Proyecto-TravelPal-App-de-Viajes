@@ -7,15 +7,18 @@ import { createInsforgeClient, Note, Trip } from '@/lib/insforge'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import NoteEditor from '@/components/notes/NoteEditor'
 import Button from '@/components/ui/Button'
+import ErrorState from '@/components/ui/ErrorState'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import { formatDate, getErrorMessage } from '@/lib/utils'
 import { logger } from '@/lib/logger'
 import { 
   ArrowLeftIcon,
+  MapPinIcon,
   PencilIcon,
   TrashIcon,
   EyeIcon
 } from '@heroicons/react/24/outline'
+import CategoryIcon from '@/components/ui/CategoryIcon'
 
 export default function NoteDetailPage() {
   const { user } = useAuth()
@@ -25,12 +28,14 @@ export default function NoteDetailPage() {
 
   const [note, setNote] = useState<(Note & { trip?: Trip }) | null>(null)
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
   const [isEditing, setIsEditing] = useState(false)
   const [editorLoading, setEditorLoading] = useState(false)
   const [deleteLoading, setDeleteLoading] = useState(false)
 
   const loadNote = useCallback(async () => {
     const insforge = createInsforgeClient()
+    setLoadError(null)
 
     try {
       const query = insforge
@@ -64,9 +69,11 @@ export default function NoteDetailPage() {
     } catch (err: unknown) {
       if ((err as Error).message === "Timeout") {
         logger.warn("NoteDetailPage: Note fetch timed out");
+        setLoadError('La carga de la nota ha tardado demasiado. Inténtalo de nuevo.')
       } else {
-        const message = getErrorMessage(err, 'Error desconocido')
+        const message = getErrorMessage(err, 'Error al cargar la nota')
         logger.error('NoteDetailPage: Error loading note', { error: message })
+        setLoadError(message)
       }
     } finally {
       setLoading(false)
@@ -134,22 +141,6 @@ export default function NoteDetailPage() {
     }
   }
 
-  const getCategoryIcon = (category: string | undefined) => {
-    if (!category) return '📝'
-    const icons: Record<string, string> = {
-      general: '📝',
-      itinerary: '📅',
-      accommodation: '🏨',
-      transport: '🚗',
-      restaurant: '🍽️',
-      activity: '🎯',
-      shopping: '🛍️',
-      emergency: '🚨',
-      contact: '📞',
-    }
-    return icons[category] || '📝'
-  }
-
   const getCategoryName = (category: string | undefined) => {
     if (!category) return 'General'
     const names: Record<string, string> = {
@@ -200,6 +191,21 @@ export default function NoteDetailPage() {
         <div className="flex items-center justify-center py-12">
           <LoadingSpinner size="lg" />
         </div>
+      </DashboardLayout>
+    )
+  }
+
+  if (loadError) {
+    return (
+      <DashboardLayout>
+        <ErrorState
+          title="No se pudo cargar la nota"
+          message={loadError}
+          onRetry={() => {
+            setLoading(true)
+            loadNote()
+          }}
+        />
       </DashboardLayout>
     )
   }
@@ -271,7 +277,10 @@ export default function NoteDetailPage() {
               
               <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
                 <div className="flex items-center">
-                  <span className="mr-2">{getCategoryIcon(note.category)}</span>
+                  <CategoryIcon
+                    category={note.category}
+                    className="h-4 w-4 mr-2 text-gray-500"
+                  />
                   <span
                     className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getCategoryColor(
                       note.category || 'general'
@@ -283,7 +292,7 @@ export default function NoteDetailPage() {
                 
                 {note.trip && (
                   <div className="flex items-center">
-                    <span className="mr-1">📍</span>
+                    <MapPinIcon className="mr-1 h-4 w-4 text-gray-500" />
                     <span>{note.trip.title}</span>
                   </div>
                 )}

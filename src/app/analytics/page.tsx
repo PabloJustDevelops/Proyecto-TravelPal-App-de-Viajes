@@ -8,6 +8,9 @@ import ExpenseChart from "@/components/charts/ExpenseChart";
 import TripChart from "@/components/charts/TripChart";
 import { Card } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
+import PageTitle from "@/components/ui/PageTitle";
+import { fieldClassName } from "@/components/ui/fieldStyles";
+import ErrorState from "@/components/ui/ErrorState";
 import PageSkeleton from "@/components/ui/PageSkeleton";
 import {
   ChartBarIcon,
@@ -21,7 +24,7 @@ import {
   DocumentTextIcon,
   TableCellsIcon,
 } from "@heroicons/react/24/outline";
-import { formatCurrency, getLoadErrorMessage } from "@/lib/utils";
+import { formatCurrency, getLoadErrorMessage, cn } from "@/lib/utils";
 import { logger } from "@/lib/logger";
 import { useApiResource } from "@/hooks/use-api-resource";
 import { Menu, Transition } from "@headlessui/react";
@@ -320,28 +323,7 @@ export default function AnalyticsPage() {
   if (error) {
     return (
       <DashboardLayout>
-        <div className="flex flex-col items-center justify-center h-64">
-          <div className="text-red-500 mb-4">
-            <svg
-              className="h-12 w-12"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-              />
-            </svg>
-          </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            Error al cargar los datos
-          </h3>
-          <p className="text-gray-500 mb-4">{error}</p>
-          <Button onClick={() => refetch()}>Reintentar</Button>
-        </div>
+        <ErrorState message={error} onRetry={() => refetch()} />
       </DashboardLayout>
     );
   }
@@ -351,14 +333,10 @@ export default function AnalyticsPage() {
       <div className="space-y-6" ref={reportRef}>
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Análisis y Reportes
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400">
-              Insights detallados sobre tus viajes y gastos
-            </p>
-          </div>
+          <PageTitle
+            title="Análisis y Reportes"
+            subtitle="Insights detallados sobre tus viajes y gastos"
+          />
           
           <Menu as="div" className="relative inline-block text-left z-30" data-export-exclude="true">
             <div>
@@ -427,7 +405,7 @@ export default function AnalyticsPage() {
               <select
                 value={selectedCurrency}
                 onChange={(e) => setSelectedCurrency(e.target.value)}
-                className="text-sm border rounded p-1 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                className={cn(fieldClassName, 'h-auto w-auto')}
               >
                 {currencies.map((c) => (
                   <option key={c} value={c}>
@@ -443,7 +421,7 @@ export default function AnalyticsPage() {
               <select
                 value={dateRange}
                 onChange={(e) => setDateRange(e.target.value)}
-                className="text-sm border rounded p-1 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                className={cn(fieldClassName, 'h-auto w-auto')}
               >
                 {dateRanges.map((r) => (
                   <option key={r.value} value={r.value}>

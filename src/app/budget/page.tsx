@@ -8,9 +8,13 @@ import BudgetCard from "@/components/budget/BudgetCard";
 import ExpenseChart from "@/components/charts/ExpenseChart";
 import { Card } from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
+import PageTitle from "@/components/ui/PageTitle";
 import Input from "@/components/ui/Input";
 import Modal from "@/components/ui/Modal";
 import PageSkeleton from "@/components/ui/PageSkeleton";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import ErrorState from "@/components/ui/ErrorState";
+import { selectClassName, textareaClassName } from "@/components/ui/fieldStyles";
 import { logger } from "@/lib/logger";
 import {
   PlusIcon,
@@ -199,28 +203,7 @@ export default function BudgetPage() {
   if (error) {
     return (
       <DashboardLayout>
-        <div className="flex flex-col items-center justify-center h-64">
-          <div className="text-red-500 mb-4">
-            <svg
-              className="h-12 w-12"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-              />
-            </svg>
-          </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            Error al cargar los datos
-          </h3>
-          <p className="text-gray-500 mb-4">{error}</p>
-          <Button onClick={() => refetch()}>Reintentar</Button>
-        </div>
+        <ErrorState message={error} onRetry={() => refetch()} />
       </DashboardLayout>
     );
   }
@@ -434,7 +417,7 @@ export default function BudgetPage() {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <LoadingSpinner />
         </div>
       </DashboardLayout>
     );
@@ -445,14 +428,10 @@ export default function BudgetPage() {
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Gestión de Presupuestos
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400">
-              Controla tus gastos y mantén tus finanzas organizadas
-            </p>
-          </div>
+          <PageTitle
+            title="Gestión de Presupuestos"
+            subtitle="Controla tus gastos y mantén tus finanzas organizadas"
+          />
           <Button
             onClick={handleCreateBudget}
             className="flex items-center space-x-2"
@@ -562,7 +541,7 @@ export default function BudgetPage() {
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-700"
+              className={selectClassName}
             >
               <option value="">Todas las categorías</option>
               {categories.map((category) => (
@@ -575,7 +554,7 @@ export default function BudgetPage() {
             <select
               value={selectedTrip}
               onChange={(e) => setSelectedTrip(e.target.value)}
-              className="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-700"
+              className={selectClassName}
             >
               <option value="">Todos los viajes</option>
               {trips.map((trip) => (
@@ -676,7 +655,7 @@ export default function BudgetPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, currency: e.target.value })
                   }
-                  className="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-700"
+                  className={selectClassName}
                 >
                   {currencies.map((currency) => (
                     <option key={currency.value} value={currency.value}>
@@ -697,7 +676,7 @@ export default function BudgetPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, category: e.target.value })
                   }
-                  className="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-700"
+                  className={selectClassName}
                 >
                   <option value="">Seleccionar categoría</option>
                   {categories.map((category) => (
@@ -722,7 +701,7 @@ export default function BudgetPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, trip_id: e.target.value })
                   }
-                  className="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-700"
+                  className={selectClassName}
                 >
                   <option value="">Sin viaje específico</option>
                   {trips.map((trip) => (
@@ -776,7 +755,7 @@ export default function BudgetPage() {
                   setFormData({ ...formData, description: e.target.value })
                 }
                 rows={3}
-                className="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-700 placeholder:text-gray-400"
+                className={textareaClassName}
                 placeholder="Descripción opcional del presupuesto..."
               />
             </div>

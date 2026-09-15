@@ -9,6 +9,8 @@ import { Trip } from '@/lib/insforge'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
+import { selectClassName, textareaClassName } from '@/components/ui/fieldStyles'
+import CategoryIcon from '@/components/ui/CategoryIcon'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 
 export default function NewExpensePage() {
@@ -109,14 +111,14 @@ export default function NewExpensePage() {
   }
 
   const categories = [
-    { value: 'accommodation', label: 'Alojamiento', icon: '🏨' },
-    { value: 'transport', label: 'Transporte', icon: '🚗' },
-    { value: 'food', label: 'Comida', icon: '🍽️' },
-    { value: 'entertainment', label: 'Entretenimiento', icon: '🎭' },
-    { value: 'shopping', label: 'Compras', icon: '🛍️' },
-    { value: 'health', label: 'Salud', icon: '🏥' },
-    { value: 'insurance', label: 'Seguro', icon: '🛡️' },
-    { value: 'other', label: 'Otros', icon: '💰' },
+    { value: 'accommodation', label: 'Alojamiento' },
+    { value: 'transport', label: 'Transporte' },
+    { value: 'food', label: 'Comida' },
+    { value: 'entertainment', label: 'Entretenimiento' },
+    { value: 'shopping', label: 'Compras' },
+    { value: 'health', label: 'Salud' },
+    { value: 'insurance', label: 'Seguro' },
+    { value: 'other', label: 'Otros' },
   ]
 
   const currencies = [
@@ -187,7 +189,7 @@ export default function NewExpensePage() {
                       name="currency"
                       value={formData.currency}
                       onChange={handleInputChange}
-                      className="w-full h-10 px-3 py-2 text-sm border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className={selectClassName}
                       required
                     >
                       {currencies.map((currency) => (
@@ -221,7 +223,10 @@ export default function NewExpensePage() {
                           onChange={handleInputChange}
                           className="sr-only"
                         />
-                        <span className="text-2xl mb-1">{category.icon}</span>
+                        <CategoryIcon
+                          category={category.value}
+                          className="h-6 w-6 mb-1 text-gray-600"
+                        />
                         <span className="text-xs text-center font-medium">
                           {category.label}
                         </span>
@@ -247,7 +252,7 @@ export default function NewExpensePage() {
                     name="trip_id"
                     value={formData.trip_id}
                     onChange={handleInputChange}
-                    className="w-full h-10 px-3 py-2 text-sm border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className={selectClassName}
                   >
                     <option value="">Sin viaje asociado</option>
                     {trips.map((trip) => (
@@ -270,7 +275,7 @@ export default function NewExpensePage() {
                     value={formData.notes}
                     onChange={handleInputChange}
                     rows={3}
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className={textareaClassName}
                     placeholder="Añade detalles adicionales sobre este gasto..."
                   />
                 </div>

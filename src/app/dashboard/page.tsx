@@ -6,7 +6,19 @@ import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { Trip, Expense } from "@/lib/insforge";
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { Plane, DollarSign, Calendar, MapPin, CreditCard, ShoppingBag, Utensils, Ticket, Heart } from "lucide-react";
+import Button from "@/components/ui/Button";
+import ErrorState from "@/components/ui/ErrorState";
+import {
+  CakeIcon,
+  CalendarIcon,
+  CreditCardIcon,
+  CurrencyDollarIcon,
+  HeartIcon,
+  MapPinIcon,
+  PaperAirplaneIcon,
+  ShoppingBagIcon,
+  TicketIcon,
+} from "@heroicons/react/24/outline";
 import { formatCurrency, getLoadErrorMessage } from "@/lib/utils";
 import { useApiResource } from "@/hooks/use-api-resource";
 import { motion } from "framer-motion";
@@ -52,24 +64,24 @@ const getCategoryIcon = (category: string) => {
   switch (category?.toLowerCase()) {
     case 'food':
     case 'comida':
-      return <Utensils className="h-5 w-5 text-orange-500" />;
+      return <CakeIcon className="h-5 w-5 text-orange-500" />;
     case 'transport':
     case 'transporte':
-      return <Plane className="h-5 w-5 text-blue-500" />;
+      return <PaperAirplaneIcon className="h-5 w-5 text-blue-500" />;
     case 'accommodation':
     case 'alojamiento':
-      return <MapPin className="h-5 w-5 text-purple-500" />;
+      return <MapPinIcon className="h-5 w-5 text-purple-500" />;
     case 'shopping':
     case 'compras':
-      return <ShoppingBag className="h-5 w-5 text-pink-500" />;
+      return <ShoppingBagIcon className="h-5 w-5 text-pink-500" />;
     case 'entertainment':
     case 'entretenimiento':
-      return <Ticket className="h-5 w-5 text-yellow-500" />;
+      return <TicketIcon className="h-5 w-5 text-yellow-500" />;
     case 'health':
     case 'salud':
-      return <Heart className="h-5 w-5 text-red-500" />;
+      return <HeartIcon className="h-5 w-5 text-red-500" />;
     default:
-      return <CreditCard className="h-5 w-5 text-gray-500" />;
+      return <CreditCardIcon className="h-5 w-5 text-gray-500" />;
   }
 };
 
@@ -178,33 +190,11 @@ export default function DashboardPage() {
   if (error) {
     return (
       <DashboardLayout>
-        <div className="flex flex-col items-center justify-center h-64">
-          <div className="text-red-500 mb-4">
-            <svg
-              className="h-12 w-12"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-              />
-            </svg>
-          </div>
-          <p className="text-gray-900 font-medium mb-2">
-            Error al cargar el dashboard
-          </p>
-          <p className="text-gray-500 mb-4">{error}</p>
-          <button
-            onClick={() => refetch()}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
-          >
-            Reintentar
-          </button>
-        </div>
+        <ErrorState
+          message={error}
+          onRetry={() => refetch()}
+          title="Error al cargar el dashboard"
+        />
       </DashboardLayout>
     );
   }
@@ -220,7 +210,7 @@ export default function DashboardPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Bienvenido, {user?.full_name?.split(" ")[0] || "Viajero"} 👋
+              Bienvenido, {user?.full_name?.split(" ")[0] || "Viajero"}
             </h1>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
               Aquí tienes un resumen de tus viajes y actividades recientes.
@@ -235,7 +225,7 @@ export default function DashboardPage() {
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0 bg-blue-100 dark:bg-blue-900/30 rounded-lg p-3">
-                  <DollarSign className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                  <CurrencyDollarIcon className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
@@ -256,7 +246,7 @@ export default function DashboardPage() {
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0 bg-red-100 dark:bg-red-900/30 rounded-lg p-3">
-                  <CreditCard className="h-6 w-6 text-red-600 dark:text-red-400" />
+                  <CreditCardIcon className="h-6 w-6 text-red-600 dark:text-red-400" />
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
@@ -277,7 +267,7 @@ export default function DashboardPage() {
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0 bg-green-100 dark:bg-green-900/30 rounded-lg p-3">
-                  <Plane className="h-6 w-6 text-green-600 dark:text-green-400" />
+                  <PaperAirplaneIcon className="h-6 w-6 text-green-600 dark:text-green-400" />
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
@@ -298,7 +288,7 @@ export default function DashboardPage() {
             <div className="p-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg p-3">
-                  <Calendar className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
+                  <CalendarIcon className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
@@ -320,7 +310,7 @@ export default function DashboardPage() {
           <motion.div variants={item} className="bg-white dark:bg-gray-800 shadow rounded-xl transition-all duration-200 border border-gray-100 dark:border-gray-700">
             <div className="px-6 py-5 flex justify-between items-center border-b border-gray-200 dark:border-gray-700">
               <h2 className="text-lg font-semibold leading-6 text-gray-900 dark:text-white flex items-center gap-2">
-                <MapPin className="h-5 w-5 text-blue-500" />
+                <MapPinIcon className="h-5 w-5 text-blue-500" />
                 Viajes Recientes
               </h2>
               <Link
@@ -370,12 +360,12 @@ export default function DashboardPage() {
                       <div className="mt-2 sm:flex sm:justify-between">
                         <div className="sm:flex">
                           <p className="flex items-center text-sm text-gray-500 dark:text-gray-400">
-                            <MapPin className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400 dark:text-gray-500" />
+                            <MapPinIcon className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400 dark:text-gray-500" />
                             {trip.destination}
                           </p>
                         </div>
                         <div className="mt-2 flex items-center text-sm text-gray-500 dark:text-gray-400 sm:mt-0">
-                          <Calendar className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400 dark:text-gray-500" />
+                          <CalendarIcon className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400 dark:text-gray-500" />
                           <p>
                             {new Date(trip.departure_date).toLocaleDateString()}
                           </p>
@@ -387,7 +377,7 @@ export default function DashboardPage() {
               ))}
               {trips.length === 0 && (
                 <li className="px-6 py-12 text-center text-gray-500 dark:text-gray-400 text-sm flex flex-col items-center">
-                  <Plane className="h-10 w-10 text-gray-300 mb-2" />
+                  <PaperAirplaneIcon className="h-10 w-10 text-gray-300 mb-2" />
                   No tienes viajes recientes
                 </li>
               )}
@@ -398,7 +388,7 @@ export default function DashboardPage() {
           <motion.div variants={item} className="bg-white dark:bg-gray-800 shadow rounded-xl transition-all duration-200 border border-gray-100 dark:border-gray-700">
             <div className="px-6 py-5 flex justify-between items-center border-b border-gray-200 dark:border-gray-700">
               <h2 className="text-lg font-semibold leading-6 text-gray-900 dark:text-white flex items-center gap-2">
-                <CreditCard className="h-5 w-5 text-purple-500" />
+                <CreditCardIcon className="h-5 w-5 text-purple-500" />
                 Gastos Recientes
               </h2>
               <Link
@@ -449,7 +439,7 @@ export default function DashboardPage() {
               ))}
               {recentExpenses.length === 0 && (
                 <li className="px-6 py-12 text-center text-gray-500 dark:text-gray-400 text-sm flex flex-col items-center">
-                  <CreditCard className="h-10 w-10 text-gray-300 mb-2" />
+                  <CreditCardIcon className="h-10 w-10 text-gray-300 mb-2" />
                   No tienes gastos recientes
                 </li>
               )}

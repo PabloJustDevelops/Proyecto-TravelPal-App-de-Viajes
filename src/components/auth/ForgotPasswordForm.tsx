@@ -7,6 +7,8 @@ import { z } from 'zod'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import Button from '@/components/ui/Button'
+import { fieldClassName } from '@/components/ui/fieldStyles'
+import { cn } from '@/lib/utils'
 import { EnvelopeIcon } from '@heroicons/react/24/outline'
 
 const forgotPasswordSchema = z.object({
@@ -102,7 +104,7 @@ export default function ForgotPasswordForm() {
               type="email"
               autoComplete="email"
               required
-              className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md py-2.5"
+              className={cn(fieldClassName, 'pl-10')}
               placeholder="tu@email.com"
             />
           </div>
@@ -136,7 +138,7 @@ export default function ForgotPasswordForm() {
         <Button
           type="submit"
           loading={isLoading}
-          className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          className="w-full"
         >
           Enviar enlace de recuperación
         </Button>

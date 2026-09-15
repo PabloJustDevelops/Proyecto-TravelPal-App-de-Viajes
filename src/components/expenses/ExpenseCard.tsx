@@ -11,6 +11,7 @@ import {
 } from '@heroicons/react/24/outline'
 import Link from 'next/link'
 import Button from '@/components/ui/Button'
+import CategoryIcon from '@/components/ui/CategoryIcon'
 
 interface ExpenseWithTrip extends Expense {
   trip: {
@@ -28,27 +29,6 @@ interface ExpenseCardProps {
 }
 
 export default function ExpenseCard({ expense, showTripTitle = false }: ExpenseCardProps) {
-  const getCategoryIcon = (category: Expense['category']) => {
-    switch (category) {
-      case 'accommodation':
-        return '🏨'
-      case 'transport':
-        return '🚗'
-      case 'food':
-        return '🍽️'
-      case 'entertainment':
-        return '🎭'
-      case 'shopping':
-        return '🛍️'
-      case 'health':
-        return '🏥'
-      case 'insurance':
-        return '🛡️'
-      default:
-        return '💰'
-    }
-  }
-
   const getCategoryName = (category: Expense['category']) => {
     switch (category) {
       case 'accommodation':
@@ -96,7 +76,10 @@ export default function ExpenseCard({ expense, showTripTitle = false }: ExpenseC
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <CardTitle className="text-lg flex items-center space-x-2">
-            <span className="text-xl">{getCategoryIcon(expense.category)}</span>
+            <CategoryIcon
+              category={expense.category}
+              className="h-5 w-5 text-gray-500"
+            />
             <span>{expense.title || expense.description}</span>
           </CardTitle>
           <div className="text-right flex flex-col items-end">

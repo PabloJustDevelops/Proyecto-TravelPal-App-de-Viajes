@@ -14,6 +14,7 @@ import {
   EnvelopeIcon,
 } from "@heroicons/react/24/outline";
 import Button from "../ui/Button";
+import CategoryIcon from "../ui/CategoryIcon";
 import { Card } from "../ui/Card";
 import { formatDate } from "../../lib/utils";
 import { Booking } from "@/lib/insforge";
@@ -27,20 +28,20 @@ interface BookingCardProps {
 }
 
 const BOOKING_TYPES = {
-  flight: { label: "Vuelo", icon: "✈️", color: "bg-blue-100 text-blue-800" },
-  hotel: { label: "Hotel", icon: "🏨", color: "bg-purple-100 text-purple-800" },
-  car: { label: "Auto", icon: "🚗", color: "bg-green-100 text-green-800" },
+  flight: { label: "Vuelo", category: "flight", color: "bg-blue-100 text-blue-800" },
+  hotel: { label: "Hotel", category: "hotel", color: "bg-purple-100 text-purple-800" },
+  car: { label: "Auto", category: "car", color: "bg-green-100 text-green-800" },
   activity: {
     label: "Actividad",
-    icon: "🎯",
+    category: "activity",
     color: "bg-orange-100 text-orange-800",
   },
   restaurant: {
     label: "Restaurante",
-    icon: "🍽️",
+    category: "restaurant",
     color: "bg-red-100 text-red-800",
   },
-  other: { label: "Otro", icon: "📝", color: "bg-gray-100 text-gray-800" },
+  other: { label: "Otro", category: "other", color: "bg-gray-100 text-gray-800" },
 };
 
 const STATUS_CONFIG = {
@@ -103,7 +104,10 @@ export const BookingCard: React.FC<BookingCardProps> = ({
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-start space-x-3">
             <div className="flex-shrink-0">
-              <span className="text-2xl">{bookingType.icon}</span>
+              <CategoryIcon
+                category={bookingType.category}
+                className="h-6 w-6 text-gray-600"
+              />
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center space-x-2 mb-1">

@@ -9,6 +9,10 @@ import { Trip, Expense } from '@/lib/insforge'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
+import { selectClassName, textareaClassName } from '@/components/ui/fieldStyles'
+import CategoryIcon from '@/components/ui/CategoryIcon'
+import LoadingSpinner from '@/components/ui/LoadingSpinner'
+import ErrorState from '@/components/ui/ErrorState'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { logger } from '@/lib/logger'
 
@@ -21,6 +25,7 @@ export default function EditExpensePage() {
   const [loading, setLoading] = useState(false)
   const [loadingData, setLoadingData] = useState(true)
   const [error, setError] = useState('')
+  const [loadError, setLoadError] = useState('')
   const [trips, setTrips] = useState<Trip[]>([])
 
   const [formData, setFormData] = useState({
@@ -36,6 +41,7 @@ export default function EditExpensePage() {
   const loadData = useCallback(async () => {
     try {
       setLoadingData(true)
+      setLoadError('')
       
       // Cargar viajes para el selector
       const tripsRes = await fetch('/api/trips')
@@ -68,7 +74,7 @@ export default function EditExpensePage() {
       
     } catch (error) {
       logger.error('Error loading expense data:', error)
-      setError('Error al cargar los datos del gasto')
+      setLoadError('Error al cargar los datos del gasto')
     } finally {
       setLoadingData(false)
     }
@@ -160,14 +166,14 @@ export default function EditExpensePage() {
   }
 
   const categories = [
-    { value: 'accommodation', label: 'Alojamiento', icon: '🏨' },
-    { value: 'transport', label: 'Transporte', icon: '🚗' },
-    { value: 'food', label: 'Comida', icon: '🍽️' },
-    { value: 'entertainment', label: 'Entretenimiento', icon: '🎭' },
-    { value: 'shopping', label: 'Compras', icon: '🛍️' },
-    { value: 'health', label: 'Salud', icon: '🏥' },
-    { value: 'insurance', label: 'Seguro', icon: '🛡️' },
-    { value: 'other', label: 'Otros', icon: '💰' },
+    { value: 'accommodation', label: 'Alojamiento' },
+    { value: 'transport', label: 'Transporte' },
+    { value: 'food', label: 'Comida' },
+    { value: 'entertainment', label: 'Entretenimiento' },
+    { value: 'shopping', label: 'Compras' },
+    { value: 'health', label: 'Salud' },
+    { value: 'insurance', label: 'Seguro' },
+    { value: 'other', label: 'Otros' },
   ]
 
   const currencies = [
@@ -181,8 +187,20 @@ export default function EditExpensePage() {
     return (
       <DashboardLayout>
         <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+          <LoadingSpinner size="lg" />
         </div>
+      </DashboardLayout>
+    )
+  }
+
+  if (loadError) {
+    return (
+      <DashboardLayout>
+        <ErrorState
+          title="No se pudo cargar el gasto"
+          message={loadError}
+          onRetry={() => loadData()}
+        />
       </DashboardLayout>
     )
   }
@@ -253,7 +271,7 @@ export default function EditExpensePage() {
                       name="currency"
                       value={formData.currency}
                       onChange={handleInputChange}
-                      className="w-full h-10 px-3 py-2 text-sm border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className={selectClassName}
                       required
                     >
                       {currencies.map((currency) => (
@@ -287,7 +305,10 @@ export default function EditExpensePage() {
                           onChange={handleInputChange}
                           className="sr-only"
                         />
-                        <span className="text-2xl mb-1">{category.icon}</span>
+                        <CategoryIcon
+                          category={category.value}
+                          className="h-6 w-6 mb-1 text-gray-600"
+                        />
                         <span className="text-xs text-center font-medium">
                           {category.label}
                         </span>
@@ -313,7 +334,7 @@ export default function EditExpensePage() {
                     name="trip_id"
                     value={formData.trip_id}
                     onChange={handleInputChange}
-                    className="w-full h-10 px-3 py-2 text-sm border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className={selectClassName}
                   >
                     <option value="">Sin viaje asociado</option>
                     {trips.map((trip) => (
@@ -333,7 +354,7 @@ export default function EditExpensePage() {
                     value={formData.notes}
                     onChange={handleInputChange}
                     rows={3}
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className={textareaClassName}
                     placeholder="Añade detalles adicionales sobre este gasto..."
                   />
                 </div>

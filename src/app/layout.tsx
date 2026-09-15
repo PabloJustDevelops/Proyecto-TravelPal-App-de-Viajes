@@ -5,8 +5,9 @@ import { AuthProvider } from '@/contexts/AuthContext'
 import { ThemeProvider } from '@/contexts/ThemeContext'
 import ErrorBoundary from '@/components/common/ErrorBoundary'
 import { ToastProvider } from '@/components/ui/Toast'
+import MotionProvider from '@/components/common/MotionProvider'
 
-const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 
 export const metadata: Metadata = {
   title: 'Gestión de Viajes',
@@ -35,13 +36,15 @@ export default function RootLayout({
       </head>
       <body className={inter.className} suppressHydrationWarning>
         <ErrorBoundary>
-          <ToastProvider>
-            <ThemeProvider>
-              <AuthProvider>
-                {children}
-              </AuthProvider>
-            </ThemeProvider>
-          </ToastProvider>
+          <MotionProvider>
+            <ToastProvider>
+              <ThemeProvider>
+                <AuthProvider>
+                  {children}
+                </AuthProvider>
+              </ThemeProvider>
+            </ToastProvider>
+          </MotionProvider>
         </ErrorBoundary>
       </body>
     </html>

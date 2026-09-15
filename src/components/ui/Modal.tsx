@@ -74,8 +74,9 @@ export default function Modal({
                         size="sm"
                         onClick={onClose}
                         className="p-2"
+                        aria-label="Cerrar"
                       >
-                        <XMarkIcon className="h-5 w-5" />
+                        <XMarkIcon className="h-5 w-5" aria-hidden="true" />
                       </Button>
                     )}
                   </div>

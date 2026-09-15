@@ -3,13 +3,17 @@
 import { useState, useMemo } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import Button from "@/components/ui/Button";
+import PageTitle from "@/components/ui/PageTitle";
+import EmptyState from "@/components/ui/EmptyState";
 import Input from "@/components/ui/Input";
+import { selectClassName } from "@/components/ui/fieldStyles";
 import { useAuth } from "@/contexts/AuthContext";
 import { Trip } from "@/lib/insforge";
 import {
   PlusIcon,
   MagnifyingGlassIcon,
   PlayIcon,
+  MapIcon,
 } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import PageSkeleton from "@/components/ui/PageSkeleton";
@@ -100,20 +104,18 @@ export default function TripsPage() {
     <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Mis Viajes</h1>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Gestiona tus itinerarios y reservas
-            </p>
-          </div>
-          <Link href="/trips/new" className="mt-4 sm:mt-0">
-            <Button>
-              <PlusIcon className="h-4 w-4 mr-2" />
-              Nuevo Viaje
-            </Button>
-          </Link>
-        </div>
+        <PageTitle
+          title="Mis Viajes"
+          subtitle="Gestiona tus itinerarios y reservas"
+          action={
+            <Link href="/trips/new">
+              <Button>
+                <PlusIcon className="h-4 w-4 mr-2" />
+                Nuevo Viaje
+              </Button>
+            </Link>
+          }
+        />
 
         {/* Filters */}
         <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
@@ -137,7 +139,7 @@ export default function TripsPage() {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full h-10 px-3 py-2 text-sm border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white"
+                className={selectClassName}
               >
                 <option value="all">Todos los estados</option>
                 <option value="planned">Planificado</option>
@@ -216,39 +218,19 @@ export default function TripsPage() {
             ))}
           </div>
         ) : (
-          <div className="text-center py-12">
-            <div className="mx-auto h-12 w-12 text-gray-400">
-              {/* Placeholder icon */}
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-12 w-12"
-              >
-                <path
-                  d="M2 16l20-12M2 16l7-1m13-11l-4 8"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </div>
-            <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">
-              No tienes viajes registrados
-            </h3>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Crea tu primer viaje para empezar a planificar.
-            </p>
-            <div className="mt-6">
+          <EmptyState
+            icon={<MapIcon className="h-12 w-12" />}
+            title="No tienes viajes registrados"
+            description="Crea tu primer viaje para empezar a planificar."
+            action={
               <Link href="/trips/new">
                 <Button>
                   <PlusIcon className="h-4 w-4 mr-2" />
                   Crear Primer Viaje
                 </Button>
               </Link>
-            </div>
-          </div>
+            }
+          />
         )}
       </div>
     </DashboardLayout>

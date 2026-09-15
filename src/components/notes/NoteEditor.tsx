@@ -4,6 +4,9 @@ import { useState } from 'react'
 import { Note } from '@/lib/insforge'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
+import { selectClassName, textareaClassName } from '@/components/ui/fieldStyles'
+import CategoryIcon from '@/components/ui/CategoryIcon'
+import { cn } from '@/lib/utils'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import {
   EyeIcon,
@@ -70,15 +73,15 @@ export default function NoteEditor({ note, tripId, trips = [], onSave, onCancel,
   }
 
   const categories = [
-    { value: 'general', label: 'General', icon: '📝' },
-    { value: 'itinerary', label: 'Itinerario', icon: '📅' },
-    { value: 'accommodation', label: 'Alojamiento', icon: '🏨' },
-    { value: 'transport', label: 'Transporte', icon: '🚗' },
-    { value: 'restaurant', label: 'Restaurante', icon: '🍽️' },
-    { value: 'activity', label: 'Actividad', icon: '🎯' },
-    { value: 'shopping', label: 'Compras', icon: '🛍️' },
-    { value: 'emergency', label: 'Emergencia', icon: '🚨' },
-    { value: 'contact', label: 'Contacto', icon: '📞' },
+    { value: 'general', label: 'General' },
+    { value: 'itinerary', label: 'Itinerario' },
+    { value: 'accommodation', label: 'Alojamiento' },
+    { value: 'transport', label: 'Transporte' },
+    { value: 'restaurant', label: 'Restaurante' },
+    { value: 'activity', label: 'Actividad' },
+    { value: 'shopping', label: 'Compras' },
+    { value: 'emergency', label: 'Emergencia' },
+    { value: 'contact', label: 'Contacto' },
   ]
 
   return (
@@ -161,7 +164,10 @@ export default function NoteEditor({ note, tripId, trips = [], onSave, onCancel,
                         onChange={handleInputChange}
                         className="sr-only"
                       />
-                      <span className="text-lg mb-1">{category.icon}</span>
+                      <CategoryIcon
+                        category={category.value}
+                        className="h-5 w-5 mb-1 text-gray-600"
+                      />
                       <span className="text-xs text-center font-medium">
                         {category.label}
                       </span>
@@ -180,7 +186,7 @@ export default function NoteEditor({ note, tripId, trips = [], onSave, onCancel,
                           name="trip_id"
                           value={formData.trip_id}
                           onChange={handleInputChange}
-                          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className={selectClassName}
                       >
                           <option value="">Sin viaje asociado</option>
                           {trips.map(trip => (
@@ -200,7 +206,7 @@ export default function NoteEditor({ note, tripId, trips = [], onSave, onCancel,
                   value={formData.content}
                   onChange={handleInputChange}
                   rows={12}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono"
+                  className={cn(textareaClassName, 'font-mono')}
                   placeholder="Escribe tu nota aquí... Puedes usar Markdown:
 
 # Título Principal
@@ -224,9 +230,10 @@ export default function NoteEditor({ note, tripId, trips = [], onSave, onCancel,
               {/* Preview */}
               <div className="space-y-4">
                 <div className="flex items-center space-x-2">
-                  <span className="text-2xl">
-                    {categories.find(c => c.value === formData.category)?.icon}
-                  </span>
+                  <CategoryIcon
+                    category={formData.category}
+                    className="h-6 w-6"
+                  />
                   <h1 className="text-2xl font-bold">{formData.title || 'Sin título'}</h1>
                 </div>
                 

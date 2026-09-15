@@ -2,6 +2,9 @@
 
 import { useState, useRef, KeyboardEvent } from "react";
 import { PaperAirplaneIcon } from "@heroicons/react/24/outline";
+import Button from "@/components/ui/Button";
+import { fieldClassName } from "@/components/ui/fieldStyles";
+import { cn } from "@/lib/utils";
 
 interface ChatbotInputProps {
   onSendMessage: (message: string) => void;
@@ -50,17 +53,17 @@ export default function ChatbotInput({ onSendMessage, disabled = false }: Chatbo
         placeholder="Escribe tu mensaje..."
         disabled={disabled}
         rows={1}
-        className="flex-1 resize-none rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
+        className={cn(fieldClassName, 'flex-1 h-auto resize-none rounded-lg px-4 py-3')}
         style={{ minHeight: "48px", maxHeight: "120px" }}
       />
-      <button
+      <Button
         onClick={handleSend}
         disabled={!inputValue.trim() || disabled}
-        className="flex items-center justify-center flex-shrink-0 w-12 h-12 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:disabled:bg-gray-600"
+        className="w-12 h-12 rounded-lg p-0 shrink-0"
         aria-label="Enviar mensaje"
       >
         <PaperAirplaneIcon className="h-5 w-5 -ml-0.5 transform rotate-0" />
-      </button>
+      </Button>
     </div>
   );
 }

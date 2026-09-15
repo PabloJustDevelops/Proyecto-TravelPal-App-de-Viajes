@@ -5,16 +5,24 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import NoteCard from "@/components/notes/NoteCard";
 import NoteEditor from "@/components/notes/NoteEditor";
 import Button from "@/components/ui/Button";
+import PageTitle from "@/components/ui/PageTitle";
+import EmptyState from "@/components/ui/EmptyState";
 import Input from "@/components/ui/Input";
 import Modal from "@/components/ui/Modal";
+import { selectClassName } from "@/components/ui/fieldStyles";
+import ErrorState from "@/components/ui/ErrorState";
 import { useAuth } from "@/contexts/AuthContext";
 import { createInsforgeClient, Note, Trip } from "@/lib/insforge";
 import { logger } from "@/lib/logger";
 import { getErrorMessage } from "@/lib/utils";
+import { showToast } from "@/lib/toast";
 import {
   PlusIcon,
   MagnifyingGlassIcon,
   DocumentTextIcon,
+  CalendarDaysIcon,
+  BuildingOffice2Icon,
+  ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
 import PageSkeleton from "@/components/ui/PageSkeleton";
 import { useApiResource } from "@/hooks/use-api-resource";
@@ -121,8 +129,11 @@ export default function NotesPage() {
     } catch (err: unknown) {
       const message = getErrorMessage(err, "Error al guardar la nota");
       logger.error("NotesPage: Error saving note", { error: message });
-      // Show error to user?
-      alert(message); // Simple alert for now or use a toast if available
+      showToast({
+        type: "error",
+        title: "Error al guardar la nota",
+        message,
+      });
     } finally {
       setEditorLoading(false);
     }
@@ -164,28 +175,7 @@ export default function NotesPage() {
   if (error) {
     return (
       <DashboardLayout>
-        <div className="flex flex-col items-center justify-center h-64">
-          <div className="text-red-500 mb-4">
-            <svg
-              className="h-12 w-12"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-              />
-            </svg>
-          </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            Error al cargar los datos
-          </h3>
-          <p className="text-gray-500 mb-4">{error}</p>
-          <Button onClick={() => refetch()}>Reintentar</Button>
-        </div>
+        <ErrorState message={error} onRetry={() => refetch()} />
       </DashboardLayout>
     );
   }
@@ -215,20 +205,16 @@ export default function NotesPage() {
     <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Mis Notas
-            </h1>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Organiza y documenta toda la información de tus viajes
-            </p>
-          </div>
-          <Button onClick={() => setShowEditor(true)} className="mt-4 sm:mt-0">
-            <PlusIcon className="h-4 w-4 mr-2" />
-            Nueva Nota
-          </Button>
-        </div>
+        <PageTitle
+          title="Mis Notas"
+          subtitle="Organiza y documenta toda la información de tus viajes"
+          action={
+            <Button onClick={() => setShowEditor(true)}>
+              <PlusIcon className="h-4 w-4 mr-2" />
+              Nueva Nota
+            </Button>
+          }
+        />
 
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -248,7 +234,7 @@ export default function NotesPage() {
 
           <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
             <div className="flex items-center">
-              <div className="text-2xl">📅</div>
+              <CalendarDaysIcon className="h-8 w-8 text-blue-600" />
               <div className="ml-3">
                 <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
                   Itinerarios
@@ -262,7 +248,7 @@ export default function NotesPage() {
 
           <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
             <div className="flex items-center">
-              <div className="text-2xl">🏨</div>
+              <BuildingOffice2Icon className="h-8 w-8 text-blue-600" />
               <div className="ml-3">
                 <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
                   Alojamientos
@@ -276,7 +262,7 @@ export default function NotesPage() {
 
           <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
             <div className="flex items-center">
-              <div className="text-2xl">🚨</div>
+              <ExclamationTriangleIcon className="h-8 w-8 text-blue-600" />
               <div className="ml-3">
                 <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
                   Emergencias
@@ -311,7 +297,7 @@ export default function NotesPage() {
               <select
                 value={categoryFilter}
                 onChange={(e) => setCategoryFilter(e.target.value)}
-                className="w-full h-10 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className={selectClassName}
               >
                 <option value="all">Todas las categorías</option>
                 <option value="general">General</option>
@@ -331,7 +317,7 @@ export default function NotesPage() {
               <select
                 value={tripFilter}
                 onChange={(e) => setTripFilter(e.target.value)}
-                className="w-full h-10 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className={selectClassName}
               >
                 <option value="all">Todos los viajes</option>
                 {trips.map((trip) => (
@@ -357,31 +343,29 @@ export default function NotesPage() {
             ))}
           </div>
         ) : (
-          <div className="text-center py-12">
-            <div className="mx-auto h-12 w-12 text-gray-400">
-              <DocumentTextIcon className="h-12 w-12" />
-            </div>
-            <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">
-              {searchTerm || categoryFilter !== "all" || tripFilter !== "all"
+          <EmptyState
+            icon={<DocumentTextIcon className="h-12 w-12" />}
+            title={
+              searchTerm || categoryFilter !== "all" || tripFilter !== "all"
                 ? "No se encontraron notas"
-                : "No tienes notas registradas"}
-            </h3>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              {searchTerm || categoryFilter !== "all" || tripFilter !== "all"
+                : "No tienes notas registradas"
+            }
+            description={
+              searchTerm || categoryFilter !== "all" || tripFilter !== "all"
                 ? "Intenta ajustar los filtros de búsqueda"
-                : "Comienza creando tu primera nota"}
-            </p>
-            {!searchTerm &&
+                : "Comienza creando tu primera nota"
+            }
+            action={
+              !searchTerm &&
               categoryFilter === "all" &&
-              tripFilter === "all" && (
-                <div className="mt-6">
-                  <Button onClick={() => setShowEditor(true)}>
-                    <PlusIcon className="h-4 w-4 mr-2" />
-                    Crear Primera Nota
-                  </Button>
-                </div>
-              )}
-          </div>
+              tripFilter === "all" ? (
+                <Button onClick={() => setShowEditor(true)}>
+                  <PlusIcon className="h-4 w-4 mr-2" />
+                  Crear Primera Nota
+                </Button>
+              ) : undefined
+            }
+          />
         )}
 
         {/* Note Editor Modal */}

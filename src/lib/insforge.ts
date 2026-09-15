@@ -149,39 +149,6 @@ export interface ItineraryActivity {
   updated_at: string;
 }
 
-export interface Reminder {
-  id: string;
-  user_id: string;
-  booking_id?: string;
-  trip_id?: string;
-  title: string;
-  message: string;
-  reminder_datetime: string;
-  type: "booking" | "activity" | "general" | "document" | "payment";
-  status: "pending" | "sent" | "dismissed";
-  sent_at?: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface CalendarEvent {
-  id: string;
-  user_id: string;
-  trip_id?: string;
-  booking_id?: string;
-  activity_id?: string;
-  title: string;
-  description?: string;
-  event_date: string;
-  start_time?: string;
-  end_time?: string;
-  type: "trip" | "booking" | "activity" | "reminder" | "custom";
-  color?: string;
-  all_day: boolean;
-  created_at: string;
-  updated_at: string;
-}
-
 // Extended interfaces with relations
 export interface NoteWithTrip extends Note {
   trip?: {

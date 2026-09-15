@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="public/globe.svg" alt="App Viajes" width="120" />
+  <img src="src/app/icon.svg" alt="TravelPal" width="120" />
   <h1>TravelPal</h1>
   <p><strong>Planifica, reserva y controla tus viajes</strong><br/>Una plataforma completa para itinerarios, gastos, presupuestos y analíticas.</p>
 

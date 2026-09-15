@@ -16,6 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import JournalEntryForm, {
   type JournalEntryValues,
 } from "@/components/trips/JournalEntryForm";
+import JournalPhotos from "@/components/trips/JournalPhotos";
 import {
   BookOpenIcon,
   PencilSquareIcon,
@@ -235,6 +236,8 @@ export default function TripJournal({ tripId }: TripJournalProps) {
             ))}
           </ol>
         )}
+
+        <JournalPhotos tripId={tripId} />
       </CardContent>
 
       <Modal

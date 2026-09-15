@@ -6,6 +6,12 @@ import type { JournalEntry } from "@/lib/insforge";
 jest.mock("@/contexts/AuthContext", () => ({
   useAuth: () => ({ user: { id: "user-a" }, loading: false }),
 }));
+// El diario y las fotos se prueban por separado: aqui el hijo se aísla para no
+// mezclar sus estados con los de las entradas.
+jest.mock("../JournalPhotos", () => ({
+  __esModule: true,
+  default: () => null,
+}));
 jest.mock("@/lib/logger", () => ({
   logger: { debug: jest.fn(), error: jest.fn(), info: jest.fn() },
 }));

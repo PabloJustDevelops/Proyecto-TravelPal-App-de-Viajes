@@ -379,9 +379,9 @@ export const Calendar: React.FC<CalendarProps> = ({
     >
       <div className={`bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden ${className}`}>
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200">
-          <div className="flex items-center gap-4">
-            <h2 className="text-xl font-bold text-gray-900 capitalize min-w-[200px]">
+        <div className="flex flex-col gap-3 p-4 border-b border-gray-200 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+            <h2 className="text-lg font-bold text-gray-900 capitalize sm:text-xl sm:min-w-[200px]">
               {format(currentDate, 'MMMM yyyy', { locale: es })}
             </h2>
             <div className="flex items-center rounded-md border border-gray-200 bg-white shadow-sm">
@@ -410,7 +410,7 @@ export const Calendar: React.FC<CalendarProps> = ({
             <button
               onClick={() => setViewMode('month')}
               className={`
-                px-4 py-1.5 text-sm font-medium rounded-md transition-all
+                flex-1 sm:flex-none px-4 py-1.5 text-sm font-medium rounded-md transition-all
                 ${viewMode === 'month' 
                   ? 'bg-white text-blue-600 shadow-sm' 
                   : 'text-gray-600 hover:text-gray-900'}
@@ -421,7 +421,7 @@ export const Calendar: React.FC<CalendarProps> = ({
             <button
               onClick={() => setViewMode('week')}
               className={`
-                px-4 py-1.5 text-sm font-medium rounded-md transition-all
+                flex-1 sm:flex-none px-4 py-1.5 text-sm font-medium rounded-md transition-all
                 ${viewMode === 'week' 
                   ? 'bg-white text-blue-600 shadow-sm' 
                   : 'text-gray-600 hover:text-gray-900'}
@@ -432,20 +432,27 @@ export const Calendar: React.FC<CalendarProps> = ({
           </div>
         </div>
 
-        {/* Días de la semana (Header) */}
-        <div className="grid grid-cols-7 border-b border-gray-200 bg-gray-50/50">
-          {weekDays.map(day => (
-            <div
-              key={day}
-              className="py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider"
-            >
-              {day}
+        {/* A 360px, siete columnas de 1fr dan 51px por dia y el titulo del evento no cabe. Se
+            conserva la rejilla de 7 y se permite desplazar en horizontal, con una columna minima
+            de 91px. En escritorio el ancho disponible supera el minimo y no hay desplazamiento. */}
+        <div className="overflow-x-auto">
+          <div className="min-w-[640px]">
+            {/* Días de la semana (Header) */}
+            <div className="grid grid-cols-7 border-b border-gray-200 bg-gray-50/50">
+              {weekDays.map(day => (
+                <div
+                  key={day}
+                  className="py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider"
+                >
+                  {day}
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
 
-        {/* Vistas */}
-        {viewMode === 'month' ? renderMonthView() : renderWeekView()}
+            {/* Vistas */}
+            {viewMode === 'month' ? renderMonthView() : renderWeekView()}
+          </div>
+        </div>
         
         {/* Footer Leyenda */}
         <div className="px-6 py-4 border-t border-gray-200 bg-gray-50/30 flex flex-wrap gap-6 text-xs">

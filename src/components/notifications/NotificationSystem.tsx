@@ -266,9 +266,11 @@ export const NotificationSystem: React.FC<NotificationSystemProps> = ({
         )}
       </button>
 
-      {/* Panel de notificaciones */}
+      {/* Panel de notificaciones: se ancla a la campana. En movil la campana comparte fila con
+          el boton de menu (2.5rem) y con el padding del contenedor (1rem), asi que el panel nunca
+          debe medir mas que la pantalla menos ese hueco; en escritorio el tope no se aplica. */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-96 bg-white rounded-lg shadow-lg border border-gray-200 z-50 max-h-96 overflow-hidden">
+        <div className="absolute right-0 mt-2 w-96 max-w-[calc(100vw-5rem)] bg-white rounded-lg shadow-lg border border-gray-200 z-50 max-h-96 overflow-hidden">
           {/* Header */}
           <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
             <h3 className="text-lg font-semibold text-gray-900">

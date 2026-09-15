@@ -2,27 +2,188 @@
 
 @variant dark (&:where(.dark, .dark *));
 
+/*
+ * Rumbo "Cuaderno de viaje" (ver docs/DECISIONS/ADR-007-rumbo-cuaderno-de-viaje.md).
+ *
+ * Tres capas, en este orden:
+ *   1. paleta cruda: los valores del rumbo, en `:root` (claro) y `.dark` (oscuro);
+ *   2. tokens semanticos: el nombre con el que el codigo nuevo pide un color
+ *      (`bg-surface`, `text-ink`, `border-line`, `bg-accent`...);
+ *   3. alias de compatibilidad: la app arrastra cientos de utilidades crudas de la escala de
+ *      tailwind (`gray-*`, `blue-*`, `red-*`...) repartidas por decenas de ficheros. Redefinir
+ *      esas escalas aqui hace que esas pantallas hereden el rumbo sin repintarlas una a una.
+ *      El codigo nuevo usa la capa 2; la capa 3 existe para no romper lo que ya hay.
+ */
+
+/* --- Capa 1: paleta cruda ------------------------------------------------------------- */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --paper: #fbf8f3;
+  --surface: #f3ede3;
+  --surface-strong: #e9e1d3;
+  --ink: #1a1815;
+  --muted: #6b655c;
+  --line: #e4dcd0;
+  --accent: #b45309;
+  --accent-hover: #94430a;
+  --accent-soft: #fbf1e3;
+  --on-accent: #fbf8f3;
+  --success: #2f6f5e;
+  --warning: #a16207;
+  --danger: #9f1239;
+
+  --background: var(--paper);
+  --foreground: var(--ink);
 }
+
+/*
+ * Modo oscuro: el rumbo es claro por naturaleza, asi que el oscuro es su inverso literal —el
+ * mismo papel, la misma tinta, el mismo acento, solo que del reves— y no una piel distinta.
+ * Vive en tokens para que el armazon y los componentes compartidos sean coherentes sin que
+ * ninguna pantalla tenga que declarar un `dark:` propio.
+ */
+.dark {
+  --paper: #14120f;
+  --surface: #1e1b16;
+  --surface-strong: #26221c;
+  --ink: #efe9de;
+  --muted: #b9b0a2;
+  --line: #332e26;
+  --accent: #e8a33d;
+  --accent-hover: #f2b44f;
+  --accent-soft: #2a2318;
+  --on-accent: #1a1815;
+  --success: #4e9c86;
+  --warning: #c99a2e;
+  --danger: #c7546b;
+
+  --background: var(--paper);
+  --foreground: var(--ink);
+}
+
+/* --- Capa 2: tokens semanticos y escalas del rumbo ------------------------------------- */
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-paper: var(--paper);
+  --color-surface: var(--surface);
+  --color-surface-strong: var(--surface-strong);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-soft: var(--accent-soft);
+  --color-on-accent: var(--on-accent);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+
   --font-sans: var(--font-inter);
+  --font-serif: var(--font-fraunces);
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
     "Liberation Mono", "Courier New", monospace;
+
+  /* Escala editorial: titulares grandes, lectura larga, sin tracking negativo. */
+  --text-display: 2.5rem;
+  --text-display--line-height: 1.1;
+  --text-title: 2rem;
+  --text-title--line-height: 1.15;
+  --text-heading: 1.5rem;
+  --text-heading--line-height: 1.25;
+  --leading-reading: 1.6;
+
+  /* El espacio es el material: el ritmo entre secciones es un token, no un `py-8` a mano. */
+  --spacing-section: 3rem;
+  --spacing-section-lg: 5rem;
+
+  /* Laminas, no cajas: radios de 2 a 4px. */
+  --radius-xs: 2px;
+  --radius-sm: 2px;
+  --radius-md: 3px;
+  --radius-lg: 4px;
+  --radius-xl: 6px;
+  --radius-2xl: 8px;
+  --radius-3xl: 10px;
 }
+
+/* --- Capa 3: alias de compatibilidad ---------------------------------------------------- */
+
+/*
+ * Escala neutra templada: el "gris" de tailwind pasa a ser el papel y la tinta del rumbo. El
+ * modo oscuro no la invierte (los `dark:` que ya existen eligen las claves 700/800/400, que
+ * ya son las superficies y el secundario oscuros), de modo que las pantallas que no llevan
+ * `dark:` propio siguen siendo legibles sobre papel.
+ */
+@theme {
+  --color-gray-50: #faf7f2;
+  --color-gray-100: #f3ede3;
+  --color-gray-200: #e4dcd0;
+  --color-gray-300: #d6ccbc;
+  --color-gray-400: #a79e90;
+  --color-gray-500: #6b655c;
+  --color-gray-600: #57514a;
+  --color-gray-700: #3a342c;
+  --color-gray-800: #26221c;
+  --color-gray-900: #1a1815;
+  --color-gray-950: #14120f;
+
+  /* `blue` es la escala de acento heredada del nombre: el unico acento del rumbo. */
+  --color-blue-50: #fbf1e3;
+  --color-blue-100: #f6e3cc;
+  --color-blue-200: #efd0a6;
+  --color-blue-300: #e4b87a;
+  --color-blue-400: #d09241;
+  --color-blue-500: #c97f26;
+  --color-blue-600: #b45309;
+  --color-blue-700: #94430a;
+  --color-blue-800: #7a3808;
+  --color-blue-900: #5f2c06;
+  --color-blue-950: #3d1b04;
+
+  /* Estados del rumbo: exito, aviso y error, tambien en escala. */
+  --color-green-50: #f1f7f4;
+  --color-green-100: #e3f0ea;
+  --color-green-200: #c6e1d6;
+  --color-green-300: #9ccbb9;
+  --color-green-400: #7fb9a6;
+  --color-green-500: #35765f;
+  --color-green-600: #2f6f5e;
+  --color-green-700: #27604f;
+  --color-green-800: #1f4e41;
+  --color-green-900: #183b31;
+  --color-green-950: #0e241d;
+
+  --color-yellow-50: #fbf6ea;
+  --color-yellow-100: #f7ecd4;
+  --color-yellow-200: #efd9a8;
+  --color-yellow-300: #e0be72;
+  --color-yellow-400: #d3a33f;
+  --color-yellow-500: #b8790c;
+  --color-yellow-600: #a16207;
+  --color-yellow-700: #8a5406;
+  --color-yellow-800: #704305;
+  --color-yellow-900: #573304;
+  --color-yellow-950: #332002;
+
+  --color-red-50: #fbf1f3;
+  --color-red-100: #f7e3e8;
+  --color-red-200: #efc7d1;
+  --color-red-300: #e0a0b1;
+  --color-red-400: #d0718a;
+  --color-red-500: #b02a4c;
+  --color-red-600: #9f1239;
+  --color-red-700: #8a0f31;
+  --color-red-800: #700c2a;
+  --color-red-900: #560823;
+  --color-red-950: #330513;
+}
+
+/* --- Base ------------------------------------------------------------------------------- */
 
 html {
   scroll-behavior: smooth;
-}
-
-/* Dark mode variables applied via .dark class */
-.dark {
-  --background: #0a0a0a;
-  --foreground: #ededed;
 }
 
 body {

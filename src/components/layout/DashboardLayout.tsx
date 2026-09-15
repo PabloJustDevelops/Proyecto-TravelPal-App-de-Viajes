@@ -3,7 +3,7 @@
 import React from 'react'
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
 import Navbar from './Navbar'
-import { HomeIcon, MapPinIcon, CurrencyDollarIcon, DocumentTextIcon, BellIcon, ChartBarIcon, CalendarIcon, ClipboardDocumentListIcon } from '@heroicons/react/24/outline'
+import { HomeIcon, MapPinIcon, CurrencyDollarIcon, DocumentTextIcon, CalendarIcon, ClipboardDocumentListIcon } from '@heroicons/react/24/outline'
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
@@ -11,7 +11,6 @@ const navigation = [
   { name: 'Viajes', href: '/trips', icon: MapPinIcon },
   { name: 'Planificación', href: '/planning', icon: CalendarIcon },
   { name: 'Gastos', href: '/expenses', icon: CurrencyDollarIcon },
-  { name: 'Presupuesto', href: '/budget', icon: ChartBarIcon },
   { name: 'Notas', href: '/notes', icon: DocumentTextIcon },
 ]
 

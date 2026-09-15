@@ -17,7 +17,6 @@ const protectedPaths = [
   '/planning',
   '/expenses',
   '/expenses/new',
-  '/budget',
   '/alerts',
   '/notes',
   '/notes/abc',

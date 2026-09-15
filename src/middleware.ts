@@ -17,7 +17,6 @@ export async function middleware(req: NextRequest) {
     '/dashboard',
     '/trips',
     '/expenses',
-    '/budget',
     '/notes',
     '/planning',
     '/alerts',

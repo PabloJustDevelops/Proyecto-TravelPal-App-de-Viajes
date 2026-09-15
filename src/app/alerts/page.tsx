@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import AlertCard from '@/components/alerts/AlertCard'
 import Button from '@/components/ui/Button'
+import PageTitle from '@/components/ui/PageTitle'
 import { useAuth } from '@/contexts/AuthContext'
 import { createInsforgeClient, Alert } from '@/lib/insforge'
 import { logger } from '@/lib/logger'
@@ -191,10 +192,10 @@ export default function AlertsPage() {
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Alertas</h1>
-            <p className="text-gray-600">Gestiona tus recordatorios y notificaciones</p>
-          </div>
+          <PageTitle
+            title="Alertas"
+            subtitle="Gestiona tus recordatorios y notificaciones"
+          />
           <div className="flex items-center space-x-3">
             <Button variant="outline" onClick={() => handleMarkAllAsRead()}>
               <CheckIcon className="h-5 w-5 mr-2" /> Marcar todas como leídas

@@ -2,6 +2,7 @@
 
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import PageTitle from "@/components/ui/PageTitle";
 import { Cog6ToothIcon, BellIcon, ShieldCheckIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -15,7 +16,7 @@ export default function SettingsPage() {
   return (
     <DashboardLayout>
       <div className="max-w-4xl mx-auto space-y-6">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Configuración</h1>
+        <PageTitle title="Configuración" />
 
         {/* Notifications Settings */}
         <Card>

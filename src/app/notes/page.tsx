@@ -5,9 +5,12 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import NoteCard from "@/components/notes/NoteCard";
 import NoteEditor from "@/components/notes/NoteEditor";
 import Button from "@/components/ui/Button";
+import PageTitle from "@/components/ui/PageTitle";
+import EmptyState from "@/components/ui/EmptyState";
 import Input from "@/components/ui/Input";
 import Modal from "@/components/ui/Modal";
 import { selectClassName } from "@/components/ui/fieldStyles";
+import ErrorState from "@/components/ui/ErrorState";
 import { useAuth } from "@/contexts/AuthContext";
 import { createInsforgeClient, Note, Trip } from "@/lib/insforge";
 import { logger } from "@/lib/logger";
@@ -168,28 +171,7 @@ export default function NotesPage() {
   if (error) {
     return (
       <DashboardLayout>
-        <div className="flex flex-col items-center justify-center h-64">
-          <div className="text-red-500 mb-4">
-            <svg
-              className="h-12 w-12"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-              />
-            </svg>
-          </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            Error al cargar los datos
-          </h3>
-          <p className="text-gray-500 mb-4">{error}</p>
-          <Button onClick={() => refetch()}>Reintentar</Button>
-        </div>
+        <ErrorState message={error} onRetry={() => refetch()} />
       </DashboardLayout>
     );
   }
@@ -219,20 +201,16 @@ export default function NotesPage() {
     <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Mis Notas
-            </h1>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Organiza y documenta toda la información de tus viajes
-            </p>
-          </div>
-          <Button onClick={() => setShowEditor(true)} className="mt-4 sm:mt-0">
-            <PlusIcon className="h-4 w-4 mr-2" />
-            Nueva Nota
-          </Button>
-        </div>
+        <PageTitle
+          title="Mis Notas"
+          subtitle="Organiza y documenta toda la información de tus viajes"
+          action={
+            <Button onClick={() => setShowEditor(true)}>
+              <PlusIcon className="h-4 w-4 mr-2" />
+              Nueva Nota
+            </Button>
+          }
+        />
 
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -361,31 +339,29 @@ export default function NotesPage() {
             ))}
           </div>
         ) : (
-          <div className="text-center py-12">
-            <div className="mx-auto h-12 w-12 text-gray-400">
-              <DocumentTextIcon className="h-12 w-12" />
-            </div>
-            <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">
-              {searchTerm || categoryFilter !== "all" || tripFilter !== "all"
+          <EmptyState
+            icon={<DocumentTextIcon className="h-12 w-12" />}
+            title={
+              searchTerm || categoryFilter !== "all" || tripFilter !== "all"
                 ? "No se encontraron notas"
-                : "No tienes notas registradas"}
-            </h3>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              {searchTerm || categoryFilter !== "all" || tripFilter !== "all"
+                : "No tienes notas registradas"
+            }
+            description={
+              searchTerm || categoryFilter !== "all" || tripFilter !== "all"
                 ? "Intenta ajustar los filtros de búsqueda"
-                : "Comienza creando tu primera nota"}
-            </p>
-            {!searchTerm &&
+                : "Comienza creando tu primera nota"
+            }
+            action={
+              !searchTerm &&
               categoryFilter === "all" &&
-              tripFilter === "all" && (
-                <div className="mt-6">
-                  <Button onClick={() => setShowEditor(true)}>
-                    <PlusIcon className="h-4 w-4 mr-2" />
-                    Crear Primera Nota
-                  </Button>
-                </div>
-              )}
-          </div>
+              tripFilter === "all" ? (
+                <Button onClick={() => setShowEditor(true)}>
+                  <PlusIcon className="h-4 w-4 mr-2" />
+                  Crear Primera Nota
+                </Button>
+              ) : undefined
+            }
+          />
         )}
 
         {/* Note Editor Modal */}

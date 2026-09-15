@@ -23,8 +23,10 @@ import {
 import { ItineraryPlanner } from "../../components/planning/ItineraryPlanner";
 import { BookingCard } from "../../components/planning/BookingCard";
 import Button from "../../components/ui/Button";
+import PageTitle from "../../components/ui/PageTitle";
 import Input from "../../components/ui/Input";
 import { fieldClassName } from "../../components/ui/fieldStyles";
+import ErrorState from "../../components/ui/ErrorState";
 import { Card } from "../../components/ui/Card";
 import Modal from "../../components/ui/Modal";
 
@@ -415,28 +417,7 @@ export default function PlanningPage() {
   if (error) {
     return (
       <DashboardLayout>
-        <div className="flex flex-col items-center justify-center h-64">
-          <div className="text-red-500 mb-4">
-            <svg
-              className="h-12 w-12"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-              />
-            </svg>
-          </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            Error al cargar los datos
-          </h3>
-          <p className="text-gray-500 mb-4">{error}</p>
-          <Button onClick={() => refetch()}>Reintentar</Button>
-        </div>
+        <ErrorState message={error} onRetry={() => refetch()} />
       </DashboardLayout>
     );
   }
@@ -446,14 +427,10 @@ export default function PlanningPage() {
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Planificación de Viajes
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400">
-              Organiza tus viajes, itinerarios y reservas en un solo lugar
-            </p>
-          </div>
+          <PageTitle
+            title="Planificación de Viajes"
+            subtitle="Organiza tus viajes, itinerarios y reservas en un solo lugar"
+          />
 
           <div className="flex items-center space-x-3">
             <div className="flex rounded-lg shadow-sm bg-white dark:bg-gray-800">

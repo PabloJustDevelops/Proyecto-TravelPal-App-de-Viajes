@@ -6,8 +6,11 @@ import { Expense, Trip } from "@/lib/insforge";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import ExpenseCard from "@/components/expenses/ExpenseCard";
 import Button from "@/components/ui/Button";
+import PageTitle from "@/components/ui/PageTitle";
+import EmptyState from "@/components/ui/EmptyState";
 import Input from "@/components/ui/Input";
 import { selectClassName } from "@/components/ui/fieldStyles";
+import ErrorState from "@/components/ui/ErrorState";
 import { Card, CardContent } from "@/components/ui/Card";
 import {
   PlusIcon,
@@ -142,28 +145,7 @@ export default function ExpensesPage() {
   if (error) {
     return (
       <DashboardLayout>
-        <div className="flex flex-col items-center justify-center h-64">
-          <div className="text-red-500 mb-4">
-            <svg
-              className="h-12 w-12"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-              />
-            </svg>
-          </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            Error al cargar los datos
-          </h3>
-          <p className="text-gray-500 mb-4">{error}</p>
-          <Button onClick={() => refetch()}>Reintentar</Button>
-        </div>
+        <ErrorState message={error} onRetry={() => refetch()} />
       </DashboardLayout>
     );
   }
@@ -190,22 +172,18 @@ export default function ExpensesPage() {
     <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Mis Gastos
-            </h1>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Controla y analiza todos tus gastos de viaje
-            </p>
-          </div>
-          <Link href="/expenses/new">
-            <Button className="mt-4 sm:mt-0">
-              <PlusIcon className="h-4 w-4 mr-2" />
-              Nuevo Gasto
-            </Button>
-          </Link>
-        </div>
+        <PageTitle
+          title="Mis Gastos"
+          subtitle="Controla y analiza todos tus gastos de viaje"
+          action={
+            <Link href="/expenses/new">
+              <Button>
+                <PlusIcon className="h-4 w-4 mr-2" />
+                Nuevo Gasto
+              </Button>
+            </Link>
+          }
+        />
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -346,33 +324,31 @@ export default function ExpensesPage() {
             ))}
           </div>
         ) : (
-          <div className="text-center py-12">
-            <div className="mx-auto h-12 w-12 text-gray-400">
-              <CurrencyDollarIcon className="h-12 w-12" />
-            </div>
-            <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">
-              {searchTerm || categoryFilter !== "all" || tripFilter !== "all"
+          <EmptyState
+            icon={<CurrencyDollarIcon className="h-12 w-12" />}
+            title={
+              searchTerm || categoryFilter !== "all" || tripFilter !== "all"
                 ? "No se encontraron gastos"
-                : "No tienes gastos registrados"}
-            </h3>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              {searchTerm || categoryFilter !== "all" || tripFilter !== "all"
+                : "No tienes gastos registrados"
+            }
+            description={
+              searchTerm || categoryFilter !== "all" || tripFilter !== "all"
                 ? "Intenta ajustar los filtros de búsqueda"
-                : "Comienza registrando tu primer gasto"}
-            </p>
-            {!searchTerm &&
+                : "Comienza registrando tu primer gasto"
+            }
+            action={
+              !searchTerm &&
               categoryFilter === "all" &&
-              tripFilter === "all" && (
-                <div className="mt-6">
-                  <Link href="/expenses/new">
-                    <Button>
-                      <PlusIcon className="h-4 w-4 mr-2" />
-                      Registrar Primer Gasto
-                    </Button>
-                  </Link>
-                </div>
-              )}
-          </div>
+              tripFilter === "all" ? (
+                <Link href="/expenses/new">
+                  <Button>
+                    <PlusIcon className="h-4 w-4 mr-2" />
+                    Registrar Primer Gasto
+                  </Button>
+                </Link>
+              ) : undefined
+            }
+          />
         )}
       </div>
     </DashboardLayout>

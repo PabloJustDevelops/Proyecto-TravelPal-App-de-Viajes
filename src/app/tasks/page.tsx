@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import Button from "@/components/ui/Button";
+import PageTitle from "@/components/ui/PageTitle";
+import ErrorState from "@/components/ui/ErrorState";
 import { Task } from "@/lib/insforge";
 import { TaskBoard } from "@/components/tasks/TaskBoard";
 import { TaskCalendarView } from "@/components/tasks/TaskCalendarView";
@@ -136,26 +138,11 @@ export default function TasksPage() {
   if (error) {
     return (
       <DashboardLayout>
-        <div className="flex flex-col items-center justify-center h-[calc(100vh-100px)]">
-          <div className="text-red-500 mb-4">
-            <svg
-              className="h-12 w-12"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-              />
-            </svg>
-          </div>
-          <p className="text-gray-900 font-medium mb-2">Error al cargar las tareas</p>
-          <p className="text-gray-500 mb-4">{error}</p>
-          <Button onClick={() => refetch()}>Reintentar</Button>
-        </div>
+        <ErrorState
+          message={error}
+          onRetry={() => refetch()}
+          title="Error al cargar las tareas"
+        />
       </DashboardLayout>
     );
   }
@@ -165,12 +152,10 @@ export default function TasksPage() {
       <div className="flex flex-col h-[calc(100vh-100px)]">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Mis Tareas</h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Gestiona tus pendientes y proyectos
-            </p>
-          </div>
+          <PageTitle
+            title="Mis Tareas"
+            subtitle="Gestiona tus pendientes y proyectos"
+          />
 
           <div className="flex items-center gap-3">
             <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-1 flex">

@@ -2,6 +2,7 @@
 
 import React, { Component, ErrorInfo, ReactNode } from 'react'
 import { ExclamationTriangleIcon, ArrowPathIcon } from '@heroicons/react/24/outline'
+import Button from '@/components/ui/Button'
 import { logger } from '@/lib/logger'
 import { getErrorMessage } from '@/lib/utils'
 
@@ -85,19 +86,16 @@ class ErrorBoundary extends Component<Props, State> {
             )}
 
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <button
-                onClick={this.handleRetry}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              >
+              <Button onClick={this.handleRetry}>
                 <ArrowPathIcon className="h-4 w-4 mr-2" />
                 Reintentar
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="outline"
                 onClick={() => window.location.reload()}
-                className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               >
                 Recargar página
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -137,12 +135,12 @@ export function RouteErrorBoundary({ children }: { children: ReactNode }) {
             <p className="text-gray-600 mb-6">
               No se pudo cargar esta página correctamente.
             </p>
-            <button
+            <Button
+              size="lg"
               onClick={() => window.location.href = '/dashboard'}
-              className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
             >
               Volver al inicio
-            </button>
+            </Button>
           </div>
         </div>
       }

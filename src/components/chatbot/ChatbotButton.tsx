@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ChatBubbleLeftRightIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import Button from "@/components/ui/Button";
 
 interface ChatbotButtonProps {
   onClick: () => void;
@@ -13,11 +14,11 @@ export default function ChatbotButton({ onClick, isOpen, unreadCount = 0 }: Chat
   const [isHovered, setIsHovered] = useState(false);
 
   return (
-    <button
+    <Button
       onClick={onClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className="fixed bottom-4 right-4 z-50 group flex items-center justify-center w-14 h-14 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:bg-blue-600 dark:hover:bg-blue-700"
+      className="fixed bottom-4 right-4 z-50 w-14 h-14 rounded-full p-0 shadow-lg hover:shadow-xl hover:scale-105"
       aria-label={isOpen ? "Cerrar chat" : "Abrir chat"}
     >
       {isOpen ? (
@@ -32,6 +33,6 @@ export default function ChatbotButton({ onClick, isOpen, unreadCount = 0 }: Chat
           )}
         </div>
       )}
-    </button>
+    </Button>
   );
 }

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import Button from "@/components/ui/Button";
 import { Task } from "@/lib/insforge";
 import { TaskBoard } from "@/components/tasks/TaskBoard";
 import { TaskCalendarView } from "@/components/tasks/TaskCalendarView";
@@ -153,12 +154,7 @@ export default function TasksPage() {
           </div>
           <p className="text-gray-900 font-medium mb-2">Error al cargar las tareas</p>
           <p className="text-gray-500 mb-4">{error}</p>
-          <button
-            onClick={() => refetch()}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
-          >
-            Reintentar
-          </button>
+          <Button onClick={() => refetch()}>Reintentar</Button>
         </div>
       </DashboardLayout>
     );
@@ -202,13 +198,13 @@ export default function TasksPage() {
               </button>
             </div>
 
-            <button
+            <Button
               onClick={handleCreateTask}
-              className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+              className="gap-2"
             >
               <PlusIcon className="w-5 h-5" />
               <span className="hidden sm:inline">Nueva Tarea</span>
-            </button>
+            </Button>
           </div>
         </div>
 

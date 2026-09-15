@@ -802,7 +802,6 @@ export default function PlanningPage() {
                     setSelectedBooking(null);
                     setShowBookingModal(true);
                   }}
-                  className="bg-blue-600 hover:bg-blue-700"
                 >
                   <PlusIcon className="h-4 w-4 mr-2" />
                   Nueva Reserva

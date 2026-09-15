@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { Trip, Expense } from "@/lib/insforge";
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import Button from "@/components/ui/Button";
 import { Plane, DollarSign, Calendar, MapPin, CreditCard, ShoppingBag, Utensils, Ticket, Heart } from "lucide-react";
 import { formatCurrency, getLoadErrorMessage } from "@/lib/utils";
 import { useApiResource } from "@/hooks/use-api-resource";
@@ -198,12 +199,7 @@ export default function DashboardPage() {
             Error al cargar el dashboard
           </p>
           <p className="text-gray-500 mb-4">{error}</p>
-          <button
-            onClick={() => refetch()}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
-          >
-            Reintentar
-          </button>
+          <Button onClick={() => refetch()}>Reintentar</Button>
         </div>
       </DashboardLayout>
     );

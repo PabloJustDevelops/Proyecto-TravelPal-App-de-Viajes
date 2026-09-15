@@ -235,7 +235,7 @@ export const ItineraryPlanner: React.FC<ItineraryPlannerProps> = ({
             {formatDate(new Date(startDate))} - {formatDate(new Date(endDate))}
           </p>
         </div>
-        <Button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700">
+        <Button onClick={handleSave}>
           Guardar Itinerario
         </Button>
       </div>
@@ -605,7 +605,6 @@ const ActivityModal: React.FC<ActivityModalProps> = ({
               </Button>
               <Button
                 type="submit"
-                className="bg-blue-600 hover:bg-blue-700"
               >
                 {activity ? 'Actualizar' : 'Agregar'}
               </Button>

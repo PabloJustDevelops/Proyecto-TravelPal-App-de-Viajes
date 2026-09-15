@@ -1,6 +1,7 @@
 import { ButtonHTMLAttributes, forwardRef } from 'react'
 import { cn } from '@/lib/utils'
 import LoadingSpinner from './LoadingSpinner'
+import { accentActionClassName } from './actionStyles'
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger'
@@ -11,16 +12,16 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = 'primary', size = 'md', loading = false, disabled, children, ...props }, ref) => {
-    const baseClasses = 'inline-flex items-center justify-center rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none'
-    
+    const baseClasses = 'inline-flex items-center justify-center rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-50 disabled:pointer-events-none'
+
     const variants = {
-      primary: 'bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700',
-      secondary: 'bg-gray-600 text-white hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600',
-      outline: 'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-transparent dark:text-gray-200 dark:hover:bg-gray-800',
-      ghost: 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800',
-      danger: 'bg-red-600 text-white hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700'
+      primary: accentActionClassName,
+      secondary: 'bg-ink text-paper hover:bg-muted',
+      outline: 'border border-line bg-transparent text-ink hover:bg-surface',
+      ghost: 'text-ink hover:bg-surface',
+      danger: 'bg-danger text-on-accent hover:opacity-90'
     }
-    
+
     const sizes = {
       sm: 'h-8 px-3 text-sm',
       md: 'h-10 px-4 py-2',

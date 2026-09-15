@@ -16,11 +16,11 @@ export default function ErrorState({
 }: ErrorStateProps) {
   return (
     <div className="flex h-64 flex-col items-center justify-center text-center">
-      <ExclamationTriangleIcon className="mb-4 h-12 w-12 text-red-500" />
-      <h3 className="mb-2 text-lg font-medium text-gray-900 dark:text-white">
+      <ExclamationTriangleIcon className="mb-4 h-12 w-12 text-danger" />
+      <h3 className="mb-2 font-serif text-heading leading-snug text-ink">
         {title}
       </h3>
-      <p className="mb-4 text-gray-500 dark:text-gray-400">{message}</p>
+      <p className="mb-4 max-w-prose leading-reading text-muted">{message}</p>
       {onRetry && <Button onClick={onRetry}>{retryLabel}</Button>}
     </div>
   )

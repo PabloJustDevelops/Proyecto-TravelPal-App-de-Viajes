@@ -8,13 +8,13 @@ interface PageTitleProps {
 
 export default function PageTitle({ title, subtitle, action }: PageTitleProps) {
   return (
-    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+        <h1 className="font-serif text-title leading-tight text-ink sm:text-display">
           {title}
         </h1>
         {subtitle && (
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          <p className="mt-2 text-base leading-reading text-muted">
             {subtitle}
           </p>
         )}

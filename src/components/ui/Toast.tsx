@@ -86,7 +86,7 @@ export function ToastViewport({ toasts, onClose }: { toasts: ToastItem[]; onClos
             <div className="text-sm">{t.message}</div>
           </div>
           <button
-            className="ml-3 text-white/80 hover:text-white"
+            className="ml-3 text-on-accent/80 hover:text-on-accent"
             onClick={() => onClose(t.id)}
             aria-label="Cerrar aviso"
           >
@@ -99,15 +99,15 @@ export function ToastViewport({ toasts, onClose }: { toasts: ToastItem[]; onClos
 }
 
 function toastClass(type: ToastType) {
-  const base = 'flex items-start p-3 rounded shadow-md text-white'
+  const base = 'flex items-start p-3 rounded-md shadow-lg text-on-accent'
   switch (type) {
     case 'success':
-      return `${base} bg-green-600`
+      return `${base} bg-success`
     case 'error':
-      return `${base} bg-red-600`
+      return `${base} bg-danger`
     case 'warning':
-      return `${base} bg-yellow-600`
+      return `${base} bg-warning`
     default:
-      return `${base} bg-blue-600`
+      return `${base} bg-accent`
   }
 }
